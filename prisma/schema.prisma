@@ -1,0 +1,204 @@
+// Prisma Schema para Nexo SaaS Platform
+// Define los modelos relacionales de Usuarios, Proyectos, Tareas, Chat, Archivos e Historial.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Modelo de Usuarios y Autenticación
+// -----------------------------------------------------------------------------
+model User {
+  id            String          @id @default(uuid())
+  email         String          @unique
+  password      String
+  name          String
+  avatarUrl     String?
+  role          String          @default("MEMBER") // ADMIN, LEADER, MEMBER, GUEST
+  bio           String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  memberships   ProjectMember[]
+  assignedTasks Task[]          @relation("TaskAssignee")
+  createdTasks  Task[]          @relation("TaskCreator")
+  comments      Comment[]
+  chatMessages  ChatMessage[]
+  reactions     ChatReaction[]
+  attachments   Attachment[]
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+}
+
+// -----------------------------------------------------------------------------
+// Modelo de Proyectos y Membresías de Equipo
+// -----------------------------------------------------------------------------
+model Project {
+  id          String          @id @default(uuid())
+  key         String          @unique // P. ej., "NEX", "PROJ"
+  name        String
+  description String?
+  color       String          @default("#7C3AED") // Tono Violeta por defecto
+  icon        String          @default("FolderKanban")
+  isArchived  Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  members     ProjectMember[]
+  tasks       Task[]
+  attachments Attachment[]
+  messages    ChatMessage[]
+  activityLogs ActivityLog[]
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  role      String   @default("MEMBER") // ADMIN, LEADER, MEMBER, GUEST
+  joinedAt  DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+// -----------------------------------------------------------------------------
+// Modelo de Gestión de Tareas, Subtareas y Comentarios
+// -----------------------------------------------------------------------------
+model Task {
+  id             String       @id @default(uuid())
+  key            String       // P. ej., "NEX-101"
+  title          String
+  description    String?
+  priority       String       @default("MEDIA") // BAJA, MEDIA, ALTA, URGENTE
+  status         String       @default("PENDIENTE") // PENDIENTE, EN_PROGRESO, EN_REVISION, FINALIZADA, CANCELADA
+  estimatedHours Float        @default(0)
+  loggedHours    Float        @default(0)
+  position       Int          @default(0) // Orden para Kanban Drag & Drop
+  dueDate        DateTime?
+  startDate      DateTime?
+  tags           String       @default("[]") // Lista JSON de etiquetas
+  projectId      String
+  assigneeId     String?
+  creatorId      String
+
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee       User?        @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  creator        User         @relation("TaskCreator", fields: [creatorId], references: [id])
+  
+  subtasks       Subtask[]
+  comments       Comment[]
+  attachments    Attachment[]
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Subtask {
+  id        String   @id @default(uuid())
+  taskId    String
+  title     String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  taskId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// Modelo de Almacenamiento de Archivos Adjuntos
+// -----------------------------------------------------------------------------
+model Attachment {
+  id          String   @id @default(uuid())
+  name        String
+  url         String
+  size        Int
+  type        String
+  taskId      String?
+  projectId   String
+  uploaderId  String
+  createdAt   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task        Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploader    User     @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// Modelo de Chat en Tiempo Real
+// -----------------------------------------------------------------------------
+model ChatMessage {
+  id        String   @id @default(uuid())
+  projectId String
+  senderId  String
+  content   String
+  parentId  String?  // Para hilos de respuesta
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reactions ChatReaction[]
+}
+
+model ChatReaction {
+  id        String      @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime    @default(now())
+
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+}
+
+// -----------------------------------------------------------------------------
+// Modelo de Notificaciones y Registro de Auditoría
+// -----------------------------------------------------------------------------
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("INFO") // TASK_ASSIGNED, MENTION, COMMENT, SYSTEM
+  read      Boolean  @default(false)
+  linkUrl   String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  projectId  String
+  userId     String
+  action     String   // P. ej., "CREATE_TASK", "CHANGE_STATUS", "UPLOAD_FILE"
+  entityType String   // TASK, PROJECT, CHAT, FILE
+  entityId   String
+  details    String   // Descripción legible en español de la acción
+  createdAt  DateTime @default(now())
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
