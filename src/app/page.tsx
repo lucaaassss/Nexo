@@ -1,24 +1,12 @@
-import {
-  ArrowRight,
-  Bot,
-  CalendarDays,
-  CheckCircle2,
-  FolderKanban,
-  MessageSquareText,
-  NotebookPen,
-  Sparkles,
-  Users,
-  Zap,
-} from 'lucide-react';
+import { ArrowRight, Bot, CalendarDays, CheckCircle2, FolderKanban, MessageSquareText, Sparkles, Users, Zap } from 'lucide-react';
+import Link from 'next/link';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { aiSuggestions, chatMessages, metrics, projectTasks, recentFiles, teamActivity } from '@/lib/mock-data';
 
-const stats = [
-  { label: 'Proyectos activos', value: '128+' },
-  { label: 'Tareas automatizadas', value: '4.2k' },
-  { label: 'Tiempo ahorrado', value: '37%' },
-];
-
+/* ==================== DATOS ESTÁTICOS ==================== */
+/**
+ * Información de módulos del producto
+ * No contiene datos de usuario, solo descripción de características
+ */
 const modules = [
   {
     title: 'Gestión de proyectos',
@@ -42,213 +30,165 @@ const modules = [
   },
 ];
 
+/* ==================== PÁGINA: HOME ==================== */
+/**
+ * PÁGINA: Inicio (Landing Page)
+ * Propósito: Presentar Nexo y dar acceso al dashboard
+ * 
+ * Secciones:
+ * - Hero con CTA al dashboard
+ * - Descripción de características
+ * - Módulos principales del producto
+ */
 export default function HomePage() {
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100 dark:bg-slate-950 dark:text-slate-100 sm:px-6 lg:bg-white lg:px-8 lg:text-slate-900 lg:dark:bg-slate-950 lg:dark:text-slate-100">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        {/* Hero / presentación principal */}
-        <header className="rounded-[2rem] border border-white/10 bg-white/10 p-4 shadow-soft backdrop-blur-xl sm:p-6">
-          <div className="flex items-center justify-between">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-sm text-violet-200">
+
+        {/* ==================== SECCIÓN: HERO ==================== */}
+        <header className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/50 sm:p-6 lg:bg-slate-50 lg:dark:bg-slate-900/50">
+          <div className="flex items-center justify-between gap-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1 text-sm text-violet-300 dark:text-violet-200 lg:dark:text-violet-200">
               <Sparkles size={16} />
               SaaS premium para equipos modernos
             </div>
             <ThemeToggle />
           </div>
+
           <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
             <div className="max-w-2xl space-y-5">
-              <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+              <h1 className="text-4xl font-bold tracking-tight text-slate-100 dark:text-slate-100 sm:text-5xl lg:text-slate-900 lg:dark:text-slate-100">
                 Nexo centraliza tu trabajo, tus equipos y tu ejecución.
               </h1>
-              <p className="max-w-xl text-lg text-slate-300">
-                Gestiona proyectos, tareas, archivos y conversaciones desde una sola plataforma elegante,
-                rápida y preparada para producción.
+              <p className="max-w-xl text-lg text-slate-400 dark:text-slate-400 lg:text-slate-600 lg:dark:text-slate-400">
+                Gestiona proyectos, tareas, archivos y conversaciones desde una sola plataforma elegante, rápida y preparada para producción.
               </p>
               <div className="flex flex-wrap gap-3">
-                <a
-                  href="#dashboard"
-                  className="rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-5 py-3 font-medium text-white transition hover:opacity-90"
+                <Link
+                  href="/dashboard"
+                  className="rounded-lg bg-gradient-to-r from-violet-500 to-indigo-600 px-6 py-3 font-semibold text-white transition hover:from-violet-600 hover:to-indigo-700"
                 >
-                  Explorar plataforma
-                </a>
+                  Entrar al dashboard
+                </Link>
                 <a
                   href="#modulos"
-                  className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-medium text-slate-200 transition hover:bg-white/10"
+                  className="rounded-lg border border-violet-400/20 bg-violet-500/10 px-6 py-3 font-semibold text-violet-300 transition hover:bg-violet-500/20 dark:text-violet-200 lg:dark:text-violet-200"
                 >
                   Ver módulos
                 </a>
               </div>
             </div>
-            <div className="rounded-[1.75rem] border border-white/10 bg-slate-900/70 p-5 shadow-2xl">
-              <div className="flex items-center gap-3 rounded-2xl border border-violet-400/20 bg-violet-500/10 px-4 py-3 text-sm text-violet-100">
+
+            {/* Tarjeta de información */}
+            <div className="rounded-xl border border-white/10 bg-slate-950/40 p-5 dark:bg-slate-900 lg:bg-white lg:dark:bg-slate-900">
+              <div className="flex items-center gap-3 rounded-lg border border-violet-400/20 bg-violet-500/10 px-4 py-3 text-sm text-violet-200 dark:text-violet-300 lg:dark:text-violet-300">
                 <Zap size={18} />
-                IA + automatización + productividad en tiempo real
+                IA + automatización + productividad
               </div>
-              <div className="mt-4 grid gap-3">
-                {stats.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    <p className="text-2xl font-semibold text-white">{item.value}</p>
-                    <p className="text-sm text-slate-400">{item.label}</p>
-                  </div>
-                ))}
+              <div className="mt-4 space-y-3">
+                <div className="rounded-lg bg-slate-900 p-3 dark:bg-slate-800 lg:bg-slate-50 lg:dark:bg-slate-800">
+                  <p className="text-sm text-slate-400 dark:text-slate-400 lg:text-slate-600 lg:dark:text-slate-400">
+                    Stack tecnológico
+                  </p>
+                  <p className="mt-1 font-semibold text-slate-100 dark:text-slate-100 lg:text-slate-900 lg:dark:text-slate-100">
+                    Next.js 14 + TypeScript
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-900 p-3 dark:bg-slate-800 lg:bg-slate-50 lg:dark:bg-slate-800">
+                  <p className="text-sm text-slate-400 dark:text-slate-400 lg:text-slate-600 lg:dark:text-slate-400">
+                    Diseño responsivo
+                  </p>
+                  <p className="mt-1 font-semibold text-slate-100 dark:text-slate-100 lg:text-slate-900 lg:dark:text-slate-100">
+                    Tailwind CSS + Claro/Oscuro
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Bloque de experiencia y arquitectura */}
-        <section id="dashboard" className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[2rem] border border-white/10 bg-slate-900/60 p-6 shadow-soft">
-            <div className="flex items-center gap-2 text-violet-300">
-              <CheckCircle2 size={18} />
-              Diseño premium para equipos de alto rendimiento
+        {/* ==================== SECCIÓN: DESCRIPCIÓN ==================== */}
+        <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/50 lg:bg-slate-50 lg:dark:bg-slate-900/50">
+            <div className="flex items-center gap-2 text-violet-400 dark:text-violet-300">
+              <CheckCircle2 size={20} />
+              <p className="text-lg font-semibold">Diseño premium escalable</p>
             </div>
-            <h2 className="mt-4 text-2xl font-semibold text-white">
-              Un panel de control de producto pensado para operaciones reales.
+            <h2 className="mt-4 text-2xl font-bold text-slate-100 dark:text-slate-100 lg:text-slate-900 lg:dark:text-slate-100">
+              Una plataforma pensada para operaciones reales.
             </h2>
-            <p className="mt-3 max-w-2xl text-slate-400">
-              Nexo combina gestión visual, colaboración en tiempo real y automatización con IA para que todo
-              el ciclo de trabajo sea más rápido y ordenado.
+            <p className="mt-3 max-w-2xl text-slate-400 dark:text-slate-400 lg:text-slate-600 lg:dark:text-slate-400">
+              Nexo combina gestión visual, colaboración en tiempo real y automatización para que todo el ciclo de trabajo sea más rápido y ordenado.
             </p>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Users className="text-violet-300" />
-                <h3 className="mt-3 font-semibold text-white">Gestión de equipos</h3>
-                <p className="mt-2 text-sm text-slate-400">Invitaciones, roles y permisos con control fino.</p>
+              <div className="rounded-lg bg-slate-950/40 p-4 dark:bg-slate-900 lg:bg-white lg:dark:bg-slate-900">
+                <Users className="text-violet-400 dark:text-violet-300" />
+                <h3 className="mt-3 font-semibold text-slate-100 dark:text-slate-100 lg:text-slate-900 lg:dark:text-slate-100">
+                  Gestión de equipos
+                </h3>
+                <p className="mt-2 text-sm text-slate-400 dark:text-slate-400 lg:text-slate-600 lg:dark:text-slate-400">
+                  Invitaciones, roles y permisos con control fino.
+                </p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <CalendarDays className="text-violet-300" />
-                <h3 className="mt-3 font-semibold text-white">Planificación visual</h3>
-                <p className="mt-2 text-sm text-slate-400">Kanban, lista, calendario y timeline sincronizados.</p>
+              <div className="rounded-lg bg-slate-950/40 p-4 dark:bg-slate-900 lg:bg-white lg:dark:bg-slate-900">
+                <CalendarDays className="text-violet-400 dark:text-violet-300" />
+                <h3 className="mt-3 font-semibold text-slate-100 dark:text-slate-100 lg:text-slate-900 lg:dark:text-slate-100">
+                  Planificación visual
+                </h3>
+                <p className="mt-2 text-sm text-slate-400 dark:text-slate-400 lg:text-slate-600 lg:dark:text-slate-400">
+                  Kanban, lista, calendario y timeline.
+                </p>
               </div>
             </div>
           </div>
-          <div className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-violet-500/20 to-indigo-500/20 p-6 shadow-soft">
-            <p className="text-sm uppercase tracking-[0.3em] text-violet-200">Arquitectura preparada</p>
-            <h3 className="mt-3 text-xl font-semibold text-white">Stack moderno para Vercel</h3>
-            <ul className="mt-4 space-y-3 text-sm text-slate-300">
+
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-violet-500/20 to-indigo-500/20 p-6 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/50 lg:bg-slate-50 lg:dark:bg-slate-900/50">
+            <p className="text-sm uppercase tracking-widest text-violet-400 dark:text-violet-300 lg:text-slate-600 lg:dark:text-violet-300">
+              Arquitectura preparada
+            </p>
+            <h3 className="mt-3 text-xl font-bold text-slate-100 dark:text-slate-100 lg:text-slate-900 lg:dark:text-slate-100">
+              Stack moderno para Vercel
+            </h3>
+            <ul className="mt-4 space-y-3 text-sm text-slate-400 dark:text-slate-400 lg:text-slate-600 lg:dark:text-slate-400">
               <li>• Next.js 14 App Router para rendimiento y SEO</li>
               <li>• TypeScript para escalabilidad y seguridad</li>
               <li>• Tailwind CSS para diseño rápido y consistente</li>
-              <li>• Componentes reutilizables para UX premium</li>
+              <li>• Componentes reutilizables listos para conectar a tu DB</li>
             </ul>
-            <a href="#modulos" className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-violet-200">
+            <a href="#modulos" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-violet-300 dark:text-violet-200 lg:dark:text-violet-300">
               Descubrir más <ArrowRight size={16} />
             </a>
           </div>
         </section>
 
-        {/* Módulos principales del producto */}
-        <section id="modulos" className="rounded-[2rem] border border-white/10 bg-slate-900/60 p-6 shadow-soft">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-violet-200">Módulos principales</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Todo lo que necesita un equipo moderno</h2>
-            </div>
+        {/* ==================== SECCIÓN: MÓDULOS ==================== */}
+        <section id="modulos" className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/50 lg:bg-slate-50 lg:dark:bg-slate-900/50">
+          <div>
+            <p className="text-sm uppercase tracking-widest text-violet-400 dark:text-violet-300 lg:text-slate-600 lg:dark:text-violet-300">
+              Módulos principales
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-100 dark:text-slate-100 lg:text-slate-900 lg:dark:text-slate-100">
+              Todo lo que necesita un equipo moderno
+            </h2>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {modules.map((module) => {
               const Icon = module.icon;
               return (
-                <div key={module.title} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                  <Icon className="text-violet-300" size={20} />
-                  <h3 className="mt-3 font-semibold text-white">{module.title}</h3>
-                  <p className="mt-2 text-sm text-slate-400">{module.description}</p>
+                <div
+                  key={module.title}
+                  className="rounded-lg border border-white/10 bg-slate-950/40 p-5 dark:border-slate-700 dark:bg-slate-900 lg:bg-white lg:dark:bg-slate-900"
+                >
+                  <Icon className="text-violet-400 dark:text-violet-300" size={24} />
+                  <h3 className="mt-3 font-semibold text-slate-100 dark:text-slate-100 lg:text-slate-900 lg:dark:text-slate-100">
+                    {module.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-400 dark:text-slate-400 lg:text-slate-600 lg:dark:text-slate-400">
+                    {module.description}
+                  </p>
                 </div>
               );
             })}
-          </div>
-        </section>
-
-        {/* Panel de métricas, tareas y actividad */}
-        <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[2rem] border border-white/10 bg-slate-900/60 p-6 shadow-soft">
-            <div className="flex items-center gap-2 text-violet-300">
-              <NotebookPen size={18} />
-              Vista de producto y operaciones
-            </div>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {metrics.map((metric) => (
-                <div key={metric.label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-2xl font-semibold text-white">{metric.value}</p>
-                  <p className="mt-1 text-sm text-slate-400">{metric.label}</p>
-                  <p className="mt-2 text-xs text-violet-200">{metric.detail}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-white">Tareas del sprint</h3>
-                <span className="text-sm text-violet-200">4 pendientes</span>
-              </div>
-              <div className="mt-4 space-y-3">
-                {projectTasks.map((task) => (
-                  <div key={task.title} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-3">
-                    <div>
-                      <p className="font-medium text-white">{task.title}</p>
-                      <p className="text-sm text-slate-400">{task.assignee} · {task.status}</p>
-                    </div>
-                    <span className="rounded-full bg-violet-500/10 px-3 py-1 text-xs text-violet-200">{task.priority}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="rounded-[2rem] border border-white/10 bg-slate-900/60 p-6 shadow-soft">
-              <h3 className="font-semibold text-white">Actividad reciente</h3>
-              <div className="mt-4 space-y-3">
-                {teamActivity.map((activity) => (
-                  <div key={activity.name} className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                    <p className="text-sm font-medium text-white">{activity.name}</p>
-                    <p className="text-sm text-slate-400">{activity.action}</p>
-                    <p className="mt-1 text-xs text-violet-200">{activity.time}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-[2rem] border border-white/10 bg-slate-900/60 p-6 shadow-soft">
-              <h3 className="font-semibold text-white">IA y colaboración</h3>
-              <div className="mt-4 space-y-3">
-                {aiSuggestions.map((item) => (
-                  <div key={item} className="rounded-2xl border border-violet-400/20 bg-violet-500/10 p-3 text-sm text-violet-100">
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <h4 className="font-medium text-white">Chat del proyecto</h4>
-                <div className="mt-3 space-y-2">
-                  {chatMessages.map((message) => (
-                    <div key={`${message.author}-${message.time}`} className="rounded-xl bg-slate-950/40 p-3">
-                      <p className="text-sm text-white">{message.author}</p>
-                      <p className="mt-1 text-sm text-slate-400">{message.message}</p>
-                      <p className="mt-1 text-xs text-violet-200">{message.time}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Archivos recientes y recursos compartidos */}
-        <section className="rounded-[2rem] border border-white/10 bg-slate-900/60 p-6 shadow-soft">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-violet-200">Archivos recientes</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Centralización de documentos y recursos</h2>
-            </div>
-          </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {recentFiles.map((file) => (
-              <div key={file.name} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="font-medium text-white">{file.name}</p>
-                <p className="mt-1 text-sm text-slate-400">{file.type}</p>
-                <p className="mt-2 text-xs text-violet-200">{file.size}</p>
-              </div>
-            ))}
           </div>
         </section>
       </div>

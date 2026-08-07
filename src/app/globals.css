@@ -2,26 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Configuración raíz para tema oscuro por defecto */
 :root {
   color-scheme: dark;
 }
 
+/* Comportamiento de scroll suave en toda la app */
 html {
   scroll-behavior: smooth;
 }
 
+/* Estilos del body en modo oscuro */
 body {
   @apply min-h-screen bg-slate-950 text-slate-100 antialiased;
-  background-image: radial-gradient(circle at top left, rgba(139, 92, 246, 0.2), transparent 35%),
-    radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.18), transparent 28%);
+  background-image: 
+    radial-gradient(circle at top left, rgba(139, 92, 246, 0.15), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.1), transparent 35%);
+}
+
+/* Estilos del body en modo claro */
+html.light {
+  color-scheme: light;
 }
 
 html.light body {
-  @apply bg-slate-50 text-slate-900;
-  background-image: radial-gradient(circle at top left, rgba(139, 92, 246, 0.16), transparent 35%),
-    radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.1), transparent 28%);
+  @apply bg-white text-slate-900;
+  background-image: 
+    radial-gradient(circle at top left, rgba(139, 92, 246, 0.08), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.06), transparent 35%);
 }
 
+/* Estilos de selección de texto */
 ::selection {
   @apply bg-violet-500/40 text-white;
 }
+
+html.light ::selection {
+  @apply bg-violet-500/30 text-slate-900;
+}
+
