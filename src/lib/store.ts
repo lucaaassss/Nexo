@@ -40,16 +40,24 @@ export class NexoStore {
   public notifications: NotificationItem[] = [];
   public activityLogs: ActivityItem[] = [];
   public listeners: Set<() => void> = new Set();
+  private isInitialized = false;
 
-  private constructor() {
-    this.loadInitialState();
-  }
+  private constructor() {}
 
   public static getInstance(): NexoStore {
     if (!NexoStore.instance) {
       NexoStore.instance = new NexoStore();
     }
     return NexoStore.instance;
+  }
+
+  /** Carga el estado inicial desde localStorage solo en el cliente tras la hidratación */
+  public initClientState() {
+    if (typeof window !== 'undefined' && !this.isInitialized) {
+      this.isInitialized = true;
+      this.loadInitialState();
+      this.notify();
+    }
   }
 
   /** Carga el estado guardado localmente si existe */
