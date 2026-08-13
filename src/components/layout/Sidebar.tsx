@@ -3,7 +3,6 @@
 import React from 'react';
 import {
   CheckSquare,
-  MessageSquare,
   Folder,
   BarChart3,
   History,
@@ -43,7 +42,6 @@ export function Sidebar({
 
   const navigationItems = [
     { id: 'tasks', label: 'Tablero de Tareas', icon: CheckSquare },
-    { id: 'chat', label: 'Chat Integrado', icon: MessageSquare },
     { id: 'files', label: 'Bóveda de Archivos', icon: Folder },
     { id: 'analytics', label: 'Estadísticas', icon: BarChart3 },
     { id: 'activity', label: 'Historial & Auditoría', icon: History },

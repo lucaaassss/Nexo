@@ -13,7 +13,7 @@ import { TaskDrawer } from '@/components/tasks/TaskDrawer';
 import { ProjectModal } from '@/components/projects/ProjectModal';
 import { TaskModal } from '@/components/tasks/TaskModal';
 import { InviteMemberModal } from '@/components/projects/InviteMemberModal';
-import { ProjectChat } from '@/components/chat/ProjectChat';
+import { ChatBubble } from '@/components/chat/ChatBubble';
 import { FileManager } from '@/components/files/FileManager';
 import { ActivityTimeline } from '@/components/activity/ActivityTimeline';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
@@ -172,7 +172,7 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {activeTab === 'chat' && <ProjectChat />}
+
           {activeTab === 'files' && <FileManager />}
           {activeTab === 'analytics' && <AnalyticsDashboard />}
           {activeTab === 'activity' && <ActivityTimeline />}
@@ -268,6 +268,7 @@ export default function DashboardPage() {
         onClose={() => setIsInviteModalOpen(false)}
       />
       <NexoAiModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
+      <ChatBubble />
     </div>
   );
 }
