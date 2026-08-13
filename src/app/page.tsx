@@ -57,17 +57,6 @@ export default function DashboardPage() {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  // Inicializar un primer proyecto automáticamente si la base de datos está totalmente vacía
-  useEffect(() => {
-    if (projects.length === 0) {
-      createProject({
-        name: 'Proyecto Principal Nexo',
-        key: 'NEX',
-        description: 'Espacio de trabajo centralizado para tareas, chat y archivos del equipo.',
-        color: '#7C3AED',
-      });
-    }
-  }, [projects.length, createProject]);
 
   /** Dispara animación de confetti al celebrar logros o proyectos completados */
   const triggerCelebration = () => {
