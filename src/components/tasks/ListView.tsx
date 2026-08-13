@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, CheckSquare, Clock, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clock, Plus } from 'lucide-react';
 import { Task, TaskStatus } from '@/types';
 import { getPriorityDetails, getStatusDetails, formatDate, getInitials } from '@/lib/utils';
-import { useNexo } from '@/hooks/useNexo';
 
 interface ListViewProps {
   tasks: Task[];
@@ -25,7 +24,6 @@ const STATUS_GROUPS: { id: TaskStatus; title: string }[] = [
  * Vista de lista jerárquica con grupos desplegables por estado y edición rápida.
  */
 export function ListView({ tasks, onSelectTask, onOpenNewTask }: ListViewProps) {
-  const { updateTask } = useNexo();
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
   /** Alterna la expansión/colapso de un grupo de tareas */

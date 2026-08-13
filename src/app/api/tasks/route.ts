@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
     const project = await db.project.findUnique({ where: { id: projectId } });
     if (!project) {
-      return NextResponse.json({ error: 'Proyecto no encontrado' }, { status: 444 });
+      return NextResponse.json({ error: 'Proyecto no encontrado' }, { status: 404 });
     }
 
     const count = await db.task.count({ where: { projectId } });

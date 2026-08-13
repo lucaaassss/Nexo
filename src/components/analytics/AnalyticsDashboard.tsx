@@ -6,8 +6,6 @@ import {
   CheckCircle2,
   Clock,
   TrendingUp,
-  AlertTriangle,
-  Users,
   Target,
 } from 'lucide-react';
 import { useNexo } from '@/hooks/useNexo';

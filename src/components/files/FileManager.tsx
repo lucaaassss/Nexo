@@ -9,7 +9,6 @@ import {
   Code,
   Download,
   Trash2,
-  ExternalLink,
   Search,
   Folder,
 } from 'lucide-react';
@@ -25,7 +24,6 @@ export function FileManager() {
   const { projectAttachments, uploadFile, deleteFile, currentProject } = useNexo();
   const [filterType, setFilterType] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFile, setSelectedFile] = useState<Attachment | null>(null);
 
   /** Procesa la subida de un nuevo archivo */
   const handleDrop = (e: React.DragEvent) => {

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, CheckSquare, Clock, Tag, Calendar, User as UserIcon } from 'lucide-react';
+import { X, CheckSquare } from 'lucide-react';
 import { useNexo } from '@/hooks/useNexo';
 import { TaskPriority, TaskStatus } from '@/types';
+import { getTodayDateString } from '@/lib/utils';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -141,8 +142,15 @@ export function TaskModal({ isOpen, onClose }: TaskModalProps) {
               <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Fecha Límite</label>
               <input
                 type="date"
+                min={getTodayDateString()}
                 value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const today = getTodayDateString();
+                  if (!val || val >= today) {
+                    setDueDate(val);
+                  }
+                }}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-violet-500"
               />
             </div>

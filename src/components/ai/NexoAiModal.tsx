@@ -6,11 +6,8 @@ import {
   X,
   Bot,
   ListPlus,
-  Clock,
-  MessageSquare,
   FileText,
   HelpCircle,
-  Send,
   CheckCircle,
 } from 'lucide-react';
 import { useNexo } from '@/hooks/useNexo';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { store } from '@/lib/store';
-import { Project, Task, ChatMessage, Attachment, NotificationItem, ActivityItem, User } from '@/types';
+import { Project, Task, MemberRole, TaskStatus } from '@/types';
 
 /**
  * Hook de React para consumir el estado global de Nexo
@@ -59,10 +59,10 @@ export function useNexo() {
     createProject: (data: Parameters<typeof store.createProject>[0]) => store.createProject(data),
     updateProject: (id: string, updates: Partial<Project>) => store.updateProject(id, updates),
     deleteProject: (id: string) => store.deleteProject(id),
-    addMemberToProject: (projectId: string, email: string, role: any) => store.addMemberToProject(projectId, email, role),
+    addMemberToProject: (projectId: string, email: string, role: MemberRole) => store.addMemberToProject(projectId, email, role),
     createTask: (data: Parameters<typeof store.createTask>[0]) => store.createTask(data),
     updateTask: (taskId: string, updates: Partial<Task>) => store.updateTask(taskId, updates),
-    moveTaskStatus: (taskId: string, status: any, pos: number) => store.moveTaskStatus(taskId, status, pos),
+    moveTaskStatus: (taskId: string, status: TaskStatus, pos: number) => store.moveTaskStatus(taskId, status, pos),
     deleteTask: (taskId: string) => store.deleteTask(taskId),
     addSubtask: (taskId: string, title: string) => store.addSubtask(taskId, title),
     toggleSubtask: (taskId: string, subtaskId: string) => store.toggleSubtask(taskId, subtaskId),

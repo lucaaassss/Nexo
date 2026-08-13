@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, UserPlus, Mail, Link as LinkIcon, Check, Shield } from 'lucide-react';
+import { X, UserPlus, Mail, Link as LinkIcon, Check } from 'lucide-react';
 import { useNexo } from '@/hooks/useNexo';
 import { MemberRole } from '@/types';
 
