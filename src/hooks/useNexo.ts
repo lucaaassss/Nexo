@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { store } from '@/lib/store';
 import { Project, Task, MemberRole, TaskStatus } from '@/types';
+import { supabase } from '@/lib/supabase';
 
 /**
- * Hook de React para consumir el estado global de Nexo
+ * Hook de React para consumir el estado global de Nexo.
  * Sincroniza automáticamente los componentes con los cambios en la tienda de datos.
+ * Carga el usuario real desde la sesión de Supabase si está disponible.
  */
 export function useNexo() {
   const [state, setState] = useState({
@@ -22,6 +24,53 @@ export function useNexo() {
     // Cargar estado guardado de localStorage tras la hidratación del cliente
     store.initClientState();
 
+    // Cargar usuario real de Supabase si hay sesión activa
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const u = session.user;
+        const meta = u.user_metadata || {};
+
+        // Construir nombre desde metadatos o desde email
+        const name =
+          meta.nombre && meta.apellido
+            ? `${meta.nombre} ${meta.apellido}`.trim()
+            : meta.nombre || meta.name || meta.full_name || u.email?.split('@')[0] || 'Usuario';
+
+        store.setCurrentUser({
+          id: u.id,
+          name,
+          email: u.email || '',
+          avatarUrl: meta.avatar_url || '',
+          role: meta.role || 'MEMBER',
+          bio: meta.bio || '',
+          createdAt: u.created_at || new Date().toISOString(),
+        });
+      }
+    });
+
+    // Escuchar cambios de sesión (login/logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const u = session.user;
+        const meta = u.user_metadata || {};
+
+        const name =
+          meta.nombre && meta.apellido
+            ? `${meta.nombre} ${meta.apellido}`.trim()
+            : meta.nombre || meta.name || meta.full_name || u.email?.split('@')[0] || 'Usuario';
+
+        store.setCurrentUser({
+          id: u.id,
+          name,
+          email: u.email || '',
+          avatarUrl: meta.avatar_url || '',
+          role: meta.role || 'MEMBER',
+          bio: meta.bio || '',
+          createdAt: u.created_at || new Date().toISOString(),
+        });
+      }
+    });
+
     // Suscribirse a los cambios en la tienda
     const unsubscribe = store.subscribe(() => {
       setState({
@@ -38,6 +87,7 @@ export function useNexo() {
 
     return () => {
       unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 

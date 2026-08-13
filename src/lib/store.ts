@@ -252,6 +252,12 @@ export class NexoStore {
     this.listeners.forEach((listener) => listener());
   }
 
+  /** Actualiza el usuario actual y notifica a los suscriptores */
+  public setCurrentUser(user: User) {
+    this.currentUser = user;
+    this.notify();
+  }
+
   // ---------------------------------------------------------------------------
   // MÉTODOS DE PROYECTO
   // ---------------------------------------------------------------------------

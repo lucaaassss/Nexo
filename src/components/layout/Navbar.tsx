@@ -1,19 +1,21 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Sparkles,
   Search,
   Plus,
-  FolderKanban,
   ChevronDown,
   Layers,
-  User as UserIcon,
+  LogOut,
+  Home,
 } from 'lucide-react';
 import { useNexo } from '@/hooks/useNexo';
 import { ThemeToggle } from './ThemeToggle';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { getInitials } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 
 interface NavbarProps {
   onOpenNewProject: () => void;
@@ -25,14 +27,32 @@ interface NavbarProps {
  * Barra superior con selector de proyecto, buscador rápido, activador de IA y perfil.
  */
 export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
+  const router = useRouter();
   const { currentProject, projects, setCurrentProject, currentUser } = useNexo();
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.replace('/login');
+  };
+
   return (
     <header className="h-16 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-6 flex items-center justify-between gap-4">
-      {/* Sección Izquierda: Logo y Selector de Proyecto */}
-      <div className="flex items-center gap-4">
+      {/* Sección Izquierda: Logo + Volver + Selector de Proyecto */}
+      <div className="flex items-center gap-3">
+        {/* Botón Volver a Home */}
+        <button
+          onClick={() => router.push('/')}
+          title="Volver a mis proyectos"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/60 border border-transparent hover:border-zinc-700/50 text-xs font-medium transition-all"
+        >
+          <Home className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Proyectos</span>
+        </button>
+
+        <div className="h-5 w-px bg-zinc-800 hidden sm:block" />
+
         {/* Marca Nexo */}
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-500 flex items-center justify-center shadow-lg shadow-violet-500/20 ring-1 ring-white/20">
@@ -147,15 +167,22 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
 
         <div className="h-5 w-px bg-zinc-800 mx-1" />
 
-        {/* Perfil de Usuario */}
-        <div className="flex items-center gap-2.5 pl-1">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 text-white font-bold text-xs flex items-center justify-center ring-2 ring-violet-500/30 shadow-md">
+        {/* Perfil de Usuario + Cerrar Sesión */}
+        <div className="flex items-center gap-2 pl-1">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 text-white font-bold text-xs flex items-center justify-center ring-2 ring-violet-500/30 shadow-md shrink-0">
             {getInitials(currentUser.name)}
           </div>
           <div className="hidden lg:block text-left">
             <p className="text-xs font-semibold text-zinc-200 leading-none">{currentUser.name}</p>
             <p className="text-[10px] text-zinc-500 mt-0.5 leading-none">{currentUser.email}</p>
           </div>
+          <button
+            onClick={handleSignOut}
+            title="Cerrar sesión"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-zinc-800/60 transition-colors ml-1"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </header>

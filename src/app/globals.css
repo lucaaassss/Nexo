@@ -2,41 +2,39 @@
 
 /* ============================================================
    NEXO – Sistema de temas Claro / Oscuro
-   El html tiene clase "dark" por defecto.
-   Al cambiar a modo claro se agrega clase "light" y se quita "dark".
+   html.dark  = modo oscuro (por defecto)
+   html.light = modo claro
    ============================================================ */
 
-/* ---------- VARIABLES BASE (modo oscuro – por defecto) ---------- */
+/* ---------- VARIABLES BASE (modo oscuro) ---------- */
 :root {
-  --bg-base:        #09090b;   /* zinc-950  */
-  --bg-surface:     #18181b;   /* zinc-900  */
-  --bg-elevated:    #27272a;   /* zinc-800  */
-  --bg-subtle:      #3f3f46;   /* zinc-700  */
-  --text-primary:   #f4f4f5;   /* zinc-100  */
-  --text-secondary: #a1a1aa;   /* zinc-400  */
-  --text-muted:     #71717a;   /* zinc-500  */
-  --border-color:   #27272a;   /* zinc-800  */
-  --border-subtle:  #3f3f46;   /* zinc-700  */
-
-  /* Acento violeta – igual en ambos temas */
+  --bg-base:        #09090b;
+  --bg-surface:     #18181b;
+  --bg-elevated:    #27272a;
+  --bg-subtle:      #3f3f46;
+  --text-primary:   #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted:     #71717a;
+  --border-color:   rgba(63,63,70,0.8);
+  --border-subtle:  #3f3f46;
   --accent:         #7c3aed;
   --accent-light:   #8b5cf6;
 }
 
-/* ---------- OVERRIDES MODO CLARO ---------- */
+/* ---------- MODO CLARO ---------- */
 html.light {
-  --bg-base:        #f8f8fc;
+  --bg-base:        #f4f4f8;
   --bg-surface:     #ffffff;
-  --bg-elevated:    #f1f1f7;
-  --bg-subtle:      #e4e4ef;
-  --text-primary:   #18181b;   /* zinc-900  */
-  --text-secondary: #52525b;   /* zinc-600  */
-  --text-muted:     #71717a;   /* zinc-500  */
-  --border-color:   #e4e4eb;
-  --border-subtle:  #d4d4e0;
+  --bg-elevated:    #ebebf2;
+  --bg-subtle:      #e0e0ea;
+  --text-primary:   #18181b;
+  --text-secondary: #52525b;
+  --text-muted:     #71717a;
+  --border-color:   #d4d4df;
+  --border-subtle:  #c8c8d8;
 }
 
-/* ---------- APLICAR VARIABLES AL BODY ---------- */
+/* ---------- BODY ---------- */
 body {
   background-color: var(--bg-base);
   color: var(--text-primary);
@@ -47,83 +45,69 @@ body {
 }
 
 /* ============================================================
-   OVERRIDES DE CLASES TAILWIND PARA MODO CLARO
-   Reemplazamos los zinc oscuros usados en los componentes
-   por los valores de las variables de tema claro.
+   MODO CLARO — overrides específicos
    ============================================================ */
 
-/* Fondos */
-html.light .bg-zinc-950,
-html.light .bg-zinc-950\/60,
-html.light .bg-zinc-950\/80,
-html.light .bg-zinc-950\/90 {
-  background-color: var(--bg-elevated) !important;
+/* --- Fondo base de la app --- */
+html.light .min-h-screen { background-color: var(--bg-base) !important; }
+html.light main          { background-color: var(--bg-base) !important; }
+
+/* --- Navbar / header --- */
+html.light header {
+  background-color: rgba(255,255,255,0.92) !important;
+  border-bottom-color: var(--border-color) !important;
 }
 
-html.light .bg-zinc-900,
-html.light .bg-zinc-900\/40,
-html.light .bg-zinc-900\/60,
-html.light .bg-zinc-900\/80 {
-  background-color: var(--bg-surface) !important;
+/* --- Sidebar --- */
+html.light aside {
+  background-color: #f0f0f6 !important;
+  border-right-color: var(--border-color) !important;
 }
 
-html.light .bg-zinc-800,
-html.light .bg-zinc-800\/60,
-html.light .bg-zinc-800\/80 {
-  background-color: var(--bg-elevated) !important;
-}
+/* --- Fondos zinc-950 → claro elevado --- */
+html.light .bg-zinc-950  { background-color: var(--bg-elevated) !important; }
 
-/* Textos */
+/* --- Fondos zinc-900 → blanco / superficie --- */
+html.light .bg-zinc-900  { background-color: var(--bg-surface) !important; }
+
+/* --- Fondos zinc-800 → gris claro --- */
+html.light .bg-zinc-800  { background-color: var(--bg-elevated) !important; }
+
+/* --- Fondos con opacidad Tailwind --- */
+html.light [class*="bg-zinc-950/"] { background-color: var(--bg-elevated) !important; }
+html.light [class*="bg-zinc-900/"] { background-color: var(--bg-surface) !important; }
+html.light [class*="bg-zinc-800/"] { background-color: #e8e8f0 !important; }
+
+/* --- Columnas Kanban: necesitan un fondo ligeramente diferenciado --- */
+html.light .bg-zinc-950\/60 { background-color: #eeeef5 !important; }
+html.light .bg-zinc-900\/40 { background-color: rgba(255,255,255,0.7) !important; }
+
+/* --- Textos --- */
 html.light .text-zinc-100 { color: var(--text-primary)   !important; }
 html.light .text-zinc-200 { color: var(--text-primary)   !important; }
 html.light .text-zinc-300 { color: var(--text-secondary) !important; }
 html.light .text-zinc-400 { color: var(--text-secondary) !important; }
 html.light .text-zinc-500 { color: var(--text-muted)     !important; }
 
-/* Bordes */
-html.light .border-zinc-800,
-html.light .border-zinc-800\/80,
-html.light .border-zinc-800\/60 {
-  border-color: var(--border-color) !important;
-}
-html.light .border-zinc-700 { border-color: var(--border-subtle) !important; }
+/* --- Bordes --- */
+html.light [class*="border-zinc-800"] { border-color: var(--border-color) !important; }
+html.light [class*="border-zinc-700"] { border-color: var(--border-subtle) !important; }
 
-/* Hover fondos */
-html.light .hover\:bg-zinc-800:hover,
-html.light .hover\:bg-zinc-800\/60:hover,
-html.light .hover\:bg-zinc-800\/80:hover {
-  background-color: var(--bg-elevated) !important;
-}
-html.light .hover\:bg-zinc-900\/60:hover,
-html.light .hover\:bg-zinc-900:hover {
-  background-color: var(--bg-subtle) !important;
-}
+/* --- Hover fondos --- */
+html.light .hover\:bg-zinc-900:hover  { background-color: var(--bg-subtle) !important; }
+html.light .hover\:bg-zinc-800:hover  { background-color: var(--bg-elevated) !important; }
+html.light [class*="hover:bg-zinc-800"]:hover { background-color: var(--bg-elevated) !important; }
+html.light [class*="hover:bg-zinc-900"]:hover { background-color: var(--bg-subtle) !important; }
 
-/* Hover textos */
-html.light .hover\:text-zinc-100:hover,
+/* --- Hover textos --- */
+html.light .hover\:text-zinc-100:hover { color: var(--text-primary) !important; }
 html.light .hover\:text-zinc-200:hover { color: var(--text-primary) !important; }
+html.light .hover\:text-white:hover    { color: var(--text-primary) !important; }
 
-/* Navbar */
-html.light header {
-  background-color: rgba(248, 248, 252, 0.9) !important;
-  border-bottom-color: var(--border-color) !important;
-}
-
-/* Sidebar */
-html.light aside {
-  background-color: var(--bg-elevated) !important;
-  border-right-color: var(--border-color) !important;
-}
-
-/* Menú desplegable de proyectos */
-html.light .bg-zinc-900.border.border-zinc-800.rounded-2xl {
-  background-color: var(--bg-surface) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* Inputs y textareas */
+/* --- Inputs y textareas --- */
 html.light input,
-html.light textarea {
+html.light textarea,
+html.light select {
   background-color: var(--bg-surface) !important;
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
@@ -133,16 +117,9 @@ html.light textarea::placeholder {
   color: var(--text-muted) !important;
 }
 
-/* Min-h-screen principal */
-html.light .min-h-screen.bg-zinc-950 {
-  background-color: var(--bg-base) !important;
-}
-
-/* Área de contenido principal */
-html.light main { background-color: var(--bg-base) !important; }
-
-/* Tarjetas / paneles con borde zinc-800 */
-html.light [class*="border-zinc-800"] {
+/* --- Dropdowns / menús --- */
+html.light [class*="bg-zinc-900"][class*="border"][class*="rounded"] {
+  background-color: var(--bg-surface) !important;
   border-color: var(--border-color) !important;
 }
 
@@ -167,8 +144,8 @@ html.light .glass-panel {
    ============================================================ */
 ::-webkit-scrollbar          { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track    { background: transparent; }
-::-webkit-scrollbar-thumb    { background: rgba(124, 58, 237, 0.25); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(124, 58, 237, 0.5); }
+::-webkit-scrollbar-thumb    { background: rgba(124,58,237,0.25); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,0.5); }
 
 /* ============================================================
    TRANSICIÓN SUAVE al cambiar tema
@@ -178,10 +155,6 @@ html.light .glass-panel {
   transition-duration: 0.2s;
   transition-timing-function: ease;
 }
-/* Excluir transiciones de animaciones y transforms */
-*[class*="animate-"],
-*[class*="transition-transform"],
-*[class*="hover:scale-"],
-*[class*="active:scale-"] {
-  transition-property: transform, opacity;
-}
+/* No interferir con otras transiciones */
+*[class*="animate-"]          { transition-property: opacity; }
+*[class*="transition-"]       { transition-property: revert; }
