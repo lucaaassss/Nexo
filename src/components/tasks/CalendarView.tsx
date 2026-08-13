@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { Task } from '@/types';
-import { getStatusDetails, getPriorityDetails } from '@/lib/utils';
+import { getStatusDetails } from '@/lib/utils';
 
 interface CalendarViewProps {
   tasks: Task[];

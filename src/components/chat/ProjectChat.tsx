@@ -3,21 +3,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Send,
-  Smile,
   Paperclip,
   Search,
   MessageSquare,
   Reply,
-  CheckCheck,
-  User as UserIcon,
-  Circle,
   X,
-  FileText,
-  Edit2,
-  Trash2,
 } from 'lucide-react';
 import { useNexo } from '@/hooks/useNexo';
-import { formatDateTime, getInitials, formatFileSize } from '@/lib/utils';
+import { formatDateTime, getInitials } from '@/lib/utils';
 import { ChatMessage } from '@/types';
 
 const EMOJI_OPTIONS = ['👍', '❤️', '🔥', '🚀', '🎉', '👀'];
@@ -76,7 +69,7 @@ export function ProjectChat() {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const fakeUrl = URL.createObjectURL(file);
-      const att = uploadFile(file.name, fakeUrl, file.size, file.type);
+      uploadFile(file.name, fakeUrl, file.size, file.type);
       sendChatMessage(`📎 Archivo adjunto: ${file.name}`);
     }
   };

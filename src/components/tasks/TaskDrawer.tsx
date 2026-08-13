@@ -12,15 +12,11 @@ import {
   CheckCircle2,
   Circle,
   Trash2,
-  Tag,
-  Calendar,
-  AlertCircle,
   FileText,
-  History,
 } from 'lucide-react';
 import { useNexo } from '@/hooks/useNexo';
 import { Task, TaskPriority, TaskStatus } from '@/types';
-import { getPriorityDetails, getStatusDetails, formatDate, formatDateTime, formatFileSize } from '@/lib/utils';
+import { getPriorityDetails, getStatusDetails, formatDate, formatDateTime, formatFileSize, getTodayDateString } from '@/lib/utils';
 
 interface TaskDrawerProps {
   task: Task | null;
@@ -205,8 +201,15 @@ export function TaskDrawer({ task, onClose }: TaskDrawerProps) {
                 </span>
                 <input
                   type="date"
+                  min={getTodayDateString()}
                   value={task.dueDate ? task.dueDate.split('T')[0] : ''}
-                  onChange={(e) => updateTask(task.id, { dueDate: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const today = getTodayDateString();
+                    if (!val || val >= today) {
+                      updateTask(task.id, { dueDate: val });
+                    }
+                  }}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-zinc-200 focus:outline-none focus:border-violet-500"
                 />
               </div>

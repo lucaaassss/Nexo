@@ -20,14 +20,10 @@ import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
 import { NexoAiModal } from '@/components/ai/NexoAiModal';
 import { Task } from '@/types';
 import {
-  FolderKanban,
   Plus,
   UserPlus,
-  Sparkles,
   Shield,
   Trash2,
-  CheckCircle2,
-  Lock,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 

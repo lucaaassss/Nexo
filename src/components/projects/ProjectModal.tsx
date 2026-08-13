@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, FolderPlus, Sparkles } from 'lucide-react';
+import { X, FolderPlus } from 'lucide-react';
 import { useNexo } from '@/hooks/useNexo';
 
 interface ProjectModalProps {

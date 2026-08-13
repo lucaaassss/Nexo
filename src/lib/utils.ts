@@ -137,3 +137,15 @@ export function getPriorityDetails(priority: TaskPriority) {
       };
   }
 }
+
+/**
+ * Retorna la fecha local actual en formato YYYY-MM-DD para inputs de tipo date
+ */
+export function getTodayDateString(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+

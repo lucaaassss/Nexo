@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Table as TableIcon, ArrowUpDown } from 'lucide-react';
 import { Task } from '@/types';
 import { getStatusDetails, getPriorityDetails, formatDate, getInitials } from '@/lib/utils';
 

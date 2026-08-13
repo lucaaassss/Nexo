@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Clock, Layers } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { Task } from '@/types';
-import { getStatusDetails, formatDate } from '@/lib/utils';
+import { getStatusDetails } from '@/lib/utils';
 
 interface TimelineViewProps {
   tasks: Task[];

@@ -122,8 +122,9 @@ export class NexoStore {
 
   /** Crea un nuevo proyecto */
   public createProject(data: { name: string; key: string; description?: string; color?: string; icon?: string }): Project {
+    const projId = 'proj_' + Date.now();
     const newProject: Project = {
-      id: 'proj_' + Date.now(),
+      id: projId,
       key: data.key.toUpperCase(),
       name: data.name,
       description: data.description || '',
@@ -135,7 +136,7 @@ export class NexoStore {
       members: [
         {
           id: 'mem_' + Date.now(),
-          projectId: 'proj_' + Date.now(),
+          projectId: projId,
           userId: this.currentUser.id,
           role: 'ADMIN',
           joinedAt: new Date().toISOString(),

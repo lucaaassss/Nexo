@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { History, Activity, User as UserIcon } from 'lucide-react';
+import { History } from 'lucide-react';
 import { useNexo } from '@/hooks/useNexo';
 import { formatDateTime, getInitials } from '@/lib/utils';
 
