@@ -1,90 +1,187 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 240 10% 98%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 263.4 70% 50.4%;
-    --radius: 0.75rem;
-  }
+/* ============================================================
+   NEXO – Sistema de temas Claro / Oscuro
+   El html tiene clase "dark" por defecto.
+   Al cambiar a modo claro se agrega clase "light" y se quita "dark".
+   ============================================================ */
 
-  .dark {
-    --background: 240 10% 4%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 6%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 6%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 263.4 70% 50.4%;
-  }
+/* ---------- VARIABLES BASE (modo oscuro – por defecto) ---------- */
+:root {
+  --bg-base:        #09090b;   /* zinc-950  */
+  --bg-surface:     #18181b;   /* zinc-900  */
+  --bg-elevated:    #27272a;   /* zinc-800  */
+  --bg-subtle:      #3f3f46;   /* zinc-700  */
+  --text-primary:   #f4f4f5;   /* zinc-100  */
+  --text-secondary: #a1a1aa;   /* zinc-400  */
+  --text-muted:     #71717a;   /* zinc-500  */
+  --border-color:   #27272a;   /* zinc-800  */
+  --border-subtle:  #3f3f46;   /* zinc-700  */
+
+  /* Acento violeta – igual en ambos temas */
+  --accent:         #7c3aed;
+  --accent-light:   #8b5cf6;
 }
 
+/* ---------- OVERRIDES MODO CLARO ---------- */
+html.light {
+  --bg-base:        #f8f8fc;
+  --bg-surface:     #ffffff;
+  --bg-elevated:    #f1f1f7;
+  --bg-subtle:      #e4e4ef;
+  --text-primary:   #18181b;   /* zinc-900  */
+  --text-secondary: #52525b;   /* zinc-600  */
+  --text-muted:     #71717a;   /* zinc-500  */
+  --border-color:   #e4e4eb;
+  --border-subtle:  #d4d4e0;
+}
+
+/* ---------- APLICAR VARIABLES AL BODY ---------- */
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   overflow-x: hidden;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Efectos de Glassmorphism estilo Linear */
+/* ============================================================
+   OVERRIDES DE CLASES TAILWIND PARA MODO CLARO
+   Reemplazamos los zinc oscuros usados en los componentes
+   por los valores de las variables de tema claro.
+   ============================================================ */
+
+/* Fondos */
+html.light .bg-zinc-950,
+html.light .bg-zinc-950\/60,
+html.light .bg-zinc-950\/80,
+html.light .bg-zinc-950\/90 {
+  background-color: var(--bg-elevated) !important;
+}
+
+html.light .bg-zinc-900,
+html.light .bg-zinc-900\/40,
+html.light .bg-zinc-900\/60,
+html.light .bg-zinc-900\/80 {
+  background-color: var(--bg-surface) !important;
+}
+
+html.light .bg-zinc-800,
+html.light .bg-zinc-800\/60,
+html.light .bg-zinc-800\/80 {
+  background-color: var(--bg-elevated) !important;
+}
+
+/* Textos */
+html.light .text-zinc-100 { color: var(--text-primary)   !important; }
+html.light .text-zinc-200 { color: var(--text-primary)   !important; }
+html.light .text-zinc-300 { color: var(--text-secondary) !important; }
+html.light .text-zinc-400 { color: var(--text-secondary) !important; }
+html.light .text-zinc-500 { color: var(--text-muted)     !important; }
+
+/* Bordes */
+html.light .border-zinc-800,
+html.light .border-zinc-800\/80,
+html.light .border-zinc-800\/60 {
+  border-color: var(--border-color) !important;
+}
+html.light .border-zinc-700 { border-color: var(--border-subtle) !important; }
+
+/* Hover fondos */
+html.light .hover\:bg-zinc-800:hover,
+html.light .hover\:bg-zinc-800\/60:hover,
+html.light .hover\:bg-zinc-800\/80:hover {
+  background-color: var(--bg-elevated) !important;
+}
+html.light .hover\:bg-zinc-900\/60:hover,
+html.light .hover\:bg-zinc-900:hover {
+  background-color: var(--bg-subtle) !important;
+}
+
+/* Hover textos */
+html.light .hover\:text-zinc-100:hover,
+html.light .hover\:text-zinc-200:hover { color: var(--text-primary) !important; }
+
+/* Navbar */
+html.light header {
+  background-color: rgba(248, 248, 252, 0.9) !important;
+  border-bottom-color: var(--border-color) !important;
+}
+
+/* Sidebar */
+html.light aside {
+  background-color: var(--bg-elevated) !important;
+  border-right-color: var(--border-color) !important;
+}
+
+/* Menú desplegable de proyectos */
+html.light .bg-zinc-900.border.border-zinc-800.rounded-2xl {
+  background-color: var(--bg-surface) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Inputs y textareas */
+html.light input,
+html.light textarea {
+  background-color: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Min-h-screen principal */
+html.light .min-h-screen.bg-zinc-950 {
+  background-color: var(--bg-base) !important;
+}
+
+/* Área de contenido principal */
+html.light main { background-color: var(--bg-base) !important; }
+
+/* Tarjetas / paneles con borde zinc-800 */
+html.light [class*="border-zinc-800"] {
+  border-color: var(--border-color) !important;
+}
+
+/* ============================================================
+   GLASSMORPHISM
+   ============================================================ */
 .glass-panel {
   background: rgba(18, 18, 23, 0.7);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
-
-.light .glass-panel {
+html.light .glass-panel {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-/* Personalización del Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar          { width: 6px; height: 6px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: rgba(124, 58, 237, 0.25); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(124, 58, 237, 0.5); }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+/* ============================================================
+   TRANSICIÓN SUAVE al cambiar tema
+   ============================================================ */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
 }
-
-::-webkit-scrollbar-thumb {
-  background: rgba(124, 58, 237, 0.25);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(124, 58, 237, 0.5);
+/* Excluir transiciones de animaciones y transforms */
+*[class*="animate-"],
+*[class*="transition-transform"],
+*[class*="hover:scale-"],
+*[class*="active:scale-"] {
+  transition-property: transform, opacity;
 }

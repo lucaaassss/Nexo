@@ -19,6 +19,9 @@ export function useNexo() {
   });
 
   useEffect(() => {
+    // Cargar estado guardado de localStorage tras la hidratación del cliente
+    store.initClientState();
+
     // Suscribirse a los cambios en la tienda
     const unsubscribe = store.subscribe(() => {
       setState({

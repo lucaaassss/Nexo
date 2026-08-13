@@ -1,0 +1,404 @@
+'use client';
+
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Eye, EyeOff, Lock, Mail, User, AlertCircle, ArrowRight, Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { ProfileSelector, UserRole } from './ProfileSelector';
+import { signUpUser, isSupabaseConfigured } from '@/lib/supabase';
+
+interface RegisterFormProps {
+  onSwitchToLogin: () => void;
+}
+
+export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
+  // Form State
+  const [role, setRole] = useState<UserRole | null>('alumno');
+  const [name, setName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
+
+  // Validation & Submission States
+  const [errors, setErrors] = useState<{
+    role?: string;
+    name?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+    acceptTerms?: string;
+  }>({});
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [registerSuccess, setRegisterSuccess] = useState<boolean>(false);
+
+  const validateEmail = (emailStr: string): boolean => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(emailStr.trim());
+  };
+
+  const handleValidation = (): boolean => {
+    const newErrors: typeof errors = {};
+
+    if (!role) {
+      newErrors.role = 'Por favor seleccioná tu perfil (Alumno o Profesor).';
+    }
+
+    if (!name.trim()) {
+      newErrors.name = 'El nombre completo es obligatorio.';
+    } else if (name.trim().length < 3) {
+      newErrors.name = 'El nombre debe tener al menos 3 caracteres.';
+    }
+
+    if (!email.trim()) {
+      newErrors.email = 'El correo electrónico es obligatorio.';
+    } else if (!validateEmail(email)) {
+      newErrors.email = 'Ingresá un correo electrónico válido.';
+    }
+
+    if (!password) {
+      newErrors.password = 'La contraseña es obligatoria.';
+    } else if (password.length < 6) {
+      newErrors.password = 'La contraseña debe tener al menos 6 caracteres.';
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = 'Confirmá tu contraseña.';
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Las contraseñas no coinciden.';
+    }
+
+    if (!acceptTerms) {
+      newErrors.acceptTerms = 'Debés aceptar los términos y la política de privacidad.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setServerError(null);
+
+    if (!handleValidation()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      if (isSupabaseConfigured) {
+        const { error } = await signUpUser({
+          email: email.trim(),
+          password: password,
+          name: name.trim(),
+          role: role!,
+        });
+
+        if (error) {
+          setServerError(error.message || 'Ocurrió un error al registrar la cuenta.');
+          setIsLoading(false);
+          return;
+        }
+
+        setRegisterSuccess(true);
+      } else {
+        // Modo Demo simulado
+        await new Promise((resolve) => setTimeout(resolve, 1400));
+        setRegisterSuccess(true);
+      }
+    } catch (err: any) {
+      setServerError('Ocurrió un error inesperado al conectar con el servidor.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="w-full max-w-md mx-auto space-y-6">
+      {/* Header Form Titles */}
+      <div className="space-y-1.5 text-left">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+          Creá tu cuenta en Nexo
+        </h1>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          Completá tus datos para comenzar.
+        </p>
+      </div>
+
+      {/* Global Server Error Banner */}
+      <AnimatePresence>
+        {serverError && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            className="flex items-start space-x-3 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs sm:text-sm font-medium shadow-sm"
+          >
+            <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p>{serverError}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Success Banner */}
+      <AnimatePresence>
+        {registerSuccess && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-sm font-medium space-y-2 shadow-md"
+          >
+            <div className="flex items-center space-x-2.5">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="font-bold">¡Cuenta registrada con éxito!</span>
+            </div>
+            <p className="text-xs text-emerald-700 dark:text-emerald-400">
+              Bienvenido/a <strong>{name}</strong> como <strong>{role === 'alumno' ? 'Alumno' : 'Profesor'}</strong>. Ya podés iniciar sesión en la plataforma.
+            </p>
+            <button
+              type="button"
+              onClick={onSwitchToLogin}
+              className="mt-2 w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors"
+            >
+              Ir a Iniciar Sesión
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Register Form */}
+      {!registerSuccess && (
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
+          {/* Selector de Perfil */}
+          <ProfileSelector
+            selectedRole={role}
+            onSelectRole={(r) => {
+              setRole(r);
+              if (errors.role) setErrors((prev) => ({ ...prev, role: undefined }));
+              if (serverError) setServerError(null);
+            }}
+            error={errors.role}
+          />
+
+          {/* Full Name Input */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="register-name"
+              className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
+            >
+              Nombre completo <span className="text-violet-500">*</span>
+            </label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-500 transition-colors">
+                <User className="w-4 h-4" />
+              </div>
+              <input
+                id="register-name"
+                type="text"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+                  if (serverError) setServerError(null);
+                }}
+                placeholder="Ingresá tu nombre y apellido"
+                disabled={isLoading}
+                className={`w-full pl-10 pr-4 py-2 rounded-xl border text-sm transition-all duration-200 bg-white/70 dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${
+                  errors.name
+                    ? 'border-rose-500 dark:border-rose-500 focus:border-rose-500'
+                    : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-violet-600 dark:focus:border-violet-500'
+                }`}
+              />
+            </div>
+            {errors.name && (
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs font-medium text-rose-500 dark:text-rose-400 pt-0.5"
+              >
+                {errors.name}
+              </motion.p>
+            )}
+          </div>
+
+          {/* Email Input */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="register-email"
+              className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
+            >
+              Correo electrónico <span className="text-violet-500">*</span>
+            </label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-500 transition-colors">
+                <Mail className="w-4 h-4" />
+              </div>
+              <input
+                id="register-email"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+                  if (serverError) setServerError(null);
+                }}
+                placeholder="ejemplo@nexo.edu.ar"
+                disabled={isLoading}
+                className={`w-full pl-10 pr-4 py-2 rounded-xl border text-sm transition-all duration-200 bg-white/70 dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${
+                  errors.email
+                    ? 'border-rose-500 dark:border-rose-500 focus:border-rose-500'
+                    : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-violet-600 dark:focus:border-violet-500'
+                }`}
+              />
+            </div>
+            {errors.email && (
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs font-medium text-rose-500 dark:text-rose-400 pt-0.5"
+              >
+                {errors.email}
+              </motion.p>
+            )}
+          </div>
+
+          {/* Grid Password and Confirm Password */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Password */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="register-password"
+                className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
+              >
+                Contraseña <span className="text-violet-500">*</span>
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-500 transition-colors">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <input
+                  id="register-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+                    if (serverError) setServerError(null);
+                  }}
+                  placeholder="Mín. 6 caract."
+                  disabled={isLoading}
+                  className={`w-full pl-10 pr-10 py-2 rounded-xl border text-sm transition-all duration-200 bg-white/70 dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${
+                    errors.password
+                      ? 'border-rose-500 dark:border-rose-500 focus:border-rose-500'
+                      : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-violet-600 dark:focus:border-violet-500'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-[11px] font-medium text-rose-500 dark:text-rose-400">
+                  {errors.password}
+                </p>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="confirm-password"
+                className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
+              >
+                Confirmar <span className="text-violet-500">*</span>
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-500 transition-colors">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <input
+                  id="confirm-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                    if (serverError) setServerError(null);
+                  }}
+                  placeholder="Repetí la clave"
+                  disabled={isLoading}
+                  className={`w-full pl-10 pr-4 py-2 rounded-xl border text-sm transition-all duration-200 bg-white/70 dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${
+                    errors.confirmPassword
+                      ? 'border-rose-500 dark:border-rose-500 focus:border-rose-500'
+                      : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-violet-600 dark:focus:border-violet-500'
+                  }`}
+                />
+              </div>
+              {errors.confirmPassword && (
+                <p className="text-[11px] font-medium text-rose-500 dark:text-rose-400">
+                  {errors.confirmPassword}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Terms and Conditions Checkbox */}
+          <div className="space-y-1 pt-1">
+            <div className="flex items-start space-x-2.5">
+              <input
+                id="accept-terms"
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => {
+                  setAcceptTerms(e.target.checked);
+                  if (errors.acceptTerms) setErrors((prev) => ({ ...prev, acceptTerms: undefined }));
+                }}
+                className="w-4 h-4 mt-0.5 rounded border-zinc-300 dark:border-zinc-700 text-violet-600 focus:ring-violet-500/50 dark:bg-zinc-900 accent-violet-600 cursor-pointer"
+              />
+              <label
+                htmlFor="accept-terms"
+                className="text-xs font-normal text-zinc-600 dark:text-zinc-400 leading-normal cursor-pointer select-none"
+              >
+                Acepto los <a href="#terms" onClick={(e) => e.preventDefault()} className="text-violet-600 dark:text-violet-400 hover:underline">Términos de Servicio</a> y la <a href="#privacy" onClick={(e) => e.preventDefault()} className="text-violet-600 dark:text-violet-400 hover:underline">Política de Privacidad</a> de Nexo.
+              </label>
+            </div>
+            {errors.acceptTerms && (
+              <p className="text-[11px] font-medium text-rose-500 dark:text-rose-400 pl-6">
+                {errors.acceptTerms}
+              </p>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="relative w-full py-3 px-6 rounded-xl font-semibold text-sm text-white shadow-lg shadow-violet-600/25 dark:shadow-violet-900/40 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-500 hover:via-indigo-500 hover:to-purple-500 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 group"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  <span>Creando cuenta...</span>
+                </>
+              ) : (
+                <>
+                  <span>Crear cuenta</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+};

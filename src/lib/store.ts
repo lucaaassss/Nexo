@@ -40,16 +40,24 @@ export class NexoStore {
   public notifications: NotificationItem[] = [];
   public activityLogs: ActivityItem[] = [];
   public listeners: Set<() => void> = new Set();
+  private isInitialized = false;
 
-  private constructor() {
-    this.loadInitialState();
-  }
+  private constructor() {}
 
   public static getInstance(): NexoStore {
     if (!NexoStore.instance) {
       NexoStore.instance = new NexoStore();
     }
     return NexoStore.instance;
+  }
+
+  /** Carga el estado inicial desde localStorage solo en el cliente tras la hidratación */
+  public initClientState() {
+    if (typeof window !== 'undefined' && !this.isInitialized) {
+      this.isInitialized = true;
+      this.loadInitialState();
+      this.notify();
+    }
   }
 
   /** Carga el estado guardado localmente si existe */
@@ -70,7 +78,144 @@ export class NexoStore {
         if (savedLogs) this.activityLogs = JSON.parse(savedLogs);
         if (savedNotifs) this.notifications = JSON.parse(savedNotifs);
 
-        if (this.projects.length > 0) {
+        if (this.projects.length === 0) {
+          const defaultProj: Project = {
+            id: 'proj_demo_1',
+            key: 'NEX',
+            name: 'Proyecto Principal Nexo',
+            description: 'Espacio de trabajo centralizado para tareas, chat y archivos del equipo.',
+            color: '#7C3AED',
+            icon: 'FolderKanban',
+            isArchived: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            members: [
+              {
+                id: 'mem_1',
+                projectId: 'proj_demo_1',
+                userId: DEFAULT_USER.id,
+                role: 'ADMIN',
+                joinedAt: new Date().toISOString(),
+                user: DEFAULT_USER,
+              },
+            ],
+          };
+
+          const defaultTasks: Task[] = [
+            {
+              id: 'tsk_1',
+              key: 'NEX-1',
+              title: 'Diseñar arquitectura del sistema y base de datos',
+              description: 'Definir esquemas de modelos en Prisma y la estructura de endpoints REST API.',
+              priority: 'ALTA',
+              status: 'FINALIZADA',
+              estimatedHours: 8,
+              loggedHours: 8,
+              position: 1,
+              dueDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+              tags: ['Backend', 'DB', 'Prisma'],
+              projectId: 'proj_demo_1',
+              creatorId: DEFAULT_USER.id,
+              creator: DEFAULT_USER,
+              subtasks: [
+                { id: 'sub_1', taskId: 'tsk_1', title: 'Crear esquema Prisma', completed: true, createdAt: new Date().toISOString() },
+                { id: 'sub_2', taskId: 'tsk_1', title: 'Configurar cliente DB Singleton', completed: true, createdAt: new Date().toISOString() },
+              ],
+              comments: [
+                { id: 'cmt_1', taskId: 'tsk_1', authorId: DEFAULT_USER.id, content: 'Esquema validado correctamente.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), author: DEFAULT_USER }
+              ],
+              attachments: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            {
+              id: 'tsk_2',
+              key: 'NEX-2',
+              title: 'Implementar interfaz Kanban reactiva con Drag & Drop',
+              description: 'Desarrollar el tablero con @hello-pangea/dnd para mover tarjetas entre estados.',
+              priority: 'URGENTE',
+              status: 'EN_PROGRESO',
+              estimatedHours: 12,
+              loggedHours: 6,
+              position: 1,
+              dueDate: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
+              tags: ['Frontend', 'React', 'Kanban'],
+              projectId: 'proj_demo_1',
+              creatorId: DEFAULT_USER.id,
+              creator: DEFAULT_USER,
+              subtasks: [
+                { id: 'sub_3', taskId: 'tsk_2', title: 'Crear componentes de columna', completed: true, createdAt: new Date().toISOString() },
+                { id: 'sub_4', taskId: 'tsk_2', title: 'Conectar manejador de arrastrar y soltar', completed: false, createdAt: new Date().toISOString() },
+              ],
+              comments: [],
+              attachments: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            {
+              id: 'tsk_3',
+              key: 'NEX-3',
+              title: 'Integrar asistente inteligente Nexo AI',
+              description: 'Desarrollar modal y respuestas automatizadas con IA para resumen de proyectos.',
+              priority: 'MEDIA',
+              status: 'EN_REVISION',
+              estimatedHours: 6,
+              loggedHours: 4,
+              position: 1,
+              dueDate: new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0],
+              tags: ['AI', 'SaaS', 'Feature'],
+              projectId: 'proj_demo_1',
+              creatorId: DEFAULT_USER.id,
+              creator: DEFAULT_USER,
+              subtasks: [],
+              comments: [],
+              attachments: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            {
+              id: 'tsk_4',
+              key: 'NEX-4',
+              title: 'Optimización de rendimiento y modo oscuro',
+              description: 'Ajustar tokens de TailwindCSS v4 y resolver advertencias de hidratación SSR.',
+              priority: 'BAJA',
+              status: 'PENDIENTE',
+              estimatedHours: 4,
+              loggedHours: 0,
+              position: 1,
+              dueDate: new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0],
+              tags: ['CSS', 'UI', 'Performance'],
+              projectId: 'proj_demo_1',
+              creatorId: DEFAULT_USER.id,
+              creator: DEFAULT_USER,
+              subtasks: [],
+              comments: [],
+              attachments: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ];
+
+          const defaultChat: ChatMessage[] = [
+            {
+              id: 'msg_1',
+              projectId: 'proj_demo_1',
+              senderId: DEFAULT_USER.id,
+              content: '¡Bienvenidos al espacio de trabajo de Nexo! Aquí podemos coordinar tareas, compartir archivos y chatear.',
+              isSystem: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              sender: DEFAULT_USER,
+              reactions: [{ id: 'rct_1', messageId: 'msg_1', userId: DEFAULT_USER.id, emoji: '🚀', createdAt: new Date().toISOString(), user: DEFAULT_USER }],
+            },
+          ];
+
+          this.projects = [defaultProj];
+          this.currentProject = defaultProj;
+          this.tasks = defaultTasks;
+          this.chatMessages = defaultChat;
+          this.persistState();
+        } else {
           this.currentProject = this.projects[0];
         }
       } catch (e) {
