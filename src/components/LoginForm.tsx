@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail, AlertCircle, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import { ProfileSelector, UserRole } from './ProfileSelector';
@@ -11,7 +12,7 @@ interface LoginFormProps {
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
-
+  const router = useRouter();
 
   // Form State
   const [role, setRole] = useState<UserRole | null>('alumno');
@@ -79,6 +80,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         }
 
         setLoginSuccess(true);
+        setTimeout(() => router.push('/'), 800);
       } else {
         // Modo Demo interactivo (para pruebas locales cuando no hay credenciales de Supabase)
         await new Promise((resolve) => setTimeout(resolve, 1200));
@@ -92,6 +94,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         // Permitir login si cumple formato demo o password >= 6 caracteres en desarrollo
         if (isDemoAccount || (email.includes('@') && password.length >= 6)) {
           setLoginSuccess(true);
+          setTimeout(() => router.push('/'), 800);
         } else {
           setAuthError('El correo o la contraseña son incorrectos.');
         }

@@ -1,169 +1,256 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { LoginForm } from '@/components/LoginForm';
-import { RegisterForm } from '@/components/RegisterForm';
-import { AbstractIllustration } from '@/components/AbstractIllustration';
-import { Sparkles, Layers, ShieldCheck, Zap, LogIn, UserPlus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useNexo } from '@/hooks/useNexo';
+import { supabase } from '@/lib/supabase';
+import { ProjectModal } from '@/components/projects/ProjectModal';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { NexoAiModal } from '@/components/ai/NexoAiModal';
+import { getInitials } from '@/lib/utils';
+import {
+  Plus,
+  Sparkles,
+  Layers,
+  FolderKanban,
+  CheckSquare,
+  MessageSquare,
+  BarChart3,
+  LogOut,
+  ArrowRight,
+  Clock,
+  Users,
+  Loader2,
+} from 'lucide-react';
 
-export default function AuthPage() {
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+/**
+ * Home principal de Nexo
+ * Muestra las tarjetas de proyectos del usuario con acceso directo a cada uno.
+ * Redirige a /login si no hay sesión activa.
+ */
+export default function HomePage() {
+  const router = useRouter();
+  const { projects, setCurrentProject, createProject, currentUser } = useNexo();
+  const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace('/login');
+      } else {
+        setIsCheckingAuth(false);
+      }
+    });
+  }, [router]);
+
+  const handleOpenProject = (projectId: string) => {
+    setCurrentProject(projectId);
+    router.push('/dashboard');
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.replace('/login');
+  };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen w-full flex flex-col lg:flex-row bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 relative overflow-hidden">
-      {/* Background Subtle Gradient Blobs */}
-      <div className="absolute top-0 -left-40 w-96 h-96 bg-violet-600/15 dark:bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-600/15 dark:bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
-
-      {/* ------------------------------------------------------------------- */}
-      {/* PANEL IZQUIERDO: Presentación de NEXO (Desktop)                      */}
-      {/* ------------------------------------------------------------------- */}
-      <section className="relative hidden lg:flex lg:w-1/2 flex-col justify-between p-12 overflow-hidden border-r border-zinc-200/80 dark:border-zinc-800/60 bg-gradient-to-br from-zinc-900 via-zinc-950 to-zinc-900 text-white selection:bg-violet-500">
-        {/* Subtle Ambient Mesh Grid */}
-        <div className="absolute inset-0 bg-[radial-gradient(#3b0764_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none" />
-
-        {/* Top Header Branding */}
-        <div className="relative z-20 flex items-center space-x-3">
-          <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-600 shadow-lg shadow-violet-600/30">
-            <Layers className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col" suppressHydrationWarning>
+      {/* Navbar Home */}
+      <header className="h-16 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-8 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-500 flex items-center justify-center shadow-lg shadow-violet-500/20 ring-1 ring-white/20">
+            <Layers className="w-5 h-5 text-white" />
           </div>
-          <div>
-            <span className="text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-violet-200 to-violet-400">
-              NEXO
-            </span>
-            <span className="ml-2 text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
-              SaaS Platform
-            </span>
-          </div>
+          <span className="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400">
+            NEXO
+          </span>
         </div>
 
-        {/* Center Illustration & Tagline */}
-        <div className="relative z-20 my-auto flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-6">
-          <AbstractIllustration />
-
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="space-y-3"
+        {/* Right actions */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsAiModalOpen(true)}
+            className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/25 transition-all"
           >
-            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white leading-snug">
-              "Conectando ideas, personas y proyectos."
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-400 font-normal leading-relaxed">
-              La plataforma integral diseñada para potenciar la colaboración entre alumnos y profesores en entornos académicos y profesionales de alto impacto.
-            </p>
-          </motion.div>
-        </div>
+            <Sparkles className="w-4 h-4 animate-pulse" />
+            <span>Nexo AI</span>
+          </button>
 
-        {/* Footer Feature Badges */}
-        <div className="relative z-20 grid grid-cols-3 gap-4 pt-6 border-t border-zinc-800/80 text-xs font-medium text-zinc-400">
-          <div className="flex items-center space-x-2">
-            <ShieldCheck className="w-4 h-4 text-violet-400 shrink-0" />
-            <span>Seguridad Enterprise</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Zap className="w-4 h-4 text-indigo-400 shrink-0" />
-            <span>Tiempo Real</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
-            <span>UX/UI Premium</span>
-          </div>
-        </div>
-      </section>
+          <ThemeToggle />
 
-      {/* ------------------------------------------------------------------- */}
-      {/* PANEL DERECHO: Formulario de Autenticación (Mobile + Desktop)        */}
-      {/* ------------------------------------------------------------------- */}
-      <section className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-10 lg:p-14 relative z-10 min-h-screen">
-        {/* Top Navigation & Theme Toggle Bar */}
-        <div className="w-full flex items-center justify-between mb-6 sm:mb-8">
-          {/* Mobile Brand Header */}
-          <div className="flex lg:hidden items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-md shadow-violet-600/20">
-              <Layers className="w-5 h-5 text-white" />
+          <div className="h-5 w-px bg-zinc-800" />
+
+          {/* Avatar + logout */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 text-white font-bold text-xs flex items-center justify-center ring-2 ring-violet-500/30">
+              {getInitials(currentUser.name)}
             </div>
-            <div>
-              <span className="text-xl font-black tracking-widest text-zinc-900 dark:text-white">
-                NEXO
-              </span>
+            <div className="hidden lg:block text-left">
+              <p className="text-xs font-semibold text-zinc-200 leading-none">{currentUser.name}</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5 leading-none">{currentUser.email}</p>
             </div>
-          </div>
-
-          {/* Auth Tabs (Iniciar sesión / Crear cuenta) */}
-          <div className="flex items-center p-1 rounded-xl bg-zinc-200/60 dark:bg-zinc-900/80 border border-zinc-300/50 dark:border-zinc-800/80 shadow-inner">
             <button
-              type="button"
-              onClick={() => setAuthMode('login')}
-              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                authMode === 'login'
-                  ? 'bg-white dark:bg-zinc-800 text-violet-600 dark:text-violet-400 shadow-sm'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-              }`}
+              onClick={handleSignOut}
+              title="Cerrar sesión"
+              className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-zinc-800 transition-colors ml-1"
             >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Iniciar sesión</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setAuthMode('register')}
-              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                authMode === 'register'
-                  ? 'bg-white dark:bg-zinc-800 text-violet-600 dark:text-violet-400 shadow-sm'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-              }`}
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>Crear cuenta</span>
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
-
-          {/* Selector de Modo Claro/Oscuro */}
-          <div className="flex items-center space-x-2">
-            <ThemeToggle />
-          </div>
         </div>
+      </header>
 
-        {/* Form Container with Animated Switch */}
-        <div className="my-auto w-full flex justify-center">
-          <AnimatePresence mode="wait">
-            {authMode === 'login' ? (
-              <motion.div
-                key="login-form"
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 16 }}
-                transition={{ duration: 0.25, ease: 'easeInOut' }}
-                className="w-full"
-              >
-                <LoginForm onSwitchToRegister={() => setAuthMode('register')} />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="register-form"
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -16 }}
-                transition={{ duration: 0.25, ease: 'easeInOut' }}
-                className="w-full"
-              >
-                <RegisterForm onSwitchToLogin={() => setAuthMode('login')} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Footer info */}
-        <div className="mt-8 text-center text-xs text-zinc-500 dark:text-zinc-400 space-y-1">
-          <p>© {new Date().getFullYear()} Nexo Platform Inc. Todos los derechos reservados.</p>
-          <p className="text-[11px] text-zinc-400 dark:text-zinc-400">
-            Autenticación y Registro seguros con Supabase.
+      {/* Main Content */}
+      <main className="flex-1 px-4 md:px-8 py-8 max-w-7xl mx-auto w-full">
+        {/* Hero greeting */}
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight mb-1">
+            Bienvenido, <span className="text-violet-400">{currentUser.name.split(' ')[0]}</span> 👋
+          </h1>
+          <p className="text-sm text-zinc-400">
+            {projects.length === 0
+              ? 'Todavía no tenés proyectos. ¡Creá el primero!'
+              : `Tenés ${projects.length} proyecto${projects.length !== 1 ? 's' : ''} activo${projects.length !== 1 ? 's' : ''}.`}
           </p>
         </div>
-      </section>
-    </main>
+
+        {/* Stats row */}
+        {projects.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+            {[
+              { label: 'Proyectos', value: projects.length, icon: FolderKanban, color: 'text-violet-400' },
+              { label: 'Total Tareas', value: projects.reduce((acc, _) => acc, 0), icon: CheckSquare, color: 'text-emerald-400' },
+              { label: 'Miembros', value: projects.reduce((acc, p) => acc + (p.members?.length || 0), 0), icon: Users, color: 'text-blue-400' },
+              { label: 'Activos hoy', value: projects.length, icon: Clock, color: 'text-amber-400' },
+            ].map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div key={stat.label} className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center ${stat.color}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-zinc-100">{stat.value}</p>
+                    <p className="text-[11px] text-zinc-500">{stat.label}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Projects grid */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">Tus Proyectos</h2>
+          <button
+            onClick={() => setIsNewProjectModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo Proyecto
+          </button>
+        </div>
+
+        {projects.length === 0 ? (
+          /* Empty state */
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-20 h-20 rounded-3xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center mb-6">
+              <FolderKanban className="w-10 h-10 text-violet-400 opacity-60" />
+            </div>
+            <h3 className="text-lg font-semibold text-zinc-300 mb-2">No hay proyectos aún</h3>
+            <p className="text-sm text-zinc-500 mb-6 max-w-sm">
+              Creá tu primer proyecto para empezar a gestionar tareas, colaborar con tu equipo y mucho más.
+            </p>
+            <button
+              onClick={() => setIsNewProjectModalOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold shadow-lg shadow-violet-600/30 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              Crear primer proyecto
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {projects.map((project) => {
+              const taskCount = 0; // placeholder — podrías filtrar desde store si querés
+              const memberCount = project.members?.length || 0;
+
+              return (
+                <button
+                  key={project.id}
+                  onClick={() => handleOpenProject(project.id)}
+                  className="group text-left bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800/80 hover:border-violet-500/40 rounded-2xl p-5 flex flex-col gap-4 transition-all duration-200 hover:shadow-xl hover:shadow-violet-500/5 active:scale-[0.98] cursor-pointer"
+                >
+                  {/* Header tarjeta */}
+                  <div className="flex items-start justify-between">
+                    <div
+                      className="w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow-lg ring-1 ring-white/10"
+                      style={{ backgroundColor: project.color }}
+                    >
+                      {project.key}
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-violet-400 group-hover:translate-x-1 transition-all" />
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-bold text-zinc-100 group-hover:text-white truncate mb-1">
+                      {project.name}
+                    </h3>
+                    <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">
+                      {project.description || 'Sin descripción'}
+                    </p>
+                  </div>
+
+                  {/* Footer tarjeta */}
+                  <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60">
+                    {/* Miembros */}
+                    <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+                      <Users className="w-3 h-3" />
+                      <span>{memberCount} miembro{memberCount !== 1 ? 's' : ''}</span>
+                    </div>
+
+                    {/* Módulos quick-access */}
+                    <div className="flex items-center gap-2 text-zinc-600 group-hover:text-zinc-400 transition-colors">
+                      <CheckSquare className="w-3.5 h-3.5" />
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      <MessageSquare className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+
+            {/* Tarjeta "Nuevo Proyecto" */}
+            <button
+              onClick={() => setIsNewProjectModalOpen(true)}
+              className="group text-left bg-zinc-900/30 hover:bg-violet-600/5 border border-dashed border-zinc-700/60 hover:border-violet-500/40 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 transition-all duration-200 min-h-[160px] cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-xl bg-violet-600/10 group-hover:bg-violet-600/20 border border-violet-500/20 flex items-center justify-center transition-colors">
+                <Plus className="w-5 h-5 text-violet-400" />
+              </div>
+              <span className="text-xs font-semibold text-zinc-500 group-hover:text-violet-400 transition-colors">
+                Nuevo Proyecto
+              </span>
+            </button>
+          </div>
+        )}
+      </main>
+
+      {/* Modales */}
+      <ProjectModal isOpen={isNewProjectModalOpen} onClose={() => setIsNewProjectModalOpen(false)} />
+      <NexoAiModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
+    </div>
   );
 }
