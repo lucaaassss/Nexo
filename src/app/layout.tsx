@@ -20,6 +20,28 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="dark scroll-smooth" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var observer = new MutationObserver(function(mutations) {
+                  for (var i = 0; i < mutations.length; i++) {
+                    if (mutations[i].attributeName === 'bis_skin_checked') {
+                      mutations[i].target.removeAttribute('bis_skin_checked');
+                    }
+                  }
+                });
+                observer.observe(document.documentElement, {
+                  attributes: true,
+                  subtree: true,
+                  attributeFilter: ['bis_skin_checked']
+                });
+              } catch(e) {}
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased selection:bg-violet-600 selection:text-white" suppressHydrationWarning>
         {children}
       </body>

@@ -79,7 +79,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans" suppressHydrationWarning>
       {/* Top Navbar */}
       <Navbar
         onOpenNewProject={() => setIsNewProjectModalOpen(true)}
