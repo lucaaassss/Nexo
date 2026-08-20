@@ -10,11 +10,12 @@ import {
   TaskStatus,
   TaskPriority,
 } from '@/types';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 /**
- * Estado Central Reactivo de Nexo (In-Memory + API Persistence Store)
+ * Estado Central Reactivo de Nexo (In-Memory + Database API Persistence Store)
  * Administra el estado global de la sesión, proyectos activos, tareas, chat,
- * notificaciones, archivos e historial de actividad en tiempo real.
+ * notificaciones, archivos e historial de actividad sincronizados con la Base de Datos.
  */
 
 // Usuario por defecto para el inicio de sesión inicial
@@ -52,12 +53,155 @@ export class NexoStore {
     return NexoStore.instance;
   }
 
-  /** Carga el estado inicial desde localStorage solo en el cliente tras la hidratación */
+  /** Carga el estado inicial y sincroniza con la base de datos */
   public initClientState() {
     if (typeof window !== 'undefined' && !this.isInitialized) {
       this.isInitialized = true;
       this.loadInitialState();
+      this.syncWithDatabase();
       this.notify();
+    }
+  }
+
+  /** Sincroniza proyectos y tareas desde la base de datos */
+  public async syncWithDatabase() {
+    if (typeof window === 'undefined') return;
+
+    try {
+      // 1. Obtener proyectos desde la API de la Base de Datos
+      const res = await fetch('/api/projects');
+      if (res.ok) {
+        const dbProjects = await res.json();
+        if (Array.isArray(dbProjects) && dbProjects.length > 0) {
+          const formattedProjects: Project[] = dbProjects.map((p: any) => ({
+            id: p.id,
+            key: p.key,
+            name: p.name,
+            description: p.description || '',
+            color: p.color || '#7C3AED',
+            icon: p.icon || 'FolderKanban',
+            isArchived: Boolean(p.isArchived),
+            createdAt: p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString(),
+            updatedAt: p.updatedAt ? new Date(p.updatedAt).toISOString() : new Date().toISOString(),
+            members: (p.members || []).map((m: any) => ({
+              id: m.id,
+              projectId: m.projectId,
+              userId: m.userId,
+              role: m.role as MemberRole,
+              joinedAt: m.joinedAt ? new Date(m.joinedAt).toISOString() : new Date().toISOString(),
+              user: m.user ? {
+                id: m.user.id,
+                email: m.user.email,
+                name: m.user.name,
+                role: m.user.role,
+                avatarUrl: m.user.avatarUrl || '',
+                createdAt: m.user.createdAt || new Date().toISOString(),
+              } : DEFAULT_USER,
+            })),
+          }));
+
+          this.projects = formattedProjects;
+
+          // Mantener o seleccionar proyecto activo
+          if (!this.currentProject || !this.projects.some((p) => p.id === this.currentProject?.id)) {
+            this.currentProject = this.projects[0];
+          } else {
+            const updatedCurrent = this.projects.find((p) => p.id === this.currentProject?.id);
+            if (updatedCurrent) this.currentProject = updatedCurrent;
+          }
+
+          // Cargar tareas del proyecto activo desde la base de datos
+          if (this.currentProject?.id) {
+            await this.fetchTasksForProject(this.currentProject.id);
+          }
+
+          this.persistState();
+          this.notify();
+        }
+      }
+    } catch (err) {
+      console.warn('Sincronización con base de datos en modo offline:', err);
+    }
+  }
+
+  /** Carga tareas de un proyecto desde la base de datos */
+  public async fetchTasksForProject(projectId: string) {
+    try {
+      const res = await fetch(`/api/tasks?projectId=${encodeURIComponent(projectId)}`);
+      if (res.ok) {
+        const dbTasks = await res.json();
+        if (Array.isArray(dbTasks)) {
+          const formattedTasks: Task[] = dbTasks.map((t: any) => {
+            let parsedTags: string[] = [];
+            if (Array.isArray(t.tags)) {
+              parsedTags = t.tags;
+            } else if (typeof t.tags === 'string') {
+              try {
+                parsedTags = JSON.parse(t.tags);
+              } catch {
+                parsedTags = t.tags ? [t.tags] : [];
+              }
+            }
+
+            return {
+              id: t.id,
+              key: t.key,
+              title: t.title,
+              description: t.description || '',
+              priority: t.priority as TaskPriority,
+              status: t.status as TaskStatus,
+              estimatedHours: t.estimatedHours || 0,
+              loggedHours: t.loggedHours || 0,
+              position: t.position || 0,
+              dueDate: t.dueDate ? new Date(t.dueDate).toISOString().split('T')[0] : undefined,
+              startDate: t.startDate ? new Date(t.startDate).toISOString().split('T')[0] : undefined,
+              tags: parsedTags,
+              projectId: t.projectId,
+              assigneeId: t.assigneeId || undefined,
+              creatorId: t.creatorId,
+              assignee: t.assignee,
+              creator: t.creator,
+              subtasks: (t.subtasks || []).map((s: any) => ({
+                id: s.id,
+                taskId: s.taskId,
+                title: s.title,
+                completed: Boolean(s.completed),
+                createdAt: s.createdAt ? new Date(s.createdAt).toISOString() : new Date().toISOString(),
+              })),
+              comments: (t.comments || []).map((c: any) => ({
+                id: c.id,
+                taskId: c.taskId,
+                authorId: c.authorId,
+                content: c.content,
+                createdAt: c.createdAt ? new Date(c.createdAt).toISOString() : new Date().toISOString(),
+                updatedAt: c.updatedAt ? new Date(c.updatedAt).toISOString() : new Date().toISOString(),
+                author: c.author || DEFAULT_USER,
+              })),
+              attachments: (t.attachments || []).map((a: any) => ({
+                id: a.id,
+                name: a.name,
+                url: a.url,
+                size: a.size || 0,
+                type: a.type || 'file',
+                taskId: a.taskId,
+                projectId: a.projectId,
+                uploaderId: a.uploaderId,
+                createdAt: a.createdAt ? new Date(a.createdAt).toISOString() : new Date().toISOString(),
+              })),
+              createdAt: t.createdAt ? new Date(t.createdAt).toISOString() : new Date().toISOString(),
+              updatedAt: t.updatedAt ? new Date(t.updatedAt).toISOString() : new Date().toISOString(),
+            };
+          });
+
+          // Combinar tareas existentes de otros proyectos con las recibidas
+          const otherTasks = this.tasks.filter((t) => t.projectId !== projectId);
+          this.tasks = [...otherTasks, ...formattedTasks];
+          this.persistState();
+          this.notify();
+        }
+      }
+    } catch (err) {
+      console.warn('Error al cargar tareas de la base de datos:', err);
     }
   }
 
@@ -102,119 +246,8 @@ export class NexoStore {
             ],
           };
 
-          const defaultTasks: Task[] = [
-            {
-              id: 'tsk_1',
-              key: 'NEX-1',
-              title: 'Diseñar arquitectura del sistema y base de datos',
-              description: 'Definir esquemas de modelos en Prisma y la estructura de endpoints REST API.',
-              priority: 'ALTA',
-              status: 'FINALIZADA',
-              estimatedHours: 8,
-              loggedHours: 8,
-              position: 1,
-              dueDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
-              tags: ['Backend', 'DB', 'Prisma'],
-              projectId: 'proj_demo_1',
-              creatorId: DEFAULT_USER.id,
-              creator: DEFAULT_USER,
-              subtasks: [
-                { id: 'sub_1', taskId: 'tsk_1', title: 'Crear esquema Prisma', completed: true, createdAt: new Date().toISOString() },
-                { id: 'sub_2', taskId: 'tsk_1', title: 'Configurar cliente DB Singleton', completed: true, createdAt: new Date().toISOString() },
-              ],
-              comments: [
-                { id: 'cmt_1', taskId: 'tsk_1', authorId: DEFAULT_USER.id, content: 'Esquema validado correctamente.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), author: DEFAULT_USER }
-              ],
-              attachments: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-            {
-              id: 'tsk_2',
-              key: 'NEX-2',
-              title: 'Implementar interfaz Kanban reactiva con Drag & Drop',
-              description: 'Desarrollar el tablero con @hello-pangea/dnd para mover tarjetas entre estados.',
-              priority: 'URGENTE',
-              status: 'EN_PROGRESO',
-              estimatedHours: 12,
-              loggedHours: 6,
-              position: 1,
-              dueDate: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
-              tags: ['Frontend', 'React', 'Kanban'],
-              projectId: 'proj_demo_1',
-              creatorId: DEFAULT_USER.id,
-              creator: DEFAULT_USER,
-              subtasks: [
-                { id: 'sub_3', taskId: 'tsk_2', title: 'Crear componentes de columna', completed: true, createdAt: new Date().toISOString() },
-                { id: 'sub_4', taskId: 'tsk_2', title: 'Conectar manejador de arrastrar y soltar', completed: false, createdAt: new Date().toISOString() },
-              ],
-              comments: [],
-              attachments: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-            {
-              id: 'tsk_3',
-              key: 'NEX-3',
-              title: 'Integrar asistente inteligente Nexo AI',
-              description: 'Desarrollar modal y respuestas automatizadas con IA para resumen de proyectos.',
-              priority: 'MEDIA',
-              status: 'EN_REVISION',
-              estimatedHours: 6,
-              loggedHours: 4,
-              position: 1,
-              dueDate: new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0],
-              tags: ['AI', 'SaaS', 'Feature'],
-              projectId: 'proj_demo_1',
-              creatorId: DEFAULT_USER.id,
-              creator: DEFAULT_USER,
-              subtasks: [],
-              comments: [],
-              attachments: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-            {
-              id: 'tsk_4',
-              key: 'NEX-4',
-              title: 'Optimización de rendimiento y modo oscuro',
-              description: 'Ajustar tokens de TailwindCSS v4 y resolver advertencias de hidratación SSR.',
-              priority: 'BAJA',
-              status: 'PENDIENTE',
-              estimatedHours: 4,
-              loggedHours: 0,
-              position: 1,
-              dueDate: new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0],
-              tags: ['CSS', 'UI', 'Performance'],
-              projectId: 'proj_demo_1',
-              creatorId: DEFAULT_USER.id,
-              creator: DEFAULT_USER,
-              subtasks: [],
-              comments: [],
-              attachments: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          ];
-
-          const defaultChat: ChatMessage[] = [
-            {
-              id: 'msg_1',
-              projectId: 'proj_demo_1',
-              senderId: DEFAULT_USER.id,
-              content: '¡Bienvenidos al espacio de trabajo de Nexo! Aquí podemos coordinar tareas, compartir archivos y chatear.',
-              isSystem: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              sender: DEFAULT_USER,
-              reactions: [{ id: 'rct_1', messageId: 'msg_1', userId: DEFAULT_USER.id, emoji: '🚀', createdAt: new Date().toISOString(), user: DEFAULT_USER }],
-            },
-          ];
-
           this.projects = [defaultProj];
           this.currentProject = defaultProj;
-          this.tasks = defaultTasks;
-          this.chatMessages = defaultChat;
           this.persistState();
         } else {
           this.currentProject = this.projects[0];
@@ -263,16 +296,17 @@ export class NexoStore {
   // MÉTODOS DE PROYECTO
   // ---------------------------------------------------------------------------
 
-  /** Selecciona el proyecto activo actual */
+  /** Selecciona el proyecto activo actual y carga sus tareas desde la base de datos */
   public setCurrentProject(projectId: string) {
     const found = this.projects.find((p) => p.id === projectId);
     if (found) {
       this.currentProject = found;
+      this.fetchTasksForProject(projectId);
       this.notify();
     }
   }
 
-  /** Crea un nuevo proyecto */
+  /** Crea un nuevo proyecto y lo persiste en la base de datos */
   public createProject(data: { name: string; key: string; description?: string; color?: string; icon?: string }): Project {
     const projId = 'proj_' + Date.now();
     const newProject: Project = {
@@ -299,13 +333,48 @@ export class NexoStore {
 
     this.projects.push(newProject);
     this.currentProject = newProject;
-    
     this.logActivity(newProject.id, 'CREATE_PROJECT', 'PROJECT', newProject.id, `Proyecto "${newProject.name}" creado`);
     this.persistState();
+
+    // Persistir en la Base de Datos (Prisma SQLite / API)
+    fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: data.name,
+        key: data.key.toUpperCase(),
+        description: data.description || '',
+        color: data.color || '#7C3AED',
+        icon: data.icon || 'FolderKanban',
+        creatorId: this.currentUser.id,
+      }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((savedProject) => {
+        if (savedProject && savedProject.id) {
+          // Actualizar ID asignado por la base de datos
+          newProject.id = savedProject.id;
+          this.persistState();
+        }
+      })
+      .catch((e) => console.warn('Error al persistir proyecto en base de datos:', e));
+
+    // Si Supabase está disponible, sincronizar tabla proyectos
+    if (isSupabaseConfigured) {
+      Promise.resolve(
+        supabase.from('proyectos').insert({
+          name: data.name,
+          key: data.key.toUpperCase(),
+          description: data.description || '',
+          color: data.color || '#7C3AED',
+        })
+      ).catch(() => {});
+    }
+
     return newProject;
   }
 
-  /** Actualiza la información de un proyecto */
+  /** Actualiza la información de un proyecto en memoria y en la base de datos */
   public updateProject(id: string, updates: Partial<Project>) {
     this.projects = this.projects.map((p) => {
       if (p.id === id) {
@@ -317,9 +386,16 @@ export class NexoStore {
     });
     this.logActivity(id, 'UPDATE_PROJECT', 'PROJECT', id, `Configuración del proyecto actualizada`);
     this.persistState();
+
+    // Persistir en la base de datos
+    fetch('/api/projects', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...updates }),
+    }).catch((e) => console.warn('Error al actualizar proyecto en base de datos:', e));
   }
 
-  /** Elimina un proyecto */
+  /** Elimina un proyecto de la base de datos y memoria */
   public deleteProject(id: string) {
     this.projects = this.projects.filter((p) => p.id !== id);
     this.tasks = this.tasks.filter((t) => t.projectId !== id);
@@ -328,6 +404,11 @@ export class NexoStore {
       this.currentProject = this.projects[0] || null;
     }
     this.persistState();
+
+    // Eliminar de la base de datos
+    fetch(`/api/projects?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }).catch((e) => console.warn('Error al eliminar proyecto en base de datos:', e));
   }
 
   /** Agrega un miembro a un proyecto */
@@ -361,7 +442,7 @@ export class NexoStore {
   // MÉTODOS DE TAREAS
   // ---------------------------------------------------------------------------
 
-  /** Crea una nueva tarea en el proyecto activo */
+  /** Crea una nueva tarea en el proyecto activo y la persiste en la base de datos */
   public createTask(data: {
     title: string;
     description?: string;
@@ -408,10 +489,38 @@ export class NexoStore {
     }
 
     this.persistState();
+
+    // Persistir en la base de datos
+    fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: data.title,
+        description: data.description || '',
+        priority: data.priority || 'MEDIA',
+        status: data.status || 'PENDIENTE',
+        projectId,
+        creatorId: this.currentUser.id,
+        assigneeId: data.assigneeId || null,
+        dueDate: data.dueDate || null,
+        estimatedHours: data.estimatedHours || 0,
+        tags: data.tags || [],
+      }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((savedTask) => {
+        if (savedTask && savedTask.id) {
+          newTask.id = savedTask.id;
+          if (savedTask.key) newTask.key = savedTask.key;
+          this.persistState();
+        }
+      })
+      .catch((e) => console.warn('Error persistiendo tarea en base de datos:', e));
+
     return newTask;
   }
 
-  /** Actualiza los campos de una tarea */
+  /** Actualiza los campos de una tarea en memoria y base de datos */
   public updateTask(taskId: string, updates: Partial<Task>) {
     this.tasks = this.tasks.map((t) => {
       if (t.id === taskId) {
@@ -424,6 +533,13 @@ export class NexoStore {
       return t;
     });
     this.persistState();
+
+    // Actualizar en base de datos
+    fetch('/api/tasks', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: taskId, ...updates }),
+    }).catch((e) => console.warn('Error al actualizar tarea en base de datos:', e));
   }
 
   /** Actualiza el orden y estado de una tarea tras un Drag & Drop en Kanban */
@@ -437,9 +553,16 @@ export class NexoStore {
 
     this.logActivity(task.projectId, 'DRAG_TASK', 'TASK', taskId, `Tarea "${task.title}" movida a ${newStatus}`);
     this.persistState();
+
+    // Actualizar en la base de datos
+    fetch('/api/tasks', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: taskId, status: newStatus, position: newPosition }),
+    }).catch((e) => console.warn('Error al mover tarea en base de datos:', e));
   }
 
-  /** Elimina una tarea */
+  /** Elimina una tarea de la base de datos y memoria */
   public deleteTask(taskId: string) {
     const task = this.tasks.find((t) => t.id === taskId);
     if (task) {
@@ -447,6 +570,11 @@ export class NexoStore {
     }
     this.tasks = this.tasks.filter((t) => t.id !== taskId);
     this.persistState();
+
+    // Eliminar de base de datos
+    fetch(`/api/tasks?id=${encodeURIComponent(taskId)}`, {
+      method: 'DELETE',
+    }).catch((e) => console.warn('Error al eliminar tarea de base de datos:', e));
   }
 
   /** Agrega una subtarea a una tarea */
@@ -485,6 +613,12 @@ export class NexoStore {
     task.loggedHours = (task.loggedHours || 0) + hours;
     this.logActivity(task.projectId, 'LOG_TIME', 'TASK', taskId, `Registradas ${hours}h trabajadas en "${task.title}"`);
     this.persistState();
+
+    fetch('/api/tasks', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: taskId, loggedHours: task.loggedHours }),
+    }).catch((e) => console.warn('Error actualizando horas trabajadas:', e));
   }
 
   /** Agrega un comentario a una tarea */
@@ -530,6 +664,27 @@ export class NexoStore {
 
     this.chatMessages.push(newMessage);
     this.persistState();
+
+    // Persistir en API de chat
+    fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projectId,
+        senderId: this.currentUser.id,
+        content,
+        parentId,
+      }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((saved) => {
+        if (saved && saved.id) {
+          newMessage.id = saved.id;
+          this.persistState();
+        }
+      })
+      .catch((e) => console.warn('Error al guardar mensaje en base de datos:', e));
+
     return newMessage;
   }
 

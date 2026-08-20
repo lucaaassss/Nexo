@@ -44,13 +44,34 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { title, description, priority, status, projectId, creatorId, assigneeId, dueDate, estimatedHours, tags } = body;
 
-    if (!title || !projectId || !creatorId) {
+    if (!title || !projectId) {
       return NextResponse.json({ error: 'Faltan parámetros obligatorios' }, { status: 400 });
     }
 
     const project = await db.project.findUnique({ where: { id: projectId } });
     if (!project) {
       return NextResponse.json({ error: 'Proyecto no encontrado' }, { status: 404 });
+    }
+
+    // Asegurar que el creador exista en la base de datos
+    let validCreatorId = creatorId;
+    if (validCreatorId) {
+      const userExists = await db.user.findUnique({ where: { id: validCreatorId } });
+      if (!userExists) {
+        const createdUser = await db.user.create({
+          data: {
+            id: validCreatorId,
+            email: `${validCreatorId}@nexo.app`,
+            name: 'Usuario Nexo',
+            password: 'demo_password',
+            role: 'MEMBER',
+          },
+        });
+        validCreatorId = createdUser.id;
+      }
+    } else {
+      const firstUser = await db.user.findFirst();
+      validCreatorId = firstUser ? firstUser.id : 'usr_admin_1';
     }
 
     const count = await db.task.count({ where: { projectId } });
@@ -60,21 +81,92 @@ export async function POST(req: Request) {
       data: {
         key: taskKey,
         title,
-        description,
+        description: description || '',
         priority: priority || 'MEDIA',
         status: status || 'PENDIENTE',
         projectId,
-        creatorId,
+        creatorId: validCreatorId,
         assigneeId: assigneeId || null,
         dueDate: dueDate ? new Date(dueDate) : null,
-        estimatedHours: estimatedHours || 0,
-        tags: tags ? JSON.stringify(tags) : '[]',
+        estimatedHours: estimatedHours ? Number(estimatedHours) : 0,
+        tags: tags ? (Array.isArray(tags) ? JSON.stringify(tags) : String(tags)) : '[]',
         position: count + 1,
+      },
+      include: {
+        assignee: true,
+        creator: true,
+        subtasks: true,
+        comments: true,
+        attachments: true,
       },
     });
 
     return NextResponse.json(task, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Error al crear la tarea' }, { status: 500 });
+  }
+}
+
+/**
+ * Handler PATCH /api/tasks
+ * Actualiza estado, posición, descripción, etc., de una tarea.
+ */
+export async function PATCH(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, title, description, priority, status, position, loggedHours, estimatedHours, dueDate, tags, assigneeId } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'El ID de la tarea es obligatorio' }, { status: 400 });
+    }
+
+    const updatedTask = await db.task.update({
+      where: { id },
+      data: {
+        ...(title && { title }),
+        ...(description !== undefined && { description }),
+        ...(priority && { priority }),
+        ...(status && { status }),
+        ...(position !== undefined && { position: Number(position) }),
+        ...(loggedHours !== undefined && { loggedHours: Number(loggedHours) }),
+        ...(estimatedHours !== undefined && { estimatedHours: Number(estimatedHours) }),
+        ...(dueDate !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),
+        ...(tags !== undefined && { tags: Array.isArray(tags) ? JSON.stringify(tags) : String(tags) }),
+        ...(assigneeId !== undefined && { assigneeId: assigneeId || null }),
+      },
+      include: {
+        assignee: true,
+        creator: true,
+        subtasks: true,
+        comments: true,
+      },
+    });
+
+    return NextResponse.json(updatedTask);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Error al actualizar la tarea' }, { status: 500 });
+  }
+}
+
+/**
+ * Handler DELETE /api/tasks
+ * Elimina una tarea por su ID.
+ */
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'El parámetro id es requerido' }, { status: 400 });
+    }
+
+    await db.task.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true, message: 'Tarea eliminada correctamente' });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Error al eliminar la tarea' }, { status: 500 });
   }
 }
