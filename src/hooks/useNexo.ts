@@ -48,7 +48,7 @@ export function useNexo() {
             usuario: usuario || u.email?.split('@')[0] || 'user',
             email: u.email || '',
             foto_perfil: avatarUrl || '',
-            estado: 'ACTIVO',
+            estado: 'activo',
           });
         }
       } catch (err) {

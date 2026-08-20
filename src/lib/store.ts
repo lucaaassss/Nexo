@@ -397,11 +397,17 @@ export class NexoStore {
             usuario: data.usuario,
             email: authUser?.email || this.currentUser.email,
             foto_perfil: data.avatarUrl || '',
-            estado: 'ACTIVO',
+            estado: 'activo',
           });
 
           if (tableError) {
             console.warn('Error al actualizar tabla usuarios en Supabase:', tableError.message);
+            if (tableError.code === '42501' || tableError.message?.includes('row-level security')) {
+              return {
+                success: false,
+                error: 'Falta habilitar la política RLS en Supabase para la tabla usuarios (Permiso denegado por Row-Level Security).',
+              };
+            }
             return { success: false, error: tableError.message };
           }
         }
@@ -495,7 +501,7 @@ export class NexoStore {
             descripcion: data.description || '',
             color: data.color || '#7C3AED',
             creador_id: creatorId,
-            estado: 'ACTIVO',
+            estado: 'activo',
           })
           .select()
           .then(({ data: inserted, error }) => {
@@ -535,7 +541,7 @@ export class NexoStore {
           ...(updates.name && { nombre: updates.name }),
           ...(updates.description !== undefined && { descripcion: updates.description }),
           ...(updates.color && { color: updates.color }),
-          ...(updates.isArchived !== undefined && { estado: updates.isArchived ? 'ARCHIVADO' : 'ACTIVO' }),
+          ...(updates.isArchived !== undefined && { estado: updates.isArchived ? 'inactivo' : 'activo' }),
         })
         .eq('id', id)
         .then(({ error }) => {
