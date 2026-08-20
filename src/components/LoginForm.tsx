@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail, AlertCircle, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
-import { ProfileSelector, UserRole } from './ProfileSelector';
 import { signInUser, isSupabaseConfigured } from '@/lib/supabase';
 
 interface LoginFormProps {
@@ -15,14 +14,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const router = useRouter();
 
   // Form State
-  const [role, setRole] = useState<UserRole | null>('alumno');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(false);
 
   // Validation & Submission States
-  const [errors, setErrors] = useState<{ email?: string; password?: string; role?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loginSuccess, setLoginSuccess] = useState<boolean>(false);
@@ -34,11 +32,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   };
 
   const handleValidation = (): boolean => {
-    const newErrors: { email?: string; password?: string; role?: string } = {};
-
-    if (!role) {
-      newErrors.role = 'Por favor seleccioná tu perfil (Alumno o Profesor).';
-    }
+    const newErrors: { email?: string; password?: string } = {};
 
     if (!email.trim()) {
       newErrors.email = 'El correo electrónico es obligatorio.';
@@ -71,7 +65,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           email: email.trim(),
           password: password,
         });
-
 
         if (error) {
           setAuthError('El correo o la contraseña son incorrectos.');
@@ -144,24 +137,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-sm font-medium flex items-center space-x-3 shadow-md"
           >
             <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span>¡Autenticación exitosa como <strong>{role === 'alumno' ? 'Alumno' : 'Profesor'}</strong>! Conectando a Nexo...</span>
+            <span>¡Autenticación exitosa! Conectando a Nexo...</span>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Main Login Form */}
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
-        {/* Selector de Perfil */}
-        <ProfileSelector
-          selectedRole={role}
-          onSelectRole={(r) => {
-            setRole(r);
-            if (errors.role) setErrors((prev) => ({ ...prev, role: undefined }));
-            if (authError) setAuthError(null);
-          }}
-          error={errors.role}
-        />
-
+        
         {/* Email Input */}
         <div className="space-y-1.5">
           <label
@@ -311,9 +294,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           <p className="font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
             <span>💡 Credenciales de prueba:</span>
           </p>
-          <p>• Alumno: <code className="text-violet-600 dark:text-violet-400">alumno@nexo.edu.ar</code> / <code className="text-violet-600 dark:text-violet-400">nexo1234</code></p>
-          <p>• Profesor: <code className="text-indigo-600 dark:text-indigo-400">profesor@nexo.edu.ar</code> / <code className="text-indigo-600 dark:text-indigo-400">nexo1234</code></p>
+          <p>• Cuenta Demo: <code className="text-violet-600 dark:text-violet-400">alumno@nexo.edu.ar</code> / <code className="text-violet-600 dark:text-violet-400">nexo1234</code></p>
         </div>
+        
         {/* Switch to Register link */}
         {onSwitchToRegister && (
           <div className="text-center pt-2">
@@ -333,4 +316,3 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     </div>
   );
 };
-

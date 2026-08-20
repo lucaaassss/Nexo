@@ -22,6 +22,7 @@ export const DEFAULT_USER: User = {
   id: 'usr_admin_1',
   name: 'Administrador Nexo',
   email: 'admin@nexo.app',
+  usuario: 'admin_nexo',
   avatarUrl: '',
   role: 'ADMIN',
   bio: 'Arquitecto Principal del Sistema Nexo',

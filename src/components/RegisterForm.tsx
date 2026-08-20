@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Lock, Mail, User, AlertCircle, ArrowRight, Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
-import { ProfileSelector, UserRole } from './ProfileSelector';
+import { Eye, EyeOff, Lock, Mail, User, AlertCircle, ArrowRight, Loader2, CheckCircle2, ShieldCheck, AtSign } from 'lucide-react';
 import { signUpUser, isSupabaseConfigured } from '@/lib/supabase';
 
 interface RegisterFormProps {
@@ -12,18 +11,21 @@ interface RegisterFormProps {
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   // Form State
-  const [role, setRole] = useState<UserRole | null>('alumno');
-  const [name, setName] = useState<string>('');
+  const [nombre, setNombre] = useState<string>('');
+  const [apellido, setApellido] = useState<string>('');
+  const [usuario, setUsuario] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showPassword] = useState<boolean>(false); // Keep only state needed or implement toggle
+  const [showPasswordState, setShowPasswordState] = useState<boolean>(false);
   const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
 
   // Validation & Submission States
   const [errors, setErrors] = useState<{
-    role?: string;
-    name?: string;
+    nombre?: string;
+    apellido?: string;
+    usuario?: string;
     email?: string;
     password?: string;
     confirmPassword?: string;
@@ -41,14 +43,22 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
   const handleValidation = (): boolean => {
     const newErrors: typeof errors = {};
 
-    if (!role) {
-      newErrors.role = 'Por favor seleccioná tu perfil (Alumno o Profesor).';
+    if (!nombre.trim()) {
+      newErrors.nombre = 'El nombre es obligatorio.';
+    } else if (nombre.trim().length < 2) {
+      newErrors.nombre = 'El nombre debe tener al menos 2 caracteres.';
     }
 
-    if (!name.trim()) {
-      newErrors.name = 'El nombre completo es obligatorio.';
-    } else if (name.trim().length < 3) {
-      newErrors.name = 'El nombre debe tener al menos 3 caracteres.';
+    if (!apellido.trim()) {
+      newErrors.apellido = 'El apellido es obligatorio.';
+    } else if (apellido.trim().length < 2) {
+      newErrors.apellido = 'El apellido debe tener al menos 2 caracteres.';
+    }
+
+    if (!usuario.trim()) {
+      newErrors.usuario = 'El nombre de usuario es obligatorio.';
+    } else if (usuario.trim().length < 3) {
+      newErrors.usuario = 'El usuario debe tener al menos 3 caracteres.';
     }
 
     if (!email.trim()) {
@@ -92,8 +102,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
         const { error } = await signUpUser({
           email: email.trim(),
           password: password,
-          name: name.trim(),
-          role: role!,
+          nombre: nombre.trim(),
+          apellido: apellido.trim(),
+          usuario: usuario.trim(),
         });
 
         if (error) {
@@ -157,7 +168,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               <span className="font-bold">¡Cuenta registrada con éxito!</span>
             </div>
             <p className="text-xs text-emerald-700 dark:text-emerald-400">
-              Bienvenido/a <strong>{name}</strong> como <strong>{role === 'alumno' ? 'Alumno' : 'Profesor'}</strong>. Ya podés iniciar sesión en la plataforma.
+              Bienvenido/a <strong>{nombre} {apellido}</strong> (usuario: <strong>@{usuario}</strong>). Ya podés iniciar sesión en la plataforma.
             </p>
             <button
               type="button"
@@ -173,54 +184,121 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
       {/* Main Register Form */}
       {!registerSuccess && (
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
-          {/* Selector de Perfil */}
-          <ProfileSelector
-            selectedRole={role}
-            onSelectRole={(r) => {
-              setRole(r);
-              if (errors.role) setErrors((prev) => ({ ...prev, role: undefined }));
-              if (serverError) setServerError(null);
-            }}
-            error={errors.role}
-          />
+          
+          {/* Nombre y Apellido Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Nombre Input */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="register-nombre"
+                className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
+              >
+                Nombre <span className="text-violet-500">*</span>
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-500 transition-colors">
+                  <User className="w-4 h-4" />
+                </div>
+                <input
+                  id="register-nombre"
+                  type="text"
+                  value={nombre}
+                  onChange={(e) => {
+                    setNombre(e.target.value);
+                    if (errors.nombre) setErrors((prev) => ({ ...prev, nombre: undefined }));
+                    if (serverError) setServerError(null);
+                  }}
+                  placeholder="Tu nombre"
+                  disabled={isLoading}
+                  className={`w-full pl-10 pr-4 py-2 rounded-xl border text-sm transition-all duration-200 bg-white/70 dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${
+                    errors.nombre
+                      ? 'border-rose-500 dark:border-rose-500 focus:border-rose-500'
+                      : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-violet-600 dark:focus:border-violet-500'
+                  }`}
+                />
+              </div>
+              {errors.nombre && (
+                <p className="text-xs font-medium text-rose-500 dark:text-rose-400 pt-0.5">
+                  {errors.nombre}
+                </p>
+              )}
+            </div>
 
-          {/* Full Name Input */}
+            {/* Apellido Input */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="register-apellido"
+                className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
+              >
+                Apellido <span className="text-violet-500">*</span>
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-500 transition-colors">
+                  <User className="w-4 h-4" />
+                </div>
+                <input
+                  id="register-apellido"
+                  type="text"
+                  value={apellido}
+                  onChange={(e) => {
+                    setApellido(e.target.value);
+                    if (errors.apellido) setErrors((prev) => ({ ...prev, apellido: undefined }));
+                    if (serverError) setServerError(null);
+                  }}
+                  placeholder="Tu apellido"
+                  disabled={isLoading}
+                  className={`w-full pl-10 pr-4 py-2 rounded-xl border text-sm transition-all duration-200 bg-white/70 dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${
+                    errors.apellido
+                      ? 'border-rose-500 dark:border-rose-500 focus:border-rose-500'
+                      : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-violet-600 dark:focus:border-violet-500'
+                  }`}
+                />
+              </div>
+              {errors.apellido && (
+                <p className="text-xs font-medium text-rose-500 dark:text-rose-400 pt-0.5">
+                  {errors.apellido}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Username Input */}
           <div className="space-y-1.5">
             <label
-              htmlFor="register-name"
+              htmlFor="register-usuario"
               className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
             >
-              Nombre completo <span className="text-violet-500">*</span>
+              Nombre de usuario <span className="text-violet-500">*</span>
             </label>
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-500 transition-colors">
-                <User className="w-4 h-4" />
+                <AtSign className="w-4 h-4" />
               </div>
               <input
-                id="register-name"
+                id="register-usuario"
                 type="text"
-                value={name}
+                value={usuario}
                 onChange={(e) => {
-                  setName(e.target.value);
-                  if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+                  setUsuario(e.target.value);
+                  if (errors.usuario) setErrors((prev) => ({ ...prev, usuario: undefined }));
                   if (serverError) setServerError(null);
                 }}
-                placeholder="Ingresá tu nombre y apellido"
+                placeholder="ej: milena.ahumada"
                 disabled={isLoading}
                 className={`w-full pl-10 pr-4 py-2 rounded-xl border text-sm transition-all duration-200 bg-white/70 dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${
-                  errors.name
+                  errors.usuario
                     ? 'border-rose-500 dark:border-rose-500 focus:border-rose-500'
                     : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-violet-600 dark:focus:border-violet-500'
                 }`}
               />
             </div>
-            {errors.name && (
+            {errors.usuario && (
               <motion.p
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-xs font-medium text-rose-500 dark:text-rose-400 pt-0.5"
               >
-                {errors.name}
+                {errors.usuario}
               </motion.p>
             )}
           </div>
@@ -282,7 +360,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                 </div>
                 <input
                   id="register-password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPasswordState ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
@@ -299,10 +377,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPasswordState(!showPasswordState)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPasswordState ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               {errors.password && (
@@ -326,7 +404,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                 </div>
                 <input
                   id="confirm-password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPasswordState ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);

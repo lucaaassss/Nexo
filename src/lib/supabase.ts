@@ -34,20 +34,24 @@ export async function signInUser({ email, password }: { email: string; password:
 export async function signUpUser({
   email,
   password,
-  name,
-  role,
+  nombre,
+  apellido,
+  usuario,
+  role = 'MEMBER',
 }: {
   email: string;
   password: string;
-  name: string;
-  role: string;
+  nombre: string;
+  apellido: string;
+  usuario: string;
+  role?: string;
 }) {
   if (typeof (supabase.auth as any).signUp === 'function') {
     return await (supabase.auth as any).signUp({
       email,
       password,
       options: {
-        data: { name, role },
+        data: { nombre, apellido, usuario, role },
       },
     });
   }

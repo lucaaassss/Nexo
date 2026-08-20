@@ -39,6 +39,7 @@ export function useNexo() {
         store.setCurrentUser({
           id: u.id,
           name,
+          usuario: meta.usuario || '',
           email: u.email || '',
           avatarUrl: meta.avatar_url || '',
           role: meta.role || 'MEMBER',
@@ -62,6 +63,7 @@ export function useNexo() {
         store.setCurrentUser({
           id: u.id,
           name,
+          usuario: meta.usuario || '',
           email: u.email || '',
           avatarUrl: meta.avatar_url || '',
           role: meta.role || 'MEMBER',
