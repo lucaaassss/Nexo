@@ -90,26 +90,26 @@ export default function DashboardPage() {
         <main className="flex-1 p-4 md:p-8 overflow-y-auto max-h-[calc(100vh-4rem)]">
           {/* Header del Proyecto Actual */}
           {currentProject && (
-            <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800/80">
+            <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200 dark:border-zinc-800/80">
               <div className="flex items-center gap-3">
                 <div
-                  className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-lg ring-1 ring-white/20 shrink-0 font-bold"
+                  className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md ring-1 ring-black/5 dark:ring-white/20 shrink-0 font-bold"
                   style={{ backgroundColor: currentProject.color }}
                 >
                   {currentProject.key}
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-zinc-100 tracking-tight flex items-center gap-2">
+                  <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
                     {currentProject.name}
                     <button
                       onClick={triggerCelebration}
                       title="Celebrar Avance"
-                      className="text-xs text-amber-400 hover:scale-110 transition-transform"
+                      className="text-xs text-amber-500 dark:text-amber-400 hover:scale-110 transition-transform cursor-pointer"
                     >
                       ✨
                     </button>
                   </h1>
-                  <p className="text-xs text-zinc-400 max-w-xl truncate">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-xl truncate font-normal">
                     {currentProject.description || 'Sin descripción asignada'}
                   </p>
                 </div>
@@ -118,17 +118,17 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={() => setIsInviteModalOpen(true)}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-200 transition-colors"
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition-colors shadow-sm cursor-pointer"
                 >
-                  <UserPlus className="w-3.5 h-3.5 text-violet-400" />
+                  <UserPlus className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
                   <span>Invitar</span>
                 </button>
                 <button
                   onClick={() => setIsNewTaskModalOpen(true)}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 transition-all active:scale-95"
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 transition-all active:scale-95 cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Nueva Tarea</span>
+                  <Plus className="w-4 h-4 text-white" />
+                  <span className="text-white">Nueva Tarea</span>
                 </button>
               </div>
             </div>

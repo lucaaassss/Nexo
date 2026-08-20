@@ -58,18 +58,18 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-500 flex items-center justify-center shadow-lg shadow-violet-500/20 ring-1 ring-white/20">
             <Layers className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400">
+          <span className="font-bold text-lg tracking-tight text-zinc-900 dark:text-white">
             NEXO
           </span>
         </div>
 
-        <div className="h-5 w-px bg-zinc-800 hidden sm:block" />
+        <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block" />
 
         {/* Dropdown de Proyectos */}
         <div className="relative">
           <button
             onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800/80 border border-zinc-800/80 text-sm font-medium text-zinc-200 transition-all"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-900/90 hover:bg-zinc-200 dark:hover:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-800/80 text-sm font-medium text-zinc-800 dark:text-zinc-200 transition-all shadow-sm"
           >
             <div
               className="w-2.5 h-2.5 rounded-full"
@@ -78,7 +78,7 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
             <span className="max-w-[140px] truncate">
               {currentProject ? currentProject.name : 'Seleccionar Proyecto'}
             </span>
-            <ChevronDown className="w-4 h-4 text-zinc-400" />
+            <ChevronDown className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
           </button>
 
           {isProjectDropdownOpen && (
@@ -87,8 +87,8 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
                 className="fixed inset-0 z-40"
                 onClick={() => setIsProjectDropdownOpen(false)}
               />
-              <div className="absolute top-full left-0 mt-2 w-64 z-50 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden p-1.5">
-                <div className="text-[11px] font-semibold text-zinc-500 uppercase px-3 py-1.5">
+              <div className="absolute top-full left-0 mt-2 w-64 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden p-1.5">
+                <div className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase px-3 py-1.5">
                   Tus Proyectos
                 </div>
                 {projects.length === 0 ? (
@@ -105,8 +105,8 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-colors ${
                         currentProject?.id === p.id
-                          ? 'bg-violet-600/20 text-violet-300 font-semibold border border-violet-500/30'
-                          : 'text-zinc-300 hover:bg-zinc-800/60'
+                          ? 'bg-violet-50 dark:bg-violet-600/20 text-violet-800 dark:text-violet-300 font-semibold border border-violet-200 dark:border-violet-500/30'
+                          : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
                       }`}
                     >
                       <div className="flex items-center gap-2 truncate">
@@ -116,18 +116,18 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
                         />
                         <span className="truncate">{p.name}</span>
                       </div>
-                      <span className="text-[10px] text-zinc-500 font-mono">{p.key}</span>
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">{p.key}</span>
                     </button>
                   ))
                 )}
 
-                <div className="border-t border-zinc-800 mt-1 pt-1">
+                <div className="border-t border-zinc-100 dark:border-zinc-800 mt-1 pt-1">
                   <button
                     onClick={() => {
                       setIsProjectDropdownOpen(false);
                       onOpenNewProject();
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-violet-400 hover:bg-violet-500/10 transition-colors font-medium"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors font-semibold"
                   >
                     <Plus className="w-4 h-4" />
                     Nuevo Proyecto
@@ -141,13 +141,13 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
 
       {/* Sección Central: Buscador Rápido */}
       <div className="hidden md:flex items-center flex-1 max-w-md relative">
-        <Search className="w-4 h-4 absolute left-3 text-zinc-500" />
+        <Search className="w-4 h-4 absolute left-3 text-zinc-400 dark:text-zinc-500" />
         <input
           type="text"
           placeholder="Buscar tareas, mensajes o archivos..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-zinc-900/80 border border-zinc-800/80 rounded-xl pl-9 pr-4 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 transition-all"
+          className="w-full bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800/80 rounded-xl pl-9 pr-4 py-1.5 text-xs text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 transition-all shadow-sm"
         />
       </div>
 
@@ -165,7 +165,7 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
         <NotificationsDropdown />
         <ThemeToggle />
 
-        <div className="h-5 w-px bg-zinc-800 mx-1" />
+        <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800 mx-1" />
 
         {/* Perfil de Usuario + Cerrar Sesión */}
         <div className="flex items-center gap-2 pl-1">
@@ -173,7 +173,7 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
             {getInitials(currentUser.name)}
           </div>
           <div className="hidden lg:block text-left">
-            <p className="text-xs font-semibold text-zinc-200 leading-none">{currentUser.name}</p>
+            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 leading-none">{currentUser.name}</p>
             <p className="text-[10px] text-zinc-500 mt-0.5 leading-none">{currentUser.email}</p>
           </div>
           <button

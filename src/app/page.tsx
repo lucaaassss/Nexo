@@ -72,7 +72,7 @@ export default function HomePage() {
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-500 flex items-center justify-center shadow-lg shadow-violet-500/20 ring-1 ring-white/20">
             <Layers className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400">
+          <span className="font-bold text-lg tracking-tight text-zinc-900 dark:text-white">
             NEXO
           </span>
         </div>
@@ -89,7 +89,7 @@ export default function HomePage() {
 
           <ThemeToggle />
 
-          <div className="h-5 w-px bg-zinc-800" />
+          <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800" />
 
           {/* Avatar + logout */}
           <div className="flex items-center gap-2">
@@ -97,13 +97,13 @@ export default function HomePage() {
               {getInitials(currentUser.name)}
             </div>
             <div className="hidden lg:block text-left">
-              <p className="text-xs font-semibold text-zinc-200 leading-none">{currentUser.name}</p>
+              <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 leading-none">{currentUser.name}</p>
               <p className="text-[10px] text-zinc-500 mt-0.5 leading-none">{currentUser.email}</p>
             </div>
             <button
               onClick={handleSignOut}
               title="Cerrar sesión"
-              className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-zinc-800 transition-colors ml-1"
+              className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors ml-1 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -115,10 +115,10 @@ export default function HomePage() {
       <main className="flex-1 px-4 md:px-8 py-8 max-w-7xl mx-auto w-full">
         {/* Hero greeting */}
         <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight mb-1">
-            Bienvenido, <span className="text-violet-400">{currentUser.name.split(' ')[0]}</span> 👋
+          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mb-1">
+            Bienvenido, <span className="text-violet-600 dark:text-violet-400">{currentUser.name.split(' ')[0]}</span> 👋
           </h1>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             {projects.length === 0
               ? 'Todavía no tenés proyectos. ¡Creá el primero!'
               : `Tenés ${projects.length} proyecto${projects.length !== 1 ? 's' : ''} activo${projects.length !== 1 ? 's' : ''}.`}
@@ -129,20 +129,20 @@ export default function HomePage() {
         {projects.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
             {[
-              { label: 'Proyectos', value: projects.length, icon: FolderKanban, color: 'text-violet-400' },
-              { label: 'Total Tareas', value: projects.reduce((acc, _) => acc, 0), icon: CheckSquare, color: 'text-emerald-400' },
-              { label: 'Miembros', value: projects.reduce((acc, p) => acc + (p.members?.length || 0), 0), icon: Users, color: 'text-blue-400' },
-              { label: 'Activos hoy', value: projects.length, icon: Clock, color: 'text-amber-400' },
+              { label: 'Proyectos', value: projects.length, icon: FolderKanban, color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-zinc-800' },
+              { label: 'Total Tareas', value: projects.reduce((acc, _) => acc, 0), icon: CheckSquare, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-zinc-800' },
+              { label: 'Miembros', value: projects.reduce((acc, p) => acc + (p.members?.length || 0), 0), icon: Users, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-zinc-800' },
+              { label: 'Activos hoy', value: projects.length, icon: Clock, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-zinc-800' },
             ].map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.label} className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center ${stat.color}`}>
+                <div key={stat.label} className="bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+                  <div className={`w-9 h-9 rounded-xl ${stat.bg} flex items-center justify-center ${stat.color}`}>
                     <Icon className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-xl font-bold text-zinc-100">{stat.value}</p>
-                    <p className="text-[11px] text-zinc-500">{stat.label}</p>
+                    <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{stat.value}</p>
+                    <p className="text-[11px] font-medium text-zinc-500">{stat.label}</p>
                   </div>
                 </div>
               );
@@ -152,13 +152,13 @@ export default function HomePage() {
 
         {/* Projects grid */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">Tus Proyectos</h2>
+          <h2 className="text-sm font-bold text-zinc-800 dark:text-zinc-300 uppercase tracking-wider">Tus Proyectos</h2>
           <button
             onClick={() => setIsNewProjectModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 transition-all active:scale-95"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 transition-all active:scale-95 cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            Nuevo Proyecto
+            <Plus className="w-4 h-4 text-white" />
+            <span className="text-white">Nuevo Proyecto</span>
           </button>
         </div>
 
@@ -166,46 +166,45 @@ export default function HomePage() {
           /* Empty state */
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-20 h-20 rounded-3xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center mb-6">
-              <FolderKanban className="w-10 h-10 text-violet-400 opacity-60" />
+              <FolderKanban className="w-10 h-10 text-violet-600 dark:text-violet-400 opacity-80" />
             </div>
-            <h3 className="text-lg font-semibold text-zinc-300 mb-2">No hay proyectos aún</h3>
+            <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-300 mb-2">No hay proyectos aún</h3>
             <p className="text-sm text-zinc-500 mb-6 max-w-sm">
               Creá tu primer proyecto para empezar a gestionar tareas, colaborar con tu equipo y mucho más.
             </p>
             <button
               onClick={() => setIsNewProjectModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold shadow-lg shadow-violet-600/30 transition-all"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold shadow-lg shadow-violet-600/30 transition-all cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
-              Crear primer proyecto
+              <Plus className="w-4 h-4 text-white" />
+              <span className="text-white">Crear primer proyecto</span>
             </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {projects.map((project) => {
-              const taskCount = 0; // placeholder — podrías filtrar desde store si querés
               const memberCount = project.members?.length || 0;
 
               return (
                 <button
                   key={project.id}
                   onClick={() => handleOpenProject(project.id)}
-                  className="group text-left bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800/80 hover:border-violet-500/40 rounded-2xl p-5 flex flex-col gap-4 transition-all duration-200 hover:shadow-xl hover:shadow-violet-500/5 active:scale-[0.98] cursor-pointer"
+                  className="group text-left bg-white dark:bg-zinc-900/60 hover:bg-zinc-50 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 hover:border-violet-500/50 dark:hover:border-violet-500/40 rounded-2xl p-5 flex flex-col gap-4 transition-all duration-200 shadow-sm hover:shadow-lg active:scale-[0.98] cursor-pointer"
                 >
                   {/* Header tarjeta */}
                   <div className="flex items-start justify-between">
                     <div
-                      className="w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow-lg ring-1 ring-white/10"
+                      className="w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow-md ring-1 ring-black/5 dark:ring-white/10"
                       style={{ backgroundColor: project.color }}
                     >
                       {project.key}
                     </div>
-                    <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-violet-400 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="w-4 h-4 text-zinc-400 dark:text-zinc-600 group-hover:text-violet-600 dark:group-hover:text-violet-400 group-hover:translate-x-1 transition-all" />
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-zinc-100 group-hover:text-white truncate mb-1">
+                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-violet-600 dark:group-hover:text-white truncate mb-1">
                       {project.name}
                     </h3>
                     <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">
@@ -214,15 +213,15 @@ export default function HomePage() {
                   </div>
 
                   {/* Footer tarjeta */}
-                  <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60">
+                  <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800/60">
                     {/* Miembros */}
-                    <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
-                      <Users className="w-3 h-3" />
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
+                      <Users className="w-3 h-3 text-zinc-400" />
                       <span>{memberCount} miembro{memberCount !== 1 ? 's' : ''}</span>
                     </div>
 
                     {/* Módulos quick-access */}
-                    <div className="flex items-center gap-2 text-zinc-600 group-hover:text-zinc-400 transition-colors">
+                    <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-600 group-hover:text-violet-500 dark:group-hover:text-zinc-400 transition-colors">
                       <CheckSquare className="w-3.5 h-3.5" />
                       <BarChart3 className="w-3.5 h-3.5" />
                       <MessageSquare className="w-3.5 h-3.5" />
@@ -235,12 +234,12 @@ export default function HomePage() {
             {/* Tarjeta "Nuevo Proyecto" */}
             <button
               onClick={() => setIsNewProjectModalOpen(true)}
-              className="group text-left bg-zinc-900/30 hover:bg-violet-600/5 border border-dashed border-zinc-700/60 hover:border-violet-500/40 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 transition-all duration-200 min-h-[160px] cursor-pointer"
+              className="group text-left bg-zinc-50/80 dark:bg-zinc-900/30 hover:bg-violet-50/50 dark:hover:bg-violet-600/5 border border-dashed border-zinc-300 dark:border-zinc-700/60 hover:border-violet-500/50 dark:hover:border-violet-500/40 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 transition-all duration-200 min-h-[160px] cursor-pointer shadow-sm"
             >
-              <div className="w-10 h-10 rounded-xl bg-violet-600/10 group-hover:bg-violet-600/20 border border-violet-500/20 flex items-center justify-center transition-colors">
-                <Plus className="w-5 h-5 text-violet-400" />
+              <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-600/10 group-hover:bg-violet-200 dark:group-hover:bg-violet-600/20 border border-violet-200 dark:border-violet-500/20 flex items-center justify-center transition-colors">
+                <Plus className="w-5 h-5 text-violet-600 dark:text-violet-400" />
               </div>
-              <span className="text-xs font-semibold text-zinc-500 group-hover:text-violet-400 transition-colors">
+              <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
                 Nuevo Proyecto
               </span>
             </button>

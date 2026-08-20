@@ -61,46 +61,43 @@ export function getInitials(name: string): string {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-/**
- * Retorna las clases CSS y etiqueta legible para los estados de tareas
- */
 export function getStatusDetails(status: TaskStatus) {
   switch (status) {
     case 'PENDIENTE':
       return {
         label: 'Pendiente',
-        bg: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
-        dot: 'bg-zinc-400',
+        bg: 'bg-zinc-100 dark:bg-zinc-800/60 text-zinc-800 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700/60 font-medium',
+        dot: 'bg-zinc-500 dark:bg-zinc-400',
       };
     case 'EN_PROGRESO':
       return {
         label: 'En progreso',
-        bg: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
-        dot: 'bg-violet-400 animate-pulse',
+        bg: 'bg-violet-100 dark:bg-violet-950/60 text-violet-800 dark:text-violet-300 border-violet-300 dark:border-violet-800/60 font-medium',
+        dot: 'bg-violet-600 dark:bg-violet-400 animate-pulse',
       };
     case 'EN_REVISION':
       return {
         label: 'En revisión',
-        bg: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-        dot: 'bg-amber-400',
+        bg: 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800/60 font-medium',
+        dot: 'bg-amber-600 dark:bg-amber-400',
       };
     case 'FINALIZADA':
       return {
         label: 'Finalizada',
-        bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-        dot: 'bg-emerald-400',
+        bg: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/60 font-medium',
+        dot: 'bg-emerald-600 dark:bg-emerald-400',
       };
     case 'CANCELADA':
       return {
         label: 'Cancelada',
-        bg: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-        dot: 'bg-rose-400',
+        bg: 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800/60 font-medium',
+        dot: 'bg-rose-600 dark:bg-rose-400',
       };
     default:
       return {
         label: status,
-        bg: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
-        dot: 'bg-zinc-400',
+        bg: 'bg-zinc-100 dark:bg-zinc-800/60 text-zinc-800 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700/60 font-medium',
+        dot: 'bg-zinc-500 dark:bg-zinc-400',
       };
   }
 }
@@ -113,27 +110,27 @@ export function getPriorityDetails(priority: TaskPriority) {
     case 'URGENTE':
       return {
         label: 'Urgente',
-        bg: 'bg-red-500/15 text-red-400 border-red-500/30',
-        iconColor: 'text-red-400',
+        bg: 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300 border-red-300 dark:border-red-800/60 font-semibold',
+        iconColor: 'text-red-600 dark:text-red-400',
       };
     case 'ALTA':
       return {
         label: 'Alta',
-        bg: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
-        iconColor: 'text-orange-400',
+        bg: 'bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 border-orange-300 dark:border-orange-800/60 font-semibold',
+        iconColor: 'text-orange-600 dark:text-orange-400',
       };
     case 'MEDIA':
       return {
         label: 'Media',
-        bg: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',
-        iconColor: 'text-indigo-400',
+        bg: 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800/60 font-semibold',
+        iconColor: 'text-indigo-600 dark:text-indigo-400',
       };
     case 'BAJA':
     default:
       return {
         label: 'Baja',
-        bg: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
-        iconColor: 'text-slate-400',
+        bg: 'bg-slate-100 dark:bg-slate-800/60 text-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-700/60 font-semibold',
+        iconColor: 'text-slate-600 dark:text-slate-400',
       };
   }
 }
