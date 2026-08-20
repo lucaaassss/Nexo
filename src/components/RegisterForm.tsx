@@ -168,7 +168,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               <span className="font-bold">¡Cuenta registrada con éxito!</span>
             </div>
             <p className="text-xs text-emerald-700 dark:text-emerald-400">
-              Bienvenido/a <strong>{nombre} {apellido}</strong> (usuario: <strong>@{usuario}</strong>). Ya podés iniciar sesión en la plataforma.
+              Bienvenido/a <strong>{nombre} {apellido}</strong> (usuario: <strong>@{usuario}</strong>).
+            </p>
+            <p className="text-xs text-emerald-700/90 dark:text-emerald-400/90">
+              Enviamos un correo de confirmación. Por favor, <strong>verificá tu casilla de correo</strong> antes de iniciar sesión.
             </p>
             <button
               type="button"
