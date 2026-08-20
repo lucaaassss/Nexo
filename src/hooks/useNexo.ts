@@ -24,62 +24,68 @@ export function useNexo() {
     // Cargar estado guardado de localStorage tras la hidratación del cliente
     store.initClientState();
 
+    const syncUserFromSupabase = async (u: any) => {
+      const meta = u.user_metadata || {};
+      let nombre = meta.nombre || '';
+      let apellido = meta.apellido || '';
+      let usuario = meta.usuario || '';
+      let avatarUrl = meta.foto_perfil || meta.avatar_url || meta.avatarUrl || '';
+
+      // Consultar tabla 'usuarios' para obtener los datos más recientes
+      try {
+        const { data: dbUser } = await supabase.from('usuarios').select('*').eq('id', u.id).maybeSingle();
+        if (dbUser) {
+          if (dbUser.nombre) nombre = dbUser.nombre;
+          if (dbUser.apellido) apellido = dbUser.apellido;
+          if (dbUser.usuario) usuario = dbUser.usuario;
+          if (dbUser.foto_perfil) avatarUrl = dbUser.foto_perfil;
+        } else {
+          // Si el usuario aún no existe en la tabla usuarios, crearlo
+          await supabase.from('usuarios').upsert({
+            id: u.id,
+            nombre: nombre || u.email?.split('@')[0] || 'Usuario',
+            apellido: apellido || '',
+            usuario: usuario || u.email?.split('@')[0] || 'user',
+            email: u.email || '',
+            foto_perfil: avatarUrl || '',
+            estado: 'ACTIVO',
+          });
+        }
+      } catch (err) {
+        console.warn('Error sincronizando tabla usuarios:', err);
+      }
+
+      const name =
+        nombre && apellido
+          ? `${nombre} ${apellido}`.trim()
+          : nombre || meta.name || meta.full_name || u.email?.split('@')[0] || 'Usuario';
+
+      store.setCurrentUser({
+        id: u.id,
+        name,
+        nombre,
+        apellido,
+        usuario,
+        email: u.email || '',
+        avatarUrl,
+        role: meta.role || 'MEMBER',
+        bio: meta.bio || '',
+        createdAt: u.created_at || new Date().toISOString(),
+      });
+      store.syncWithDatabase();
+    };
+
     // Cargar usuario real de Supabase si hay sesión activa
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        const u = session.user;
-        const meta = u.user_metadata || {};
-
-        // Construir nombre desde metadatos o desde email
-        const nombre = meta.nombre || '';
-        const apellido = meta.apellido || '';
-        const name =
-          nombre && apellido
-            ? `${nombre} ${apellido}`.trim()
-            : nombre || meta.name || meta.full_name || u.email?.split('@')[0] || 'Usuario';
-
-        store.setCurrentUser({
-          id: u.id,
-          name,
-          nombre,
-          apellido,
-          usuario: meta.usuario || '',
-          email: u.email || '',
-          avatarUrl: meta.avatar_url || meta.avatarUrl || '',
-          role: meta.role || 'MEMBER',
-          bio: meta.bio || '',
-          createdAt: u.created_at || new Date().toISOString(),
-        });
-        store.syncWithDatabase();
+        syncUserFromSupabase(session.user);
       }
     });
 
     // Escuchar cambios de sesión (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        const u = session.user;
-        const meta = u.user_metadata || {};
-
-        const nombre = meta.nombre || '';
-        const apellido = meta.apellido || '';
-        const name =
-          nombre && apellido
-            ? `${nombre} ${apellido}`.trim()
-            : nombre || meta.name || meta.full_name || u.email?.split('@')[0] || 'Usuario';
-
-        store.setCurrentUser({
-          id: u.id,
-          name,
-          nombre,
-          apellido,
-          usuario: meta.usuario || '',
-          email: u.email || '',
-          avatarUrl: meta.avatar_url || meta.avatarUrl || '',
-          role: meta.role || 'MEMBER',
-          bio: meta.bio || '',
-          createdAt: u.created_at || new Date().toISOString(),
-        });
-        store.syncWithDatabase();
+        syncUserFromSupabase(session.user);
       }
     });
 

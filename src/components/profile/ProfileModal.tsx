@@ -57,21 +57,53 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   if (!isOpen) return null;
 
-  /** Procesa la selección de una nueva foto de perfil */
+  /** Procesa la selección y optimización de una nueva foto de perfil */
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMessage('La imagen no puede superar los 5MB.');
+    if (file.size > 8 * 1024 * 1024) {
+      setErrorMessage('La imagen no puede superar los 8MB.');
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
-        setAvatarUrl(event.target.result as string);
-        setErrorMessage(null);
+        const img = new Image();
+        img.onload = () => {
+          // Escalar a un tamaño óptimo para avatar (256x256)
+          const canvas = document.createElement('canvas');
+          const maxDim = 256;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            setAvatarUrl(optimizedDataUrl);
+            setErrorMessage(null);
+          } else {
+            setAvatarUrl(event.target?.result as string);
+            setErrorMessage(null);
+          }
+        };
+        img.src = event.target.result as string;
       }
     };
     reader.readAsDataURL(file);

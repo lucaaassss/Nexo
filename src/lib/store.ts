@@ -367,13 +367,18 @@ export class NexoStore {
 
     if (isSupabaseConfigured) {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const authUser = session?.user;
+        const targetUserId = authUser?.id || (!this.currentUser.id.startsWith('usr_admin') ? this.currentUser.id : null);
+
         // 1. Actualizar metadata en Supabase Auth
         const { error: authError } = await supabase.auth.updateUser({
           data: {
             nombre: data.nombre,
             apellido: data.apellido,
             usuario: data.usuario,
-            avatar_url: data.avatarUrl,
+            foto_perfil: data.avatarUrl || '',
+            avatar_url: data.avatarUrl || '',
             bio: data.bio,
             name: fullName,
           },
@@ -383,19 +388,21 @@ export class NexoStore {
           console.warn('Error al actualizar metadata en Supabase Auth:', authError.message);
         }
 
-        // 2. Actualizar o insertar en la tabla 'usuarios'
-        if (this.currentUser.id && !this.currentUser.id.startsWith('usr_admin')) {
+        // 2. Actualizar o insertar en la tabla 'usuarios' de Supabase
+        if (targetUserId) {
           const { error: tableError } = await supabase.from('usuarios').upsert({
-            id: this.currentUser.id,
+            id: targetUserId,
             nombre: data.nombre,
             apellido: data.apellido,
             usuario: data.usuario,
-            email: this.currentUser.email,
+            email: authUser?.email || this.currentUser.email,
+            foto_perfil: data.avatarUrl || '',
             estado: 'ACTIVO',
           });
 
           if (tableError) {
             console.warn('Error al actualizar tabla usuarios en Supabase:', tableError.message);
+            return { success: false, error: tableError.message };
           }
         }
 
