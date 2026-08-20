@@ -63,12 +63,59 @@ export class NexoStore {
     }
   }
 
-  /** Sincroniza proyectos y tareas desde la base de datos */
+  /** Sincroniza proyectos y tareas desde la base de datos (Supabase prioritario) */
   public async syncWithDatabase() {
     if (typeof window === 'undefined') return;
 
     try {
-      // 1. Obtener proyectos desde la API de la Base de Datos
+      // 1. Intentar obtener proyectos directamente desde Supabase si está configurado
+      if (isSupabaseConfigured) {
+        const { data: supaProjects, error } = await supabase.from('proyectos').select('*').order('fecha_creacion', { ascending: false });
+        if (!error && Array.isArray(supaProjects) && supaProjects.length > 0) {
+          const formattedProjects: Project[] = supaProjects.map((p: any) => {
+            const rawKey = p.nombre
+              ? p.nombre.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || 'PRJ'
+              : 'PRJ';
+
+            return {
+              id: String(p.id),
+              key: rawKey,
+              name: p.nombre || 'Sin nombre',
+              description: p.descripcion || '',
+              color: p.color || '#7C3AED',
+              icon: 'FolderKanban',
+              isArchived: p.estado === 'ARCHIVADO' || p.estado === 'INACTIVO',
+              createdAt: p.fecha_creacion ? new Date(p.fecha_creacion).toISOString() : new Date().toISOString(),
+              updatedAt: p.fecha_actualizacion ? new Date(p.fecha_actualizacion).toISOString() : new Date().toISOString(),
+              members: [
+                {
+                  id: 'mem_' + p.id,
+                  projectId: String(p.id),
+                  userId: p.creador_id || this.currentUser.id,
+                  role: 'ADMIN' as MemberRole,
+                  joinedAt: p.fecha_creacion ? new Date(p.fecha_creacion).toISOString() : new Date().toISOString(),
+                  user: this.currentUser,
+                },
+              ],
+            };
+          });
+
+          this.projects = formattedProjects;
+
+          if (!this.currentProject || !this.projects.some((p) => p.id === this.currentProject?.id)) {
+            this.currentProject = this.projects[0];
+          } else {
+            const updatedCurrent = this.projects.find((p) => p.id === this.currentProject?.id);
+            if (updatedCurrent) this.currentProject = updatedCurrent;
+          }
+
+          this.persistState();
+          this.notify();
+          return;
+        }
+      }
+
+      // 2. Fallback: Obtener proyectos desde la API local
       const res = await fetch('/api/projects');
       if (res.ok) {
         const dbProjects = await res.json();
@@ -359,16 +406,32 @@ export class NexoStore {
       })
       .catch((e) => console.warn('Error al persistir proyecto en base de datos:', e));
 
-    // Si Supabase está disponible, sincronizar tabla proyectos
+    // Si Supabase está disponible, guardar en tabla 'proyectos'
     if (isSupabaseConfigured) {
-      Promise.resolve(
-        supabase.from('proyectos').insert({
-          name: data.name,
-          key: data.key.toUpperCase(),
-          description: data.description || '',
-          color: data.color || '#7C3AED',
-        })
-      ).catch(() => {});
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        const creatorId = session?.user?.id || (this.currentUser.id.startsWith('usr_') ? null : this.currentUser.id);
+
+        supabase
+          .from('proyectos')
+          .insert({
+            nombre: data.name,
+            descripcion: data.description || '',
+            color: data.color || '#7C3AED',
+            creador_id: creatorId,
+            estado: 'ACTIVO',
+          })
+          .select()
+          .then(({ data: inserted, error }) => {
+            if (error) {
+              console.warn('Error al persistir proyecto en Supabase:', error.message);
+            } else if (inserted && inserted[0]) {
+              const supaItem = inserted[0];
+              newProject.id = String(supaItem.id);
+              this.persistState();
+              this.notify();
+            }
+          });
+      });
     }
 
     return newProject;
@@ -387,7 +450,23 @@ export class NexoStore {
     this.logActivity(id, 'UPDATE_PROJECT', 'PROJECT', id, `Configuración del proyecto actualizada`);
     this.persistState();
 
-    // Persistir en la base de datos
+    // Actualizar en Supabase si está disponible
+    if (isSupabaseConfigured) {
+      supabase
+        .from('proyectos')
+        .update({
+          ...(updates.name && { nombre: updates.name }),
+          ...(updates.description !== undefined && { descripcion: updates.description }),
+          ...(updates.color && { color: updates.color }),
+          ...(updates.isArchived !== undefined && { estado: updates.isArchived ? 'ARCHIVADO' : 'ACTIVO' }),
+        })
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) console.warn('Error al actualizar proyecto en Supabase:', error.message);
+        });
+    }
+
+    // Persistir en la API local
     fetch('/api/projects', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -405,7 +484,18 @@ export class NexoStore {
     }
     this.persistState();
 
-    // Eliminar de la base de datos
+    // Eliminar de Supabase si está disponible
+    if (isSupabaseConfigured) {
+      supabase
+        .from('proyectos')
+        .delete()
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) console.warn('Error al eliminar proyecto de Supabase:', error.message);
+        });
+    }
+
+    // Eliminar de la base de datos local
     fetch(`/api/projects?id=${encodeURIComponent(id)}`, {
       method: 'DELETE',
     }).catch((e) => console.warn('Error al eliminar proyecto en base de datos:', e));

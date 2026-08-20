@@ -46,6 +46,7 @@ export function useNexo() {
           bio: meta.bio || '',
           createdAt: u.created_at || new Date().toISOString(),
         });
+        store.syncWithDatabase();
       }
     });
 
@@ -70,6 +71,7 @@ export function useNexo() {
           bio: meta.bio || '',
           createdAt: u.created_at || new Date().toISOString(),
         });
+        store.syncWithDatabase();
       }
     });
 
