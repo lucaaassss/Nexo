@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { ProjectModal } from '@/components/projects/ProjectModal';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { NexoAiModal } from '@/components/ai/NexoAiModal';
+import { ProfileModal } from '@/components/profile/ProfileModal';
 import { getInitials } from '@/lib/utils';
 import {
   Plus,
@@ -33,6 +34,7 @@ export default function HomePage() {
   const { projects, setCurrentProject, createProject, currentUser } = useNexo();
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
@@ -93,13 +95,32 @@ export default function HomePage() {
 
           {/* Avatar + logout */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 text-white font-bold text-xs flex items-center justify-center ring-2 ring-violet-500/30">
-              {getInitials(currentUser.name)}
-            </div>
-            <div className="hidden lg:block text-left">
-              <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 leading-none">{currentUser.name}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5 leading-none">{currentUser.email}</p>
-            </div>
+            <button
+              onClick={() => setIsProfileModalOpen(true)}
+              title="Ver y editar mi perfil"
+              className="flex items-center gap-2 p-1 -m-1 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-all text-left group cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 text-white font-bold text-xs flex items-center justify-center ring-2 ring-violet-500/30 overflow-hidden group-hover:scale-105 transition-transform shadow-sm">
+                {currentUser.avatarUrl ? (
+                  <img
+                    src={currentUser.avatarUrl}
+                    alt={currentUser.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  getInitials(currentUser.name)
+                )}
+              </div>
+              <div className="hidden lg:block text-left">
+                <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 leading-none group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                  {currentUser.name}
+                </p>
+                <p className="text-[10px] text-zinc-500 mt-0.5 leading-none">
+                  {currentUser.usuario ? `@${currentUser.usuario}` : currentUser.email}
+                </p>
+              </div>
+            </button>
+
             <button
               onClick={handleSignOut}
               title="Cerrar sesión"
@@ -250,6 +271,7 @@ export default function HomePage() {
       {/* Modales */}
       <ProjectModal isOpen={isNewProjectModalOpen} onClose={() => setIsNewProjectModalOpen(false)} />
       <NexoAiModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
+      <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
     </div>
   );
 }

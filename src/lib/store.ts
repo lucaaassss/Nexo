@@ -336,7 +336,77 @@ export class NexoStore {
   /** Actualiza el usuario actual y notifica a los suscriptores */
   public setCurrentUser(user: User) {
     this.currentUser = user;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('nexo_current_user', JSON.stringify(user));
+      } catch (e) {}
+    }
     this.notify();
+  }
+
+  /** Actualiza los datos de perfil del usuario en Supabase Auth y tabla usuarios */
+  public async updateUserProfile(data: {
+    nombre: string;
+    apellido: string;
+    usuario: string;
+    avatarUrl?: string;
+    bio?: string;
+  }): Promise<{ success: boolean; error?: string }> {
+    const fullName = `${data.nombre} ${data.apellido}`.trim();
+    const updatedUser: User = {
+      ...this.currentUser,
+      name: fullName || data.nombre || this.currentUser.name,
+      nombre: data.nombre,
+      apellido: data.apellido,
+      usuario: data.usuario,
+      avatarUrl: data.avatarUrl !== undefined ? data.avatarUrl : this.currentUser.avatarUrl,
+      bio: data.bio !== undefined ? data.bio : this.currentUser.bio,
+    };
+
+    this.setCurrentUser(updatedUser);
+
+    if (isSupabaseConfigured) {
+      try {
+        // 1. Actualizar metadata en Supabase Auth
+        const { error: authError } = await supabase.auth.updateUser({
+          data: {
+            nombre: data.nombre,
+            apellido: data.apellido,
+            usuario: data.usuario,
+            avatar_url: data.avatarUrl,
+            bio: data.bio,
+            name: fullName,
+          },
+        });
+
+        if (authError) {
+          console.warn('Error al actualizar metadata en Supabase Auth:', authError.message);
+        }
+
+        // 2. Actualizar o insertar en la tabla 'usuarios'
+        if (this.currentUser.id && !this.currentUser.id.startsWith('usr_admin')) {
+          const { error: tableError } = await supabase.from('usuarios').upsert({
+            id: this.currentUser.id,
+            nombre: data.nombre,
+            apellido: data.apellido,
+            usuario: data.usuario,
+            email: this.currentUser.email,
+            estado: 'ACTIVO',
+          });
+
+          if (tableError) {
+            console.warn('Error al actualizar tabla usuarios en Supabase:', tableError.message);
+          }
+        }
+
+        return { success: true };
+      } catch (err: any) {
+        console.error('Error general al actualizar perfil:', err);
+        return { success: false, error: err.message || 'Error al guardar perfil' };
+      }
+    }
+
+    return { success: true };
   }
 
   // ---------------------------------------------------------------------------

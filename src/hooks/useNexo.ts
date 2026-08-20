@@ -31,17 +31,21 @@ export function useNexo() {
         const meta = u.user_metadata || {};
 
         // Construir nombre desde metadatos o desde email
+        const nombre = meta.nombre || '';
+        const apellido = meta.apellido || '';
         const name =
-          meta.nombre && meta.apellido
-            ? `${meta.nombre} ${meta.apellido}`.trim()
-            : meta.nombre || meta.name || meta.full_name || u.email?.split('@')[0] || 'Usuario';
+          nombre && apellido
+            ? `${nombre} ${apellido}`.trim()
+            : nombre || meta.name || meta.full_name || u.email?.split('@')[0] || 'Usuario';
 
         store.setCurrentUser({
           id: u.id,
           name,
+          nombre,
+          apellido,
           usuario: meta.usuario || '',
           email: u.email || '',
-          avatarUrl: meta.avatar_url || '',
+          avatarUrl: meta.avatar_url || meta.avatarUrl || '',
           role: meta.role || 'MEMBER',
           bio: meta.bio || '',
           createdAt: u.created_at || new Date().toISOString(),
@@ -56,17 +60,21 @@ export function useNexo() {
         const u = session.user;
         const meta = u.user_metadata || {};
 
+        const nombre = meta.nombre || '';
+        const apellido = meta.apellido || '';
         const name =
-          meta.nombre && meta.apellido
-            ? `${meta.nombre} ${meta.apellido}`.trim()
-            : meta.nombre || meta.name || meta.full_name || u.email?.split('@')[0] || 'Usuario';
+          nombre && apellido
+            ? `${nombre} ${apellido}`.trim()
+            : nombre || meta.name || meta.full_name || u.email?.split('@')[0] || 'Usuario';
 
         store.setCurrentUser({
           id: u.id,
           name,
+          nombre,
+          apellido,
           usuario: meta.usuario || '',
           email: u.email || '',
-          avatarUrl: meta.avatar_url || '',
+          avatarUrl: meta.avatar_url || meta.avatarUrl || '',
           role: meta.role || 'MEMBER',
           bio: meta.bio || '',
           createdAt: u.created_at || new Date().toISOString(),
@@ -109,6 +117,8 @@ export function useNexo() {
     projectAttachments,
     projectActivities,
     // Exponer métodos de acción
+    setCurrentUser: (user: any) => store.setCurrentUser(user),
+    updateUserProfile: (data: Parameters<typeof store.updateUserProfile>[0]) => store.updateUserProfile(data),
     setCurrentProject: (id: string) => store.setCurrentProject(id),
     createProject: (data: Parameters<typeof store.createProject>[0]) => store.createProject(data),
     updateProject: (id: string, updates: Partial<Project>) => store.updateProject(id, updates),
