@@ -60,17 +60,24 @@ export async function signUpUser({
 
 /**
  * Función auxiliar para Iniciar Sesión o Registrarse con Google vía OAuth
+ * Redirige al flujo oficial de Google (accounts.google.com) y luego al /dashboard
  */
 export async function signInWithGoogle() {
-  if (isSupabaseConfigured) {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    return await supabase.auth.signInWithOAuth({
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  try {
+    const res = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${origin}/dashboard`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account',
+        },
       },
     });
+    return res;
+  } catch (err: any) {
+    console.error('Error al redirigir con Google OAuth:', err);
+    return { data: null, error: err };
   }
-  // Fallback para Modo Demo sin llaves configuradas
-  return { data: { provider: 'google', url: null }, error: null };
 }

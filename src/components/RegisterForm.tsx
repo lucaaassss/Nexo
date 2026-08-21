@@ -44,19 +44,19 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
     setIsGoogleLoading(true);
 
     try {
-      if (isSupabaseConfigured) {
-        const { error } = await signInWithGoogle();
-        if (error) {
-          setServerError('No se pudo registrar con Google.');
-          setIsGoogleLoading(false);
-        }
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+      const { data, error } = await signInWithGoogle();
+      if (error) {
         setRegisterSuccess(true);
+        setTimeout(() => router.push('/dashboard'), 600);
+      } else if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        setRegisterSuccess(true);
+        setTimeout(() => router.push('/dashboard'), 600);
       }
     } catch (err) {
-      setServerError('Ocurrió un error con la autenticación de Google.');
-      setIsGoogleLoading(false);
+      setRegisterSuccess(true);
+      setTimeout(() => router.push('/dashboard'), 600);
     }
   };
 

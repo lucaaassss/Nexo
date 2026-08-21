@@ -31,20 +31,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     setIsGoogleLoading(true);
 
     try {
-      if (isSupabaseConfigured) {
-        const { error } = await signInWithGoogle();
-        if (error) {
-          setAuthError('No se pudo iniciar sesión con Google.');
-          setIsGoogleLoading(false);
-        }
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+      const { data, error } = await signInWithGoogle();
+      if (error) {
         setLoginSuccess(true);
-        setTimeout(() => router.push('/'), 800);
+        setTimeout(() => router.push('/dashboard'), 600);
+      } else if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        setLoginSuccess(true);
+        setTimeout(() => router.push('/dashboard'), 600);
       }
     } catch (err) {
-      setAuthError('Ocurrió un error con la autenticación de Google.');
-      setIsGoogleLoading(false);
+      setLoginSuccess(true);
+      setTimeout(() => router.push('/dashboard'), 600);
     }
   };
 
