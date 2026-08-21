@@ -57,3 +57,20 @@ export async function signUpUser({
   }
   return { data: null, error: new Error('Supabase signUp no disponible') };
 }
+
+/**
+ * Función auxiliar para Iniciar Sesión o Registrarse con Google vía OAuth
+ */
+export async function signInWithGoogle() {
+  if (isSupabaseConfigured) {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${origin}/dashboard`,
+      },
+    });
+  }
+  // Fallback para Modo Demo sin llaves configuradas
+  return { data: { provider: 'google', url: null }, error: null };
+}
