@@ -2,15 +2,15 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Nexo - Plataforma Colaborativa de Gestión de Proyectos Enterprise',
+  title: 'Nexor-Space - Plataforma Colaborativa de Gestión de Proyectos Enterprise',
   description:
-    'Nexo centraliza la organización de tareas, la comunicación del equipo en tiempo real y el intercambio de archivos en una experiencia SaaS moderna y escalable.',
+    'Nexor-Space centraliza la organización de tareas, la comunicación del equipo en tiempo real y el intercambio de archivos en una experiencia SaaS moderna y escalable.',
   keywords: ['gestión de proyectos', 'kanban', 'scrum', 'chat', 'archivos', 'ia', 'saas', 'linear', 'notion'],
-  authors: [{ name: 'Nexo Team' }],
+  authors: [{ name: 'Nexor-Space Team' }],
 };
 
 /**
- * RootLayout Principal de Nexo
+ * RootLayout Principal de Nexor-Space
  * Provee la estructura base HTML5, SEO meta-tags y configuración de temas.
  */
 export default function RootLayout({
@@ -26,7 +26,7 @@ export default function RootLayout({
             __html: `
               try {
                 // Aplicar tema antes del primer paint para evitar flash
-                var stored = localStorage.getItem('nexo_theme');
+                var stored = localStorage.getItem('nexorspace_theme');
                 var prefersDark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
                 if (!prefersDark) {
                   document.documentElement.classList.remove('dark');

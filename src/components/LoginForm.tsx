@@ -80,9 +80,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
         // Simulación de credenciales de prueba o cualquier correo válido con contraseña segura
         const isDemoAccount =
-          (email.trim().toLowerCase() === 'alumno@nexo.edu.ar' ||
-            email.trim().toLowerCase() === 'profesor@nexo.edu.ar') &&
-          password === 'nexo1234';
+          (email.trim().toLowerCase() === 'alumno@nexor-space.edu.ar' ||
+            email.trim().toLowerCase() === 'profesor@nexor-space.edu.ar') &&
+          password === 'nexorspace1234';
 
         // Permitir login si cumple formato demo o password >= 6 caracteres en desarrollo
         if (isDemoAccount || (email.includes('@') && password.length >= 6)) {
@@ -104,7 +104,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
       {/* Header Form Titles */}
       <div className="space-y-1.5 text-left">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-          Bienvenido a Nexo
+          Bienvenido a Nexor-Space
         </h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Iniciá sesión para continuar.
@@ -137,7 +137,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-sm font-medium flex items-center space-x-3 shadow-md"
           >
             <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span>¡Autenticación exitosa! Conectando a Nexo...</span>
+            <span>¡Autenticación exitosa! Conectando a Nexor-Space...</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -294,7 +294,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           <p className="font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
             <span>💡 Credenciales de prueba:</span>
           </p>
-          <p>• Cuenta Demo: <code className="text-violet-600 dark:text-violet-400">alumno@nexo.edu.ar</code> / <code className="text-violet-600 dark:text-violet-400">nexo1234</code></p>
+          <p>• Cuenta Demo: <code className="text-violet-600 dark:text-violet-400">alumno@nexor-space.edu.ar</code> / <code className="text-violet-600 dark:text-violet-400">nexorspace1234</code></p>
         </div>
         
         {/* Switch to Register link */}

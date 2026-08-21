@@ -4,11 +4,11 @@ import { Project, Task, MemberRole, TaskStatus } from '@/types';
 import { supabase } from '@/lib/supabase';
 
 /**
- * Hook de React para consumir el estado global de Nexo.
+ * Hook de React para consumir el estado global de Nexor-Space.
  * Sincroniza automáticamente los componentes con los cambios en la tienda de datos.
  * Carga el usuario real desde la sesión de Supabase si está disponible.
  */
-export function useNexo() {
+export function useNexorSpace() {
   const [state, setState] = useState({
     currentUser: store.currentUser,
     projects: store.projects,

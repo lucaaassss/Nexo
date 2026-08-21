@@ -15,7 +15,7 @@ import {
   Clock,
   Table,
 } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 
 interface SidebarProps {
   activeTab: string;
@@ -38,7 +38,7 @@ export function Sidebar({
   onOpenNewTask,
   onOpenInviteModal,
 }: SidebarProps) {
-  const { currentProject } = useNexo();
+  const { currentProject } = useNexorSpace();
 
   const navigationItems = [
     { id: 'tasks', label: 'Tablero de Tareas', icon: CheckSquare },

@@ -13,7 +13,7 @@ import {
   AtSign,
   ShieldCheck,
 } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { getInitials } from '@/lib/utils';
 
 interface ProfileModalProps {
@@ -27,7 +27,7 @@ interface ProfileModalProps {
  * sincronizándolo directamente con Supabase Auth y la base de datos.
  */
 export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
-  const { currentUser, updateUserProfile } = useNexo();
+  const { currentUser, updateUserProfile } = useNexorSpace();
 
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');

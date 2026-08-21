@@ -3,30 +3,30 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('--- Iniciando Seed de Base de Datos Nexo ---');
+  console.log('--- Iniciando Seed de Base de Datos Nexor-Space ---');
 
   // 1. Crear o verificar Usuario Administrador
   const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@nexo.app' },
+    where: { email: 'admin@nexor-space.app' },
     update: {},
     create: {
       id: 'usr_admin_1',
-      name: 'Administrador Nexo',
-      email: 'admin@nexo.app',
+      name: 'Administrador Nexor-Space',
+      email: 'admin@nexor-space.app',
       password: 'admin_password_hash',
       role: 'ADMIN',
-      bio: 'Arquitecto Principal del Sistema Nexo',
+      bio: 'Arquitecto Principal del Sistema Nexor-Space',
     },
   });
 
   // 2. Crear o verificar Usuario Alumno
   const studentUser = await prisma.user.upsert({
-    where: { email: 'alumno@nexo.edu.ar' },
+    where: { email: 'alumno@nexor-space.edu.ar' },
     update: {},
     create: {
       id: 'usr_student_1',
-      name: 'Alumno Nexo',
-      email: 'alumno@nexo.edu.ar',
+      name: 'Alumno Nexor-Space',
+      email: 'alumno@nexor-space.edu.ar',
       password: 'student_password_hash',
       role: 'MEMBER',
       bio: 'Estudiante de 7mo Año',
@@ -40,7 +40,7 @@ async function main() {
     create: {
       id: 'proj_demo_1',
       key: 'NEX',
-      name: 'Proyecto Principal Nexo',
+      name: 'Proyecto Principal Nexor-Space',
       description: 'Espacio de trabajo centralizado para tareas, chat y archivos del equipo.',
       color: '#7C3AED',
       icon: 'FolderKanban',
@@ -93,7 +93,7 @@ async function main() {
           {
             id: 'tsk_3',
             key: 'NEX-3',
-            title: 'Integrar asistente inteligente Nexo AI',
+            title: 'Integrar asistente inteligente Nexor-Space AI',
             description: 'Desarrollar modal y respuestas automatizadas con IA para resumen de proyectos.',
             priority: 'MEDIA',
             status: 'EN_REVISION',
@@ -123,7 +123,7 @@ async function main() {
           {
             id: 'msg_1',
             senderId: adminUser.id,
-            content: '¡Bienvenidos al espacio de trabajo de Nexo! Aquí podemos coordinar tareas, compartir archivos y chatear.',
+            content: '¡Bienvenidos al espacio de trabajo de Nexor-Space! Aquí podemos coordinar tareas, compartir archivos y chatear.',
           },
         ],
       },

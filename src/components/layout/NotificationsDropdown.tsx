@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Bell, CheckCheck, Inbox } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { formatDateTime } from '@/lib/utils';
 
 /**
@@ -11,7 +11,7 @@ import { formatDateTime } from '@/lib/utils';
  */
 export function NotificationsDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, markNotificationsAsRead } = useNexo();
+  const { notifications, markNotificationsAsRead } = useNexorSpace();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

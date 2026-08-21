@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, FolderPlus } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 
 interface ProjectModalProps {
   isOpen: boolean;
@@ -24,7 +24,7 @@ const COLOR_OPTIONS = [
  * Modal interactivo para crear un nuevo proyecto asignando nombre, clave única, color y descripción.
  */
 export function ProjectModal({ isOpen, onClose }: ProjectModalProps) {
-  const { createProject } = useNexo();
+  const { createProject } = useNexorSpace();
   const [name, setName] = useState('');
   const [key, setKey] = useState('');
   const [description, setDescription] = useState('');

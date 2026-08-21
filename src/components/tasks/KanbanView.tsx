@@ -3,7 +3,7 @@
 import React from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Clock, CheckSquare, MessageSquare, Paperclip, AlertCircle, Plus } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { Task, TaskStatus } from '@/types';
 import { getPriorityDetails, getStatusDetails, getInitials } from '@/lib/utils';
 
@@ -26,7 +26,7 @@ const KANBAN_COLUMNS: { id: TaskStatus; title: string }[] = [
  * Tablero estilo Linear con columnas de estado y arrastrar y soltar (Drag & Drop) reactivo.
  */
 export function KanbanView({ tasks, onSelectTask, onOpenNewTask }: KanbanViewProps) {
-  const { moveTaskStatus } = useNexo();
+  const { moveTaskStatus } = useNexorSpace();
 
   /** Maneja la finalización de un arrastre de tarjeta */
   const handleDragEnd = (result: DropResult) => {
@@ -143,7 +143,7 @@ export function KanbanView({ tasks, onSelectTask, onOpenNewTask }: KanbanViewPro
                                 </div>
 
                                 <div className="w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-600/30 text-violet-700 dark:text-violet-300 font-bold text-[9px] flex items-center justify-center border border-violet-300 dark:border-violet-500/30">
-                                  {getInitials(task.assignee?.name || 'Nexo')}
+                                  {getInitials(task.assignee?.name || 'Nexor-Space')}
                                 </div>
                               </div>
                             </div>

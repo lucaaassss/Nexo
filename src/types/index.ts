@@ -1,5 +1,5 @@
 /**
- * Nexo SaaS Platform - Definitions & TypeScript Interfaces
+ * Nexor-Space SaaS Platform - Definitions & TypeScript Interfaces
  * Contiene todas las definiciones del modelo de dominio: Usuarios, Proyectos, Tareas, Chat, Archivos, Permisos e IA.
  */
 

@@ -61,8 +61,8 @@ export async function POST(req: Request) {
         const createdUser = await db.user.create({
           data: {
             id: validCreatorId,
-            email: `${validCreatorId}@nexo.app`,
-            name: 'Usuario Nexo',
+            email: `${validCreatorId}@nexor-space.app`,
+            name: 'Usuario Nexor-Space',
             password: 'demo_password',
             role: 'MEMBER',
           },

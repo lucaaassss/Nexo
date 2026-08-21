@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, CheckSquare } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { TaskPriority, TaskStatus } from '@/types';
 import { getTodayDateString } from '@/lib/utils';
 
@@ -16,7 +16,7 @@ interface TaskModalProps {
  * Formulario para crear una nueva tarea con título, descripción, responsable, prioridad y estimación.
  */
 export function TaskModal({ isOpen, onClose }: TaskModalProps) {
-  const { createTask, currentProject } = useNexo();
+  const { createTask, currentProject } = useNexorSpace();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('MEDIA');
@@ -64,7 +64,7 @@ export function TaskModal({ isOpen, onClose }: TaskModalProps) {
             </div>
             <div>
               <h2 className="text-base font-bold text-zinc-100">Crear Tarea</h2>
-              <p className="text-xs text-zinc-400">Proyecto: {currentProject?.name || 'Nexo'}</p>
+              <p className="text-xs text-zinc-400">Proyecto: {currentProject?.name || 'Nexor-Space'}</p>
             </div>
           </div>
           <button

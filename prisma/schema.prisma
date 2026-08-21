@@ -1,4 +1,4 @@
-// Prisma Schema para Nexo SaaS Platform
+// Prisma Schema para Nexor-Space SaaS Platform
 // Define los modelos relacionales de Usuarios, Proyectos, Tareas, Chat, Archivos e Historial.
 
 generator client {

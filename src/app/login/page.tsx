@@ -8,7 +8,7 @@ import { AbstractIllustration } from '@/components/AbstractIllustration';
 import { supabase } from '@/lib/supabase';
 
 /**
- * Página de Login/Registro de Nexo
+ * Página de Login/Registro de Nexor-Space
  * Redirige automáticamente al dashboard si ya hay sesión activa.
  */
 export default function LoginPage() {
@@ -49,7 +49,7 @@ export default function LoginPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
             </div>
-            <span className="text-3xl font-extrabold text-white tracking-tight">NEXO</span>
+            <span className="text-3xl font-extrabold text-white tracking-tight">NEXOR-SPACE</span>
           </div>
 
           <AbstractIllustration />
@@ -63,7 +63,7 @@ export default function LoginPage() {
 
           {/* Feature pills */}
           <div className="flex flex-wrap gap-2 justify-center mt-6">
-            {['Kanban', 'Chat en vivo', 'Analíticas', 'Nexo AI'].map((f) => (
+            {['Kanban', 'Chat en vivo', 'Analíticas', 'Nexor-Space AI'].map((f) => (
               <span
                 key={f}
                 className="px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-white/90 text-xs font-medium"
@@ -85,7 +85,7 @@ export default function LoginPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
             </div>
-            <span className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">NEXO</span>
+            <span className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">NEXOR-SPACE</span>
           </div>
 
           {view === 'login' ? (

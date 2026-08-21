@@ -131,7 +131,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
       {/* Header Form Titles */}
       <div className="space-y-1.5 text-left">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-          Creá tu cuenta en Nexo
+          Creá tu cuenta en Nexor-Space
         </h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Completá tus datos para comenzar.
@@ -327,7 +327,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                   if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
                   if (serverError) setServerError(null);
                 }}
-                placeholder="ejemplo@nexo.edu.ar"
+                placeholder="ejemplo@nexor-space.edu.ar"
                 disabled={isLoading}
                 className={`w-full pl-10 pr-4 py-2 rounded-xl border text-sm transition-all duration-200 bg-white/70 dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${
                   errors.email
@@ -448,7 +448,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                 htmlFor="accept-terms"
                 className="text-xs font-normal text-zinc-600 dark:text-zinc-400 leading-normal cursor-pointer select-none"
               >
-                Acepto los <a href="#terms" onClick={(e) => e.preventDefault()} className="text-violet-600 dark:text-violet-400 hover:underline">Términos de Servicio</a> y la <a href="#privacy" onClick={(e) => e.preventDefault()} className="text-violet-600 dark:text-violet-400 hover:underline">Política de Privacidad</a> de Nexo.
+                Acepto los <a href="#terms" onClick={(e) => e.preventDefault()} className="text-violet-600 dark:text-violet-400 hover:underline">Términos de Servicio</a> y la <a href="#privacy" onClick={(e) => e.preventDefault()} className="text-violet-600 dark:text-violet-400 hover:underline">Política de Privacidad</a> de Nexor-Space.
               </label>
             </div>
             {errors.acceptTerms && (

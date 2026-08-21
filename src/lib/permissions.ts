@@ -1,7 +1,7 @@
 import { MemberRole } from '@/types';
 
 /**
- * Módulo de Control de Acceso Basado en Roles (RBAC) para Nexo
+ * Módulo de Control de Acceso Basado en Roles (RBAC) para Nexor-Space
  * Define qué acciones puede realizar un usuario según su rol en el proyecto.
  */
 

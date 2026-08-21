@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, UserPlus, Mail, Link as LinkIcon, Check } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { MemberRole } from '@/types';
 
 interface InviteMemberModalProps {
@@ -15,14 +15,14 @@ interface InviteMemberModalProps {
  * Permite invitar a nuevos integrantes al proyecto por correo electrónico o mediante enlace directo.
  */
 export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
-  const { currentProject, addMemberToProject } = useNexo();
+  const { currentProject, addMemberToProject } = useNexorSpace();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<MemberRole>('MEMBER');
   const [copied, setCopied] = useState(false);
 
   if (!isOpen || !currentProject) return null;
 
-  const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://nexo.app'}/invite/${currentProject.id}?token=nexo_${Date.now()}`;
+  const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://nexor-space.app'}/invite/${currentProject.id}?token=nexorspace_${Date.now()}`;
 
   /** Procesa la invitación por correo electrónico */
   const handleInvite = (e: React.FormEvent) => {

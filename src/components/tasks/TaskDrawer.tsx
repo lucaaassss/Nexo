@@ -14,7 +14,7 @@ import {
   Trash2,
   FileText,
 } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { Task, TaskPriority, TaskStatus } from '@/types';
 import { getPriorityDetails, getStatusDetails, formatDate, formatDateTime, formatFileSize, getTodayDateString } from '@/lib/utils';
 
@@ -38,7 +38,7 @@ export function TaskDrawer({ task, onClose }: TaskDrawerProps) {
     addComment,
     uploadFile,
     currentUser,
-  } = useNexo();
+  } = useNexorSpace();
 
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [commentContent, setCommentContent] = useState('');

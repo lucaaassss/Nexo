@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 
       default:
         return NextResponse.json({
-          reply: 'Procesamiento de Nexo AI completado satisfactoriamente.',
+          reply: 'Procesamiento de Nexor-Space AI completado satisfactoriamente.',
         });
     }
   } catch (error: any) {

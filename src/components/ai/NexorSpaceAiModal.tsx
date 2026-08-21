@@ -10,20 +10,20 @@ import {
   HelpCircle,
   CheckCircle,
 } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 
-interface NexoAiModalProps {
+interface NexorSpaceAiModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 /**
- * Componente NexoAiModal
+ * Componente NexorSpaceAiModal
  * Asistente de Inteligencia Artificial integrado para descomposición de proyectos,
  * auto-generación de subtareas, estimaciones de tiempo y respuestas interactivas.
  */
-export function NexoAiModal({ isOpen, onClose }: NexoAiModalProps) {
-  const { currentProject, projectTasks, projectMessages, createTask, addSubtask } = useNexo();
+export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
+  const { currentProject, projectTasks, projectMessages, createTask, addSubtask } = useNexorSpace();
 
   const [activeTab, setActiveTab] = useState<'DECOMPOSE' | 'SUBTASKS' | 'SUMMARIZE' | 'QA'>('DECOMPOSE');
   const [promptInput, setPromptInput] = useState('');
@@ -115,7 +115,7 @@ export function NexoAiModal({ isOpen, onClose }: NexoAiModalProps) {
             </div>
             <div>
               <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-                Asistente Nexo AI
+                Asistente Nexor-Space AI
                 <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
                   GPT-4o / Gemini
                 </span>
@@ -308,7 +308,7 @@ export function NexoAiModal({ isOpen, onClose }: NexoAiModalProps) {
 
               {aiResult && typeof aiResult === 'string' && (
                 <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1 mt-3">
-                  <h4 className="text-xs font-bold text-violet-400">Respuesta de Nexo AI:</h4>
+                  <h4 className="text-xs font-bold text-violet-400">Respuesta de Nexor-Space AI:</h4>
                   <p className="text-xs text-zinc-200 leading-relaxed">{aiResult}</p>
                 </div>
               )}

@@ -12,7 +12,7 @@ import {
   Search,
   Folder,
 } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { formatFileSize, formatDate } from '@/lib/utils';
 import { Attachment } from '@/types';
 
@@ -21,7 +21,7 @@ import { Attachment } from '@/types';
  * Almacenamiento seguro de archivos del proyecto con filtros por tipo, subida interactiva y vista previa.
  */
 export function FileManager() {
-  const { projectAttachments, uploadFile, deleteFile, currentProject } = useNexo();
+  const { projectAttachments, uploadFile, deleteFile, currentProject } = useNexorSpace();
   const [filterType, setFilterType] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 

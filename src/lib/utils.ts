@@ -3,7 +3,7 @@ import { twMerge } from 'tailwind-merge';
 import { TaskPriority, TaskStatus } from '@/types';
 
 /**
- * Utilidades generales para Nexo SaaS
+ * Utilidades generales para Nexor-Space SaaS
  */
 
 /**

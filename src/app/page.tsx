@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { supabase } from '@/lib/supabase';
 import { ProjectModal } from '@/components/projects/ProjectModal';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
-import { NexoAiModal } from '@/components/ai/NexoAiModal';
+import { NexorSpaceAiModal } from '@/components/ai/NexorSpaceAiModal';
 import { ProfileModal } from '@/components/profile/ProfileModal';
 import { getInitials } from '@/lib/utils';
 import {
@@ -25,13 +25,13 @@ import {
 } from 'lucide-react';
 
 /**
- * Home principal de Nexo
+ * Home principal de Nexor-Space
  * Muestra las tarjetas de proyectos del usuario con acceso directo a cada uno.
  * Redirige a /login si no hay sesión activa.
  */
 export default function HomePage() {
   const router = useRouter();
-  const { projects, setCurrentProject, createProject, currentUser } = useNexo();
+  const { projects, setCurrentProject, createProject, currentUser } = useNexorSpace();
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -75,7 +75,7 @@ export default function HomePage() {
             <Layers className="w-5 h-5 text-white" />
           </div>
           <span className="font-bold text-lg tracking-tight text-zinc-900 dark:text-white">
-            NEXO
+            NEXOR-SPACE
           </span>
         </div>
 
@@ -86,7 +86,7 @@ export default function HomePage() {
             className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/25 transition-all"
           >
             <Sparkles className="w-4 h-4 animate-pulse" />
-            <span>Nexo AI</span>
+            <span>Nexor-Space AI</span>
           </button>
 
           <ThemeToggle />
@@ -270,7 +270,7 @@ export default function HomePage() {
 
       {/* Modales */}
       <ProjectModal isOpen={isNewProjectModalOpen} onClose={() => setIsNewProjectModalOpen(false)} />
-      <NexoAiModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
+      <NexorSpaceAiModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
       <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
     </div>
   );

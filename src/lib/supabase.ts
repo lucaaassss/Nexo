@@ -4,7 +4,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
 /**
- * Cliente Singleton de Supabase para Autenticación y Consumo de APIs en Nexo
+ * Cliente Singleton de Supabase para Autenticación y Consumo de APIs en Nexor-Space
  */
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

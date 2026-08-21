@@ -11,7 +11,7 @@ import {
   LogOut,
   Home,
 } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { ThemeToggle } from './ThemeToggle';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { ProfileModal } from '@/components/profile/ProfileModal';
@@ -24,12 +24,12 @@ interface NavbarProps {
 }
 
 /**
- * Componente Navbar Principal de Nexo
+ * Componente Navbar Principal de Nexor-Space
  * Barra superior con selector de proyecto, buscador rápido, activador de IA y perfil.
  */
 export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
   const router = useRouter();
-  const { currentProject, projects, setCurrentProject, currentUser } = useNexo();
+  const { currentProject, projects, setCurrentProject, currentUser } = useNexorSpace();
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,13 +55,13 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
 
         <div className="h-5 w-px bg-zinc-800 hidden sm:block" />
 
-        {/* Marca Nexo */}
+        {/* Marca Nexor-Space */}
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-500 flex items-center justify-center shadow-lg shadow-violet-500/20 ring-1 ring-white/20">
             <Layers className="w-5 h-5 text-white" />
           </div>
           <span className="font-bold text-lg tracking-tight text-zinc-900 dark:text-white">
-            NEXO
+            NEXOR-SPACE
           </span>
         </div>
 
@@ -161,7 +161,7 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
           className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/25 transition-all active:scale-95"
         >
           <Sparkles className="w-4 h-4 text-purple-200 animate-pulse" />
-          <span className="hidden sm:inline">Nexo AI</span>
+          <span className="hidden sm:inline">Nexor-Space AI</span>
         </button>
 
         <NotificationsDropdown />
