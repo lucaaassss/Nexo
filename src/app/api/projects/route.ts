@@ -5,9 +5,24 @@ import { db } from '@/lib/db';
  * Handler GET /api/projects
  * Retorna la lista de todos los proyectos registrados con sus miembros y tareas.
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get('userId');
+
+    let whereClause = {};
+    if (userId) {
+      whereClause = {
+        members: {
+          some: {
+            userId: userId,
+          },
+        },
+      };
+    }
+
     const projects = await db.project.findMany({
+      where: whereClause,
       include: {
         members: {
           include: {

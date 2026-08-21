@@ -70,7 +70,12 @@ export class NexorSpaceStore {
     try {
       // 1. Intentar obtener proyectos directamente desde Supabase si está configurado
       if (isSupabaseConfigured) {
-        const { data: supaProjects, error } = await supabase.from('proyectos').select('*').order('fecha_creacion', { ascending: false });
+        // Obtenemos los proyectos donde el creador sea el usuario actual
+        const { data: supaProjects, error } = await supabase
+          .from('proyectos')
+          .select('*')
+          .eq('creador_id', this.currentUser.id)
+          .order('fecha_creacion', { ascending: false });
         if (!error && Array.isArray(supaProjects) && supaProjects.length > 0) {
           const formattedProjects: Project[] = supaProjects.map((p: any) => {
             const rawKey = p.nombre
@@ -112,11 +117,19 @@ export class NexorSpaceStore {
           this.persistState();
           this.notify();
           return;
+        } else if (!error && Array.isArray(supaProjects) && supaProjects.length === 0) {
+          // Si Supabase devuelve 0 proyectos, limpiamos el estado
+          this.projects = [];
+          this.currentProject = null;
+          this.tasks = [];
+          this.persistState();
+          this.notify();
+          return;
         }
       }
 
-      // 2. Fallback: Obtener proyectos desde la API local
-      const res = await fetch('/api/projects');
+      // 2. Fallback: Obtener proyectos desde la API local pasando el userId
+      const res = await fetch(`/api/projects?userId=${encodeURIComponent(this.currentUser.id)}`);
       if (res.ok) {
         const dbProjects = await res.json();
         if (Array.isArray(dbProjects) && dbProjects.length > 0) {
@@ -162,6 +175,13 @@ export class NexorSpaceStore {
             await this.fetchTasksForProject(this.currentProject.id);
           }
 
+          this.persistState();
+          this.notify();
+        } else if (Array.isArray(dbProjects) && dbProjects.length === 0) {
+          // Si la API devuelve 0 proyectos, limpiamos el estado
+          this.projects = [];
+          this.currentProject = null;
+          this.tasks = [];
           this.persistState();
           this.notify();
         }
@@ -262,7 +282,15 @@ export class NexorSpaceStore {
         const savedFiles = localStorage.getItem('nexorspace_files');
         const savedLogs = localStorage.getItem('nexorspace_activity');
         const savedNotifs = localStorage.getItem('nexorspace_notifications');
+        const savedUser = localStorage.getItem('nexorspace_current_user');
 
+        if (savedUser) {
+          try {
+            this.currentUser = JSON.parse(savedUser);
+          } catch(e) {
+            console.error('Error parsing saved user', e);
+          }
+        }
         if (savedProjects) this.projects = JSON.parse(savedProjects);
         if (savedTasks) this.tasks = JSON.parse(savedTasks);
         if (savedChat) this.chatMessages = JSON.parse(savedChat);

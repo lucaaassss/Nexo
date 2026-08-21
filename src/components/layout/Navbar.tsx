@@ -35,6 +35,7 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSignOut = async () => {
+    localStorage.clear();
     await supabase.auth.signOut();
     router.replace('/login');
   };
