@@ -279,6 +279,40 @@ html.light select:focus {
   box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15) !important;
 }
 
+/* --- Selectores de Fecha (input type="date") --- */
+input[type="date"] {
+  color-scheme: dark;
+  cursor: pointer;
+}
+
+html.light input[type="date"] {
+  color-scheme: light !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: none !important;
+  opacity: 0.8 !important;
+  display: block !important;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  opacity: 1 !important;
+}
+
+html.light input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: none !important;
+  opacity: 0.8 !important;
+}
+
+html.light input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  opacity: 1 !important;
+}
+
 /* --- Modales, Drawers y Popovers --- */
 html.light .bg-zinc-900.border,
 html.light .bg-zinc-900.rounded-3xl,
