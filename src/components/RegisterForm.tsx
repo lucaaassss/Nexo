@@ -212,6 +212,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                     if (serverError) setServerError(null);
                   }}
                   placeholder="Tu nombre"
+                  maxLength={100}
                   disabled={isLoading}
                   className={`w-full pl-10 pr-4 py-2 rounded-xl border text-sm transition-all duration-200 bg-white/70 dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${
                     errors.nombre
@@ -249,6 +250,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                     if (serverError) setServerError(null);
                   }}
                   placeholder="Tu apellido"
+                  maxLength={100}
                   disabled={isLoading}
                   className={`w-full pl-10 pr-4 py-2 rounded-xl border text-sm transition-all duration-200 bg-white/70 dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${
                     errors.apellido
@@ -287,6 +289,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                   if (serverError) setServerError(null);
                 }}
                 placeholder="ej: milena.ahumada"
+                maxLength={50}
                 disabled={isLoading}
                 className={`w-full pl-10 pr-4 py-2 rounded-xl border text-sm transition-all duration-200 bg-white/70 dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${
                   errors.usuario
@@ -328,6 +331,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                   if (serverError) setServerError(null);
                 }}
                 placeholder="ejemplo@nexor-space.edu.ar"
+                maxLength={255}
                 disabled={isLoading}
                 className={`w-full pl-10 pr-4 py-2 rounded-xl border text-sm transition-all duration-200 bg-white/70 dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${
                   errors.email
