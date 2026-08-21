@@ -53,6 +53,7 @@ export default function HomePage() {
   };
 
   const handleSignOut = async () => {
+    localStorage.clear();
     await supabase.auth.signOut();
     router.replace('/login');
   };
