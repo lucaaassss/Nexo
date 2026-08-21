@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Sparkles,
   X,
@@ -25,6 +26,7 @@ interface NexoAiModalProps {
 export function NexoAiModal({ isOpen, onClose }: NexoAiModalProps) {
   const { currentProject, projectTasks, projectMessages, createTask, addSubtask } = useNexo();
 
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'DECOMPOSE' | 'SUBTASKS' | 'SUMMARIZE' | 'QA'>('DECOMPOSE');
   const [promptInput, setPromptInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -32,7 +34,11 @@ export function NexoAiModal({ isOpen, onClose }: NexoAiModalProps) {
   const [generatedTasks, setGeneratedTasks] = useState<any[]>([]);
   const [selectedTaskForSubtasks, setSelectedTaskForSubtasks] = useState<string>('');
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   /** Ejecuta la acción de Inteligencia Artificial solicitada */
   const handleRunAi = async () => {
@@ -104,7 +110,7 @@ export function NexoAiModal({ isOpen, onClose }: NexoAiModalProps) {
     onClose();
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
         {/* Header con gradiente IA */}
@@ -316,6 +322,7 @@ export function NexoAiModal({ isOpen, onClose }: NexoAiModalProps) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

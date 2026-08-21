@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   User,
@@ -29,6 +30,7 @@ interface ProfileModalProps {
 export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const { currentUser, updateUserProfile } = useNexo();
 
+  const [mounted, setMounted] = useState(false);
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [usuario, setUsuario] = useState('');
@@ -40,6 +42,10 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Inicializar estado con los datos del usuario actual al abrir
   useEffect(() => {
@@ -55,7 +61,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
     }
   }, [isOpen, currentUser]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   /** Procesa la selección y optimización de una nueva foto de perfil */
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,7 +158,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   const displayName = `${nombre} ${apellido}`.trim() || currentUser.name || 'Usuario';
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl transition-all my-auto max-h-[92vh] flex flex-col">
         {/* Header del Modal */}
@@ -354,6 +360,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
