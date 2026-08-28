@@ -7,12 +7,10 @@ import { supabase } from '@/lib/supabase';
 import { ProjectModal } from '@/components/projects/ProjectModal';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { NotificationsDropdown } from '@/components/layout/NotificationsDropdown';
-import { NexorSpaceAiModal } from '@/components/ai/NexorSpaceAiModal';
 import { ProfileModal } from '@/components/profile/ProfileModal';
 import { getInitials, formatDateTime } from '@/lib/utils';
 import {
   Plus,
-  Sparkles,
   Layers,
   FolderKanban,
   CheckSquare,
@@ -35,7 +33,6 @@ export default function HomePage() {
   const router = useRouter();
   const { projects, setCurrentProject, createProject, currentUser, notifications } = useNexorSpace();
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
@@ -86,14 +83,6 @@ export default function HomePage() {
 
         {/* Right actions */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsAiModalOpen(true)}
-            className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/25 transition-all"
-          >
-            <Sparkles className="w-4 h-4 animate-pulse" />
-            <span>Nexor-Space AI</span>
-          </button>
-
           {/* Campanita de Notificaciones */}
           <NotificationsDropdown />
 
@@ -322,7 +311,6 @@ export default function HomePage() {
 
       {/* Modales */}
       <ProjectModal isOpen={isNewProjectModalOpen} onClose={() => setIsNewProjectModalOpen(false)} />
-      <NexorSpaceAiModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} activePage="home" />
       <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
     </div>
   );
