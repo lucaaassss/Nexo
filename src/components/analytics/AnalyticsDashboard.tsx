@@ -8,14 +8,14 @@ import {
   TrendingUp,
   Target,
 } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 
 /**
  * Componente AnalyticsDashboard
  * Dashboard analítico de rendimiento, tareas completadas, distribución por prioridad y horas trabajadas.
  */
 export function AnalyticsDashboard() {
-  const { projectTasks, currentProject } = useNexo();
+  const { projectTasks, currentProject } = useNexorSpace();
 
   const totalTasks = projectTasks.length;
   const completedTasks = projectTasks.filter((t) => t.status === 'FINALIZADA').length;

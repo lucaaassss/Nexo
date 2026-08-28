@@ -7,7 +7,7 @@ export const AbstractIllustration: React.FC = () => {
   const nodes = [
     { id: 1, cx: 120, cy: 100, label: 'Ideas', delay: 0 },
     { id: 2, cx: 320, cy: 90, label: 'Proyectos', delay: 0.2 },
-    { id: 3, cx: 220, cy: 220, label: 'Nexo Hub', delay: 0.4, isCenter: true },
+    { id: 3, cx: 220, cy: 220, label: 'Nexor-Space Hub', delay: 0.4, isCenter: true },
     { id: 4, cx: 100, cy: 340, label: 'Alumnos', delay: 0.6 },
     { id: 5, cx: 340, cy: 320, label: 'Profesores', delay: 0.8 },
   ];

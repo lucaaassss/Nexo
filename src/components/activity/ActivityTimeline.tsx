@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { History } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { formatDateTime, getInitials } from '@/lib/utils';
 
 /**
@@ -10,7 +10,7 @@ import { formatDateTime, getInitials } from '@/lib/utils';
  * Registro cronológico inmutable de todas las acciones del equipo (Audit Trail).
  */
 export function ActivityTimeline() {
-  const { projectActivities } = useNexo();
+  const { projectActivities } = useNexorSpace();
 
   return (
     <div className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-6 space-y-6 max-w-4xl mx-auto">

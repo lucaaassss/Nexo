@@ -11,7 +11,7 @@ import {
   ChevronDown,
   Minus,
 } from 'lucide-react';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { formatDateTime, getInitials } from '@/lib/utils';
 import { ChatMessage } from '@/types';
 
@@ -29,7 +29,7 @@ export function ChatBubble() {
     currentProject,
     currentUser,
     uploadFile,
-  } = useNexo();
+  } = useNexorSpace();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);

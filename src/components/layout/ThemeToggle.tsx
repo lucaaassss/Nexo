@@ -13,7 +13,7 @@ export function ThemeToggle() {
 
   useEffect(() => {
     // Leer preferencia guardada (o preferencia del sistema como fallback)
-    const stored = localStorage.getItem('nexo_theme');
+    const stored = localStorage.getItem('nexorspace_theme');
     const prefersDark =
       stored === 'dark' ||
       (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -36,7 +36,7 @@ export function ThemeToggle() {
   const toggleTheme = () => {
     const next = !isDark;
     applyTheme(next);
-    localStorage.setItem('nexo_theme', next ? 'dark' : 'light');
+    localStorage.setItem('nexorspace_theme', next ? 'dark' : 'light');
     setIsDark(next);
   };
 

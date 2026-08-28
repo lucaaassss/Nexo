@@ -4,7 +4,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
 /**
- * Cliente Singleton de Supabase para Autenticación y Consumo de APIs en Nexo
+ * Cliente Singleton de Supabase para Autenticación y Consumo de APIs en Nexor-Space
  */
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -56,4 +56,28 @@ export async function signUpUser({
     });
   }
   return { data: null, error: new Error('Supabase signUp no disponible') };
+}
+
+/**
+ * Función auxiliar para Iniciar Sesión o Registrarse con Google vía OAuth
+ * Redirige al flujo oficial de Google (accounts.google.com) y luego al /dashboard
+ */
+export async function signInWithGoogle() {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  try {
+    const res = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${origin}/dashboard`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account',
+        },
+      },
+    });
+    return res;
+  } catch (err: any) {
+    console.error('Error al redirigir con Google OAuth:', err);
+    return { data: null, error: err };
+  }
 }

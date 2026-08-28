@@ -13,7 +13,7 @@ import {
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 /**
- * Estado Central Reactivo de Nexo (In-Memory + Database API Persistence Store)
+ * Estado Central Reactivo de Nexor-Space (In-Memory + Database API Persistence Store)
  * Administra el estado global de la sesión, proyectos activos, tareas, chat,
  * notificaciones, archivos e historial de actividad sincronizados con la Base de Datos.
  */
@@ -21,17 +21,17 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 // Usuario por defecto para el inicio de sesión inicial
 export const DEFAULT_USER: User = {
   id: 'usr_admin_1',
-  name: 'Administrador Nexo',
-  email: 'admin@nexo.app',
-  usuario: 'admin_nexo',
+  name: 'Administrador Nexor-Space',
+  email: 'admin@nexor-space.app',
+  usuario: 'admin_nexorspace',
   avatarUrl: '',
   role: 'ADMIN',
-  bio: 'Arquitecto Principal del Sistema Nexo',
+  bio: 'Arquitecto Principal del Sistema Nexor-Space',
   createdAt: new Date().toISOString(),
 };
 
-export class NexoStore {
-  private static instance: NexoStore;
+export class NexorSpaceStore {
+  private static instance: NexorSpaceStore;
   
   public currentUser: User = DEFAULT_USER;
   public projects: Project[] = [];
@@ -46,11 +46,11 @@ export class NexoStore {
 
   private constructor() {}
 
-  public static getInstance(): NexoStore {
-    if (!NexoStore.instance) {
-      NexoStore.instance = new NexoStore();
+  public static getInstance(): NexorSpaceStore {
+    if (!NexorSpaceStore.instance) {
+      NexorSpaceStore.instance = new NexorSpaceStore();
     }
-    return NexoStore.instance;
+    return NexorSpaceStore.instance;
   }
 
   /** Carga el estado inicial y sincroniza con la base de datos */
@@ -276,13 +276,13 @@ export class NexoStore {
   private loadInitialState() {
     if (typeof window !== 'undefined') {
       try {
-        const savedProjects = localStorage.getItem('nexo_projects');
-        const savedTasks = localStorage.getItem('nexo_tasks');
-        const savedChat = localStorage.getItem('nexo_chat');
-        const savedFiles = localStorage.getItem('nexo_files');
-        const savedLogs = localStorage.getItem('nexo_activity');
-        const savedNotifs = localStorage.getItem('nexo_notifications');
-        const savedUser = localStorage.getItem('nexo_current_user');
+        const savedProjects = localStorage.getItem('nexorspace_projects');
+        const savedTasks = localStorage.getItem('nexorspace_tasks');
+        const savedChat = localStorage.getItem('nexorspace_chat');
+        const savedFiles = localStorage.getItem('nexorspace_files');
+        const savedLogs = localStorage.getItem('nexorspace_activity');
+        const savedNotifs = localStorage.getItem('nexorspace_notifications');
+        const savedUser = localStorage.getItem('nexorspace_current_user');
 
         if (savedUser) {
           try {
@@ -302,7 +302,7 @@ export class NexoStore {
           const defaultProj: Project = {
             id: 'proj_demo_1',
             key: 'NEX',
-            name: 'Proyecto Principal Nexo',
+            name: 'Proyecto Principal Nexor-Space',
             description: 'Espacio de trabajo centralizado para tareas, chat y archivos del equipo.',
             color: '#7C3AED',
             icon: 'FolderKanban',
@@ -337,12 +337,12 @@ export class NexoStore {
   private persistState() {
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('nexo_projects', JSON.stringify(this.projects));
-        localStorage.setItem('nexo_tasks', JSON.stringify(this.tasks));
-        localStorage.setItem('nexo_chat', JSON.stringify(this.chatMessages));
-        localStorage.setItem('nexo_files', JSON.stringify(this.attachments));
-        localStorage.setItem('nexo_activity', JSON.stringify(this.activityLogs));
-        localStorage.setItem('nexo_notifications', JSON.stringify(this.notifications));
+        localStorage.setItem('nexorspace_projects', JSON.stringify(this.projects));
+        localStorage.setItem('nexorspace_tasks', JSON.stringify(this.tasks));
+        localStorage.setItem('nexorspace_chat', JSON.stringify(this.chatMessages));
+        localStorage.setItem('nexorspace_files', JSON.stringify(this.attachments));
+        localStorage.setItem('nexorspace_activity', JSON.stringify(this.activityLogs));
+        localStorage.setItem('nexorspace_notifications', JSON.stringify(this.notifications));
       } catch (e) {
         console.error('Error guardando estado:', e);
       }
@@ -366,7 +366,7 @@ export class NexoStore {
     this.currentUser = user;
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('nexo_current_user', JSON.stringify(user));
+        localStorage.setItem('nexorspace_current_user', JSON.stringify(user));
       } catch (e) {}
     }
     this.notify();
@@ -988,4 +988,4 @@ export class NexoStore {
   }
 }
 
-export const store = NexoStore.getInstance();
+export const store = NexorSpaceStore.getInstance();

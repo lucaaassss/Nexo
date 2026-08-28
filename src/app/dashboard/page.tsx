@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useNexo } from '@/hooks/useNexo';
+import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { KanbanView } from '@/components/tasks/KanbanView';
@@ -18,7 +18,7 @@ import { ChatBubble } from '@/components/chat/ChatBubble';
 import { FileManager } from '@/components/files/FileManager';
 import { ActivityTimeline } from '@/components/activity/ActivityTimeline';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
-import { NexoAiModal } from '@/components/ai/NexoAiModal';
+import { NexorSpaceAiModal } from '@/components/ai/NexorSpaceAiModal';
 import { Task } from '@/types';
 import { supabase } from '@/lib/supabase';
 import {
@@ -31,7 +31,7 @@ import {
 import confetti from 'canvas-confetti';
 
 /**
- * Dashboard Principal de Nexo
+ * Dashboard Principal de Nexor-Space
  * Muestra las vistas de tareas, archivos, analíticas e historial del proyecto activo.
  */
 export default function DashboardPage() {
@@ -44,7 +44,7 @@ export default function DashboardPage() {
     createProject,
     updateProject,
     deleteProject,
-  } = useNexo();
+  } = useNexorSpace();
 
   const [activeTab, setActiveTab] = useState<string>('tasks');
   const [taskViewMode, setTaskViewMode] = useState<'kanban' | 'list' | 'calendar' | 'timeline' | 'table'>('kanban');
@@ -236,7 +236,7 @@ export default function DashboardPage() {
       <ProjectModal isOpen={isNewProjectModalOpen} onClose={() => setIsNewProjectModalOpen(false)} />
       <TaskModal isOpen={isNewTaskModalOpen} onClose={() => setIsNewTaskModalOpen(false)} />
       <InviteMemberModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
-      <NexoAiModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
+      <NexorSpaceAiModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
       <ChatBubble />
     </div>
   );
