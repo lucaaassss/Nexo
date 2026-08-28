@@ -19,8 +19,9 @@ import {
   FileText,
   ShieldAlert,
   Scale,
-  FolderKanban,
-  BrainCircuit,
+  Settings,
+  Key,
+  ExternalLink,
 } from 'lucide-react';
 import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { formatDateTime, getInitials } from '@/lib/utils';
@@ -50,6 +51,8 @@ interface AIAction {
     | 'switch_project'
     | 'update_project'
     | 'add_subtask'
+    | 'log_time'
+    | 'send_chat'
     | 'suggest_tasks';
   title?: string;
   description?: string;
@@ -63,6 +66,8 @@ interface AIAction {
   key?: string;
   color?: string;
   projectId?: string;
+  hours?: number;
+  message?: string;
   tasks?: SuggestedTask[];
 }
 
@@ -83,28 +88,6 @@ interface NexorSpaceAiModalProps {
   activePage?: 'home' | 'dashboard';
   activeTab?: string;
   taskViewMode?: string;
-}
-
-// ─── Píldoras de sugerencias dinámicas ──────────────────────────────────────────
-function buildQuickPrompts(hasProject: boolean, taskCount: number) {
-  if (!hasProject) {
-    return [
-      { icon: FolderKanban, label: 'Crear nuevo proyecto', text: 'Creá un nuevo proyecto completo para...' },
-      { icon: BrainCircuit, label: '¿Qué podés hacer?', text: '¿Qué funciones y control tenés sobre la plataforma?' },
-    ];
-  }
-  if (taskCount === 0) {
-    return [
-      { icon: ListTodo, label: 'Estructurar proyecto', text: 'Creá y proponé las tareas clave y específicas para desarrollar este proyecto.' },
-      { icon: Wand2, label: 'Sugerir arquitectura', text: '¿Qué arquitectura y stack tecnológico recomendás para este proyecto?' },
-    ];
-  }
-  return [
-    { icon: ShieldAlert, label: 'Auditar cuellos de botella', text: 'Auditá el proyecto y decime los riesgos o tareas urgentes pendientes.' },
-    { icon: FileText, label: 'Generar Changelog', text: 'Generá una nota de versión (Changelog) profesional de las tareas finalizadas.' },
-    { icon: Wand2, label: 'Próximas tareas a crear', text: 'Analizá las tareas actuales y proponé las siguientes funcionalidades que faltan.' },
-    { icon: Scale, label: 'Balancear cargas', text: 'Analizá las horas estimadas y decime cómo optimizar el esfuerzo del equipo.' },
-  ];
 }
 
 // ─── Renderizado de Markdown simple ────────────────────────────────────────────
@@ -196,6 +179,8 @@ export function NexorSpaceAiModal({
     deleteTask,
     addSubtask,
     updateProject,
+    logTimeWorked,
+    sendChatMessage,
   } = useNexorSpace();
 
   const [mounted, setMounted] = useState(false);
@@ -205,10 +190,27 @@ export function NexorSpaceAiModal({
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // API Key Settings Modal
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [activeApiKey, setActiveApiKey] = useState('');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    const savedKey = localStorage.getItem('nexor_gemini_api_key') || '';
+    setActiveApiKey(savedKey);
+    setApiKeyInput(savedKey);
+  }, []);
+
+  const handleSaveApiKey = () => {
+    const trimmed = apiKeyInput.trim();
+    localStorage.setItem('nexor_gemini_api_key', trimmed);
+    setActiveApiKey(trimmed);
+    setIsSettingsOpen(false);
+  };
 
   useEffect(() => {
     if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -218,19 +220,19 @@ export function NexorSpaceAiModal({
     if (isOpen) setTimeout(() => textareaRef.current?.focus(), 150);
   }, [isOpen]);
 
-  // Mensaje de bienvenida inicial conversacional
+  // Mensaje de bienvenida inicial
   useEffect(() => {
     if (isOpen && displayMessages.length === 0) {
       const firstName = currentUser.name.split(' ')[0] || 'Lucas';
       const projectLine = currentProject
-        ? `\n\nEstoy conectado a tu proyecto **${currentProject.name}** con **${projectTasks.length} tarea${projectTasks.length !== 1 ? 's' : ''}** activas.`
+        ? `\n\nEstoy conectado a tu proyecto **${currentProject.name}** con **${projectTasks.length} tareas** en el tablero.`
         : '';
 
       setDisplayMessages([
         {
           id: 'welcome',
           role: 'ai',
-          content: `¡Hola **${firstName}**! 👋 Soy **Nexor-Space AI**.\n\nPodemos charlar de cualquier cosa, analizar arquitectura de código, o darme órdenes directas como *"creá las tareas que faltan"*, *"borrá todas las tareas"* o *"creá un proyecto para una app de viajes"* y lo ejecutaré en tiempo real.${projectLine}\n\n¿En qué te ayudo hoy?`,
+          content: `¡Hola **${firstName}**! 👋 Soy **Nexor-Space AI**.\n\nTengo control total sobre tu espacio de trabajo. Podés pedirme crear tareas específicas, mover estados, registrar horas, auditar el proyecto o charlar de cualquier tema.${projectLine}\n\n¿En qué te doy una mano hoy?`,
           createdAt: new Date(),
         },
       ]);
@@ -238,7 +240,6 @@ export function NexorSpaceAiModal({
   }, [isOpen, currentProject, currentUser, projectTasks.length, displayMessages.length]);
 
   const getLocationLabel = () => {
-    if (activePage === 'home') return 'Inicio (Vista General de Proyectos)';
     const tabNames: Record<string, string> = {
       tasks: `Tablero (${taskViewMode.toUpperCase()})`,
       files: 'Bóveda de Archivos',
@@ -269,7 +270,7 @@ export function NexorSpaceAiModal({
                 estimatedHours: action.estimatedHours || 4,
                 tags: action.tags || ['General'],
               });
-              log.push(`✅ Tarea creada en el tablero: **${t.title}** (\`${t.key}\`)`);
+              log.push(`✅ Tarea creada: **${t.title}** (\`${t.key}\`)`);
               break;
             }
 
@@ -288,8 +289,6 @@ export function NexorSpaceAiModal({
                 if (target) {
                   deleteTask(target.id);
                   log.push(`🗑️ Tarea eliminada: **${target.title}**`);
-                } else {
-                  log.push(`⚠️ No se encontró la tarea \`${action.taskId}\`.`);
                 }
               }
               break;
@@ -307,6 +306,44 @@ export function NexorSpaceAiModal({
                   updateTask(target.id, action.updates as any);
                   log.push(`✏️ Tarea actualizada: **${target.title}**`);
                 }
+              }
+              break;
+            }
+
+            case 'add_subtask': {
+              if (action.taskId && action.title) {
+                const target = projectTasks.find(
+                  (t) =>
+                    t.id === action.taskId ||
+                    t.key.toLowerCase() === String(action.taskId).toLowerCase()
+                );
+                if (target) {
+                  addSubtask(target.id, action.title);
+                  log.push(`➕ Subtarea agregada a **${target.title}**: "${action.title}"`);
+                }
+              }
+              break;
+            }
+
+            case 'log_time': {
+              if (action.taskId && action.hours) {
+                const target = projectTasks.find(
+                  (t) =>
+                    t.id === action.taskId ||
+                    t.key.toLowerCase() === String(action.taskId).toLowerCase()
+                );
+                if (target) {
+                  logTimeWorked(target.id, action.hours);
+                  log.push(`⏱️ Se registraron **${action.hours}h** en la tarea **${target.title}**.`);
+                }
+              }
+              break;
+            }
+
+            case 'send_chat': {
+              if (action.message) {
+                sendChatMessage(action.message);
+                log.push(`💬 Mensaje enviado al chat del equipo.`);
               }
               break;
             }
@@ -344,22 +381,7 @@ export function NexorSpaceAiModal({
             case 'update_project': {
               if (currentProject && action.updates) {
                 updateProject(currentProject.id, action.updates as any);
-                log.push(`✏️ Proyecto **${currentProject.name}** actualizado exitosamente.`);
-              }
-              break;
-            }
-
-            case 'add_subtask': {
-              if (action.taskId && action.title) {
-                const target = projectTasks.find(
-                  (t) =>
-                    t.id === action.taskId ||
-                    t.key.toLowerCase() === String(action.taskId).toLowerCase()
-                );
-                if (target) {
-                  addSubtask(target.id, action.title);
-                  log.push(`➕ Subtarea agregada a **${target.title}**: "${action.title}"`);
-                }
+                log.push(`✏️ Proyecto **${currentProject.name}** actualizado.`);
               }
               break;
             }
@@ -387,6 +409,8 @@ export function NexorSpaceAiModal({
       setCurrentProject,
       updateProject,
       addSubtask,
+      logTimeWorked,
+      sendChatMessage,
     ]
   );
 
@@ -420,6 +444,7 @@ export function NexorSpaceAiModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: updatedHistory,
+          apiKey: activeApiKey,
           context: {
             project: currentProject
               ? {
@@ -427,12 +452,14 @@ export function NexorSpaceAiModal({
                   name: currentProject.name,
                   key: currentProject.key,
                   description: currentProject.description,
+                  members: currentProject.members,
                 }
               : null,
             tasks: projectTasks.map((t) => ({
               id: t.id,
               key: t.key,
               title: t.title,
+              description: t.description,
               status: t.status,
               priority: t.priority,
               estimatedHours: t.estimatedHours,
@@ -463,7 +490,6 @@ export function NexorSpaceAiModal({
       const reply: string = data.reply || 'No obtuve una respuesta.';
       const actions: AIAction[] = Array.isArray(data.actions) ? data.actions : [];
 
-      // Ejecutar acciones de inmediato
       const { log, suggestedTasks } = executeActions(actions);
 
       setConversationHistory((prev) => [...prev, { role: 'model', content: reply }]);
@@ -485,7 +511,7 @@ export function NexorSpaceAiModal({
         {
           id: `err-${Date.now()}`,
           role: 'ai',
-          content: `Hubo un inconveniente al conectar con el motor de IA: **${err.message}**.\n\nPodés reintentar tu mensaje o consultar tus proyectos.`,
+          content: `Ocurrió un error al procesar tu solicitud: **${err.message}**.`,
           createdAt: new Date(),
           error: true,
         },
@@ -495,7 +521,6 @@ export function NexorSpaceAiModal({
     }
   };
 
-  // ─── Importar Tareas Propuestas ──────────────────────────────────────────────
   const handleImportTasks = (msgId: string, tasks: SuggestedTask[]) => {
     tasks.forEach((t) => {
       createTask({
@@ -535,8 +560,6 @@ export function NexorSpaceAiModal({
 
   if (!isOpen || !mounted) return null;
 
-  const quickPrompts = buildQuickPrompts(!!currentProject, projectTasks.length);
-
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-full max-w-3xl h-[88vh] max-h-[800px] flex flex-col shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden">
@@ -555,7 +578,7 @@ export function NexorSpaceAiModal({
                 <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Nexor-Space AI</h3>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-500/30 flex items-center gap-1">
                   <Zap className="w-3 h-3 text-amber-500" />
-                  Gemini & Multi-LLM
+                  {activeApiKey ? 'Gemini 1.5 Live' : 'Autónomo'}
                 </span>
               </div>
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 mt-0.5">
@@ -566,6 +589,14 @@ export function NexorSpaceAiModal({
           </div>
 
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              title="Configurar Google Gemini API Key"
+              className="p-2 rounded-xl text-zinc-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Configurar API</span>
+            </button>
             <button
               onClick={handleClear}
               className="p-2 rounded-xl text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
@@ -581,6 +612,55 @@ export function NexorSpaceAiModal({
             </button>
           </div>
         </div>
+
+        {/* MODAL / POPOVER DE API KEY */}
+        {isSettingsOpen && (
+          <div className="p-4 bg-violet-50/90 dark:bg-zinc-900/90 border-b border-violet-200 dark:border-zinc-800 animate-in slide-in-from-top-2 duration-150">
+            <div className="flex items-start justify-between gap-4 max-w-xl mx-auto">
+              <div className="space-y-1.5 flex-1">
+                <div className="flex items-center gap-2">
+                  <Key className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                  <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                    Google Gemini API Key (IA en Vivo)
+                  </h4>
+                </div>
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  Ingresá tu API Key gratuita de Google AI Studio para activar respuestas dinámicas de Gemini 1.5 Flash en tiempo real.
+                </p>
+                <div className="flex gap-2 pt-1">
+                  <input
+                    type="password"
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder="AIzaSy..."
+                    className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 outline-none focus:border-violet-500"
+                  />
+                  <button
+                    onClick={handleSaveApiKey}
+                    className="px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-sm transition-all"
+                  >
+                    Guardar
+                  </button>
+                </div>
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[10px] text-violet-600 dark:text-violet-400 hover:underline pt-1"
+                >
+                  <span>Obtener API Key gratis en Google AI Studio</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* HISTORIAL DE MENSAJES */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-zinc-50/40 dark:bg-zinc-950/40">
@@ -606,7 +686,6 @@ export function NexorSpaceAiModal({
                 )}
 
                 <div className={`max-w-[86%] sm:max-w-[80%] space-y-2 ${isUser ? 'items-end' : 'items-start'} flex flex-col`}>
-                  {/* Nombre y Fecha */}
                   <div className={`flex items-center gap-2 text-[10px] text-zinc-400 px-1 ${isUser ? 'flex-row-reverse' : ''}`}>
                     <span className="font-semibold text-zinc-600 dark:text-zinc-400">
                       {isUser ? currentUser.name : 'Nexor AI'}
@@ -614,7 +693,6 @@ export function NexorSpaceAiModal({
                     <span>{formatDateTime(msg.createdAt.toISOString())}</span>
                   </div>
 
-                  {/* Burbuja */}
                   <div
                     className={`relative p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
                       isUser
@@ -644,7 +722,7 @@ export function NexorSpaceAiModal({
                     )}
                   </div>
 
-                  {/* Log de Acciones ejecutadas */}
+                  {/* Acciones ejecutadas */}
                   {msg.actionLog && msg.actionLog.length > 0 && (
                     <div className="px-3.5 py-2.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 space-y-1 w-full">
                       {msg.actionLog.map((log, i) => (
@@ -654,70 +732,11 @@ export function NexorSpaceAiModal({
                       ))}
                     </div>
                   )}
-
-                  {/* Tareas Sugeridas para Importar con 1 Clic */}
-                  {msg.suggestedTasks && msg.suggestedTasks.length > 0 && (
-                    <div className="w-full p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-violet-200 dark:border-violet-500/30 space-y-2.5 shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-violet-800 dark:text-violet-300 flex items-center gap-1.5">
-                          <ListTodo className="w-4 h-4 text-violet-600" />
-                          Tareas Propuestas ({msg.suggestedTasks.length})
-                        </span>
-                        {msg.imported ? (
-                          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Importadas al Tablero
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => handleImportTasks(msg.id, msg.suggestedTasks!)}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white flex items-center gap-1.5 transition-all shadow-md shadow-violet-500/25 hover:scale-105 active:scale-95 cursor-pointer"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            Importar Todo
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        {msg.suggestedTasks.map((t, idx) => (
-                          <div
-                            key={idx}
-                            className="p-2.5 rounded-xl bg-white dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 flex items-start gap-3 text-xs"
-                          >
-                            <div className="flex-1 space-y-0.5">
-                              <p className="font-semibold text-zinc-900 dark:text-zinc-100">{t.title}</p>
-                              {t.description && (
-                                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">{t.description}</p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-transparent">
-                                {t.estimatedHours}h
-                              </span>
-                              <span
-                                className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
-                                  t.priority === 'URGENTE'
-                                    ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300'
-                                    : t.priority === 'ALTA'
-                                    ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                                    : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
-                                }`}
-                              >
-                                {t.priority}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             );
           })}
 
-          {/* Animación de Pensando */}
           {isLoading && (
             <div className="flex gap-3 items-start animate-in fade-in duration-150">
               <div className="w-8 h-8 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-violet-500/20">
@@ -741,26 +760,6 @@ export function NexorSpaceAiModal({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* PÍLDORAS DE ACCIÓN RÁPIDA DINÁMICAS */}
-        {quickPrompts.length > 0 && (
-          <div className="px-4 py-2.5 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-950 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
-            {quickPrompts.map((qp, i) => {
-              const Icon = qp.icon;
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleSend(qp.text)}
-                  disabled={isLoading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 hover:bg-violet-50 dark:hover:bg-violet-950/40 border border-zinc-200 dark:border-zinc-800 hover:border-violet-300 dark:hover:border-violet-500/40 text-[11px] font-medium text-zinc-700 dark:text-zinc-300 hover:text-violet-700 dark:hover:text-violet-300 whitespace-nowrap transition-all active:scale-95 disabled:opacity-50 shadow-xs cursor-pointer"
-                >
-                  <Icon className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 shrink-0" />
-                  {qp.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
         {/* INPUT DE MENSAJE */}
         <div className="p-3 sm:p-4 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 shrink-0">
           <form
@@ -778,13 +777,13 @@ export function NexorSpaceAiModal({
                   handleSend();
                 }
               }}
-              placeholder="Escribí lo que quieras... Ej: 'Hola', 'Borrá todas las tareas', 'Creá las tareas para una app de viajes'..."
+              placeholder="Escribí lo que quieras... Ej: 'Creame tareas para la pasarela de pagos', 'Marcá NEX-1 como terminada'..."
               className="ai-chat-input w-full bg-transparent border-0 outline-none text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 resize-none max-h-32 min-h-[36px] leading-relaxed"
             />
             <div className="flex items-center justify-between pt-1 border-t border-zinc-200/60 dark:border-zinc-800/60">
               <span className="text-[10px] text-zinc-400 dark:text-zinc-500 hidden sm:flex items-center gap-1.5">
                 <Zap className="w-3 h-3 text-violet-500" />
-                Multi-LLM Inteligente · ↵ Enviar · ⇧↵ Salto de línea
+                {activeApiKey ? 'Google Gemini 1.5 Flash Conectado' : 'Modo Autónomo · Podés vincular tu Gemini Key en ⚙️'}
               </span>
               <button
                 type="submit"
