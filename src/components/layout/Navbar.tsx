@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Sparkles,
-  Search,
   Plus,
   ChevronDown,
   Layers,
@@ -25,14 +24,13 @@ interface NavbarProps {
 
 /**
  * Componente Navbar Principal de Nexor-Space
- * Barra superior con selector de proyecto, buscador rápido, activador de IA y perfil.
+ * Barra superior con selector de proyecto, activador de IA y perfil.
  */
 export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
   const router = useRouter();
   const { currentProject, projects, setCurrentProject, currentUser } = useNexorSpace();
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSignOut = async () => {
     localStorage.clear();
@@ -142,17 +140,7 @@ export function Navbar({ onOpenNewProject, onOpenAiModal }: NavbarProps) {
         </div>
       </div>
 
-      {/* Sección Central: Buscador Rápido */}
-      <div className="hidden md:flex items-center flex-1 max-w-md relative">
-        <Search className="w-4 h-4 absolute left-3 text-zinc-400 dark:text-zinc-500" />
-        <input
-          type="text"
-          placeholder="Buscar tareas, mensajes o archivos..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800/80 rounded-xl pl-9 pr-4 py-1.5 text-xs text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 transition-all shadow-sm"
-        />
-      </div>
+
 
       {/* Sección Derecha: Asistente IA, Notificaciones, Tema y Perfil */}
       <div className="flex items-center gap-2 sm:gap-3">
