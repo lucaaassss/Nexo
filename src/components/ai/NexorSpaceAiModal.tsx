@@ -6,7 +6,6 @@ import {
   Sparkles,
   X,
   Bot,
-  Send,
   Trash2,
   CheckCircle2,
   Plus,
@@ -17,7 +16,6 @@ import {
   Clock,
   Zap,
   ArrowUp,
-  SlidersHorizontal,
 } from 'lucide-react';
 import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { formatDateTime, getInitials } from '@/lib/utils';
@@ -85,11 +83,76 @@ const COLOR_MAP: Record<string, string> = {
 };
 
 /**
+ * Sintetizador contextual de descripciones para proyectos
+ */
+function synthesizeProjectDescription(projectName: string, contextPrompt: string): string {
+  const pLower = contextPrompt.toLowerCase();
+
+  if (pLower.includes('viaje') || pLower.includes('despegar') || pLower.includes('vuelo') || pLower.includes('hotel') || pLower.includes('turism')) {
+    return `Plataforma integral de viajes y turismo para la búsqueda, cotización y reserva de vuelos, alojamientos, paquetes vacacionales y alquileres con comparador de tarifas en tiempo real.`;
+  }
+  if (pLower.includes('ecommerce') || pLower.includes('tienda') || pLower.includes('compra') || pLower.includes('producto') || pLower.includes('carrito')) {
+    return `Tienda digital y plataforma de comercio electrónico para catálogo interactivo de productos, carrito de compras, gestión de inventario y checkout online con pasarelas de pago seguras.`;
+  }
+  if (pLower.includes('streaming') || pLower.includes('musica') || pLower.includes('video') || pLower.includes('media') || pLower.includes('netflix') || pLower.includes('spotify')) {
+    return `Plataforma de streaming y entretenimiento multimedia con reproducción en alta definición, listas de reproducción personalizadas y sistema de recomendaciones inteligentes.`;
+  }
+  if (pLower.includes('fintech') || pLower.includes('banco') || pLower.includes('cripto') || pLower.includes('crypto') || pLower.includes('billetera') || pLower.includes('pago')) {
+    return `Solución FinTech para la administración financiera, billetera digital, procesamiento seguro de transacciones y panel de métricas patrimoniales en tiempo real.`;
+  }
+  if (pLower.includes('turno') || pLower.includes('salud') || pLower.includes('medic') || pLower.includes('clinica')) {
+    return `Sistema de gestión médica y turnos online para la administración de historias clínicas, agenda de profesionales y atención centralizada a pacientes.`;
+  }
+  if (pLower.includes('educa') || pLower.includes('curso') || pLower.includes('academia') || pLower.includes('estudiant')) {
+    return `Plataforma educativa interactiva para la gestión de cursos online, seguimiento del aprendizaje de estudiantes, evaluaciones y emisión de certificados.`;
+  }
+  if (pLower.includes('saas') || pLower.includes('gestion') || pLower.includes('crm') || pLower.includes('erp') || pLower.includes('equipo')) {
+    return `Plataforma SaaS para la optimización de procesos operativos, gestión ágil de equipos de trabajo y análisis de métricas de rendimiento en tiempo real.`;
+  }
+
+  // Extracción genérica si el usuario explicó algo
+  const expMatch = contextPrompt.match(/(?:es\s+una?\s+|trata\s+de\s+|para\s+)([^.,;]+)/i);
+  if (expMatch && expMatch[1]) {
+    const rawExp = expMatch[1].trim();
+    return `Plataforma orientada a ${rawExp}, integrando módulos de gestión, comunicación de equipo y seguimiento centralizado de objetivos.`;
+  }
+
+  return `Espacio de trabajo centralizado para el desarrollo, diseño y despliegue del proyecto ${projectName}, con gestión ágil de tareas, comunicación de equipo y métricas en tiempo real.`;
+}
+
+/**
+ * Genera tareas iniciales relevantes según el tema del proyecto
+ */
+function generateTopicTasks(projectName: string, contextPrompt: string): GeneratedTask[] {
+  const pLower = contextPrompt.toLowerCase();
+
+  if (pLower.includes('viaje') || pLower.includes('despegar') || pLower.includes('vuelo') || pLower.includes('hotel')) {
+    return [
+      { title: 'Buscador de vuelos y hoteles con filtros dinámicos', description: 'Implementar interfaz con selector de origen, destino, fechas y cálculo de tarifas en tiempo real.', priority: 'URGENTE', estimatedHours: 8 },
+      { title: 'Integración de pasarela de pagos turística', description: 'Conectar checkout para cobro con tarjetas, cuotas sin interés y generación de vouchers PDF.', priority: 'ALTA', estimatedHours: 6 },
+      { title: 'Sistema de reserva y confirmación de itinerarios', description: 'Modelar entidades de Reservas, Pasajeros y Hoteles con confirmación por email.', priority: 'ALTA', estimatedHours: 7 },
+      { title: 'Panel de usuario "Mis Viajes" y cancelaciones', description: 'Vista para que el cliente consulte sus boletos, check-in online y gestione cambios de fecha.', priority: 'MEDIA', estimatedHours: 5 },
+    ];
+  }
+  if (pLower.includes('ecommerce') || pLower.includes('tienda')) {
+    return [
+      { title: 'Catálogo de productos con filtros y búsqueda', description: 'Paginación, filtros por categoría/precio y vista detallada de producto con fotos.', priority: 'ALTA', estimatedHours: 6 },
+      { title: 'Carrito de compras y Checkout con Stripe', description: 'Gestión de carrito en memoria/storage y pasarela de pago segura.', priority: 'URGENTE', estimatedHours: 7 },
+      { title: 'Panel de administración de inventario y pedidos', description: 'Control de stock, órdenes entrantes y cambio de estados de envío.', priority: 'MEDIA', estimatedHours: 5 },
+    ];
+  }
+
+  return [
+    { title: `Definir especificaciones y arquitectura para ${projectName}`, description: 'Documentar componentes principales, contratos de datos y flujo de trabajo.', priority: 'ALTA', estimatedHours: 5 },
+    { title: `Desarrollar vistas principales e interfaz de usuario`, description: 'Construir vistas responsivas con tema oscuro/claro y componentes interactivos.', priority: 'MEDIA', estimatedHours: 8 },
+    { title: `Integración de lógica de negocio y persistencia`, description: 'Conectar modelos de base de datos y endpoints con validaciones robustas.', priority: 'ALTA', estimatedHours: 7 },
+    { title: `Testing integral y pipeline de despliegue`, description: 'Validar rendimiento, pruebas unitarias y puesta en producción.', priority: 'URGENTE', estimatedHours: 4 },
+  ];
+}
+
+/**
  * Componente NexorSpaceAiModal
- * Asistente Autónomo con Control Total sobre el Proyecto en Nexor-Space.
- * Puede ejecutar cualquier acción requerida (renombrar proyectos, cambiar descripción, color,
- * crear tareas en lote, modificar estados, prioridades, borrar tareas, asignar miembros)
- * y ofrece una caja de texto moderna, fluida y sin bordes residuales.
+ * Asistente Autónomo con Razonamiento Multi-Intención y Control Total sobre el Proyecto.
  */
 export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
   const {
@@ -119,12 +182,12 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     setMounted(true);
   }, []);
 
-  // Mensaje de bienvenida inicial
+  // Mensaje inicial
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       const welcomeContent = currentProject
-        ? `¡Hola **${currentUser.name.split(' ')[0]}**! 👋 Soy **Nexor-Space AI**, tu agente con **Control Total** sobre el proyecto **${currentProject.name}**.\n\nPuedo ejecutar cualquier acción que me pidas en lenguaje natural:\n- 🏷️ *"Cambiá el nombre del proyecto a..."* o *"Cambiá la descripción / color..."*\n- ➕ *"Creá una tarea para..."* o *"Creá estas 3 tareas: 1. Setup, 2. Backend..."*\n- 🗑️ *"Borrá todas las tareas"* o *"Borrá la tarea [nombre]"*\n- 🚀 *"Marcá como completada la tarea X"* o *"Cambiá la prioridad a Urgente"*.\n- 📝 *"Agregá la subtarea 'Revisar PR' a la tarea X"* o *"Registrá 2 horas trabajadas"*.\n- 📊 *"Resumí el avance"* o consultame cualquier duda de código y arquitectura.\n\n¿Qué orden o consulta tenés para hoy?`
-        : `¡Hola **${currentUser.name.split(' ')[0]}**! 👋 Soy **Nexor-Space AI** con control total de proyectos.\n\n¿En qué puedo ayudarte hoy?`;
+        ? `¡Hola **${currentUser.name.split(' ')[0]}**! 👋 Soy **Nexor-Space AI**, tu agente con **Control Total** sobre el proyecto **${currentProject.name}**.\n\nPuedo procesar instrucciones compuestas y gestionar todo tu espacio de trabajo:\n- 🏷️ *"Cambiá el nombre del proyecto a Aerius y creá una descripción para una app de viajes..."*\n- ➕ *"Creá estas 3 tareas: 1. Setup, 2. Backend, 3. UI..."*\n- 🗑️ *"Borrá todas las tareas"* o *"Borrá las tareas finalizadas"*\n- 🚀 *"Marcá como completada la tarea X"* o *"Cambiá la prioridad a Urgente"*\n- 📝 *"Agregá la subtarea 'Revisar PR' a la tarea X"*\n- 📊 *"Resumí el avance"* o consultame cualquier duda técnica de arquitectura y código.\n\n¿Qué orden o consulta tenés para hoy?`
+        : `¡Hola **${currentUser.name.split(' ')[0]}**! 👋 Soy **Nexor-Space AI**.\n\n¿En qué puedo ayudarte hoy?`;
 
       setMessages([
         {
@@ -153,7 +216,6 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputMessage(e.target.value);
-    // Auto-ajustar altura
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
@@ -163,8 +225,9 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
   if (!isOpen || !mounted) return null;
 
   /**
-   * MOTOR DE ACCIÓN TOTAL (Omnipotent Project Agent)
-   * Interpreta cualquier solicitud de control sobre proyectos, tareas, subtareas, miembros y métricas.
+   * MOTOR DE RAZONAMIENTO Y EJECUCIÓN MULTI-INTENCIÓN (Deep Intent & Action Pipeline)
+   * Analiza la estructura completa del mensaje, extrae entidades limpias, detecta múltiples
+   * acciones simultáneas (renombrar + generar descripción + crear tareas) y las ejecuta.
    */
   const processAutonomousAgent = async (userPrompt: string): Promise<{
     content: string;
@@ -173,50 +236,121 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
   }> => {
     const raw = userPrompt.trim();
     const promptLower = raw.toLowerCase();
-    const projectName = currentProject?.name || 'este proyecto';
+    const currentProjName = currentProject?.name || 'este proyecto';
     const totalTasks = projectTasks.length;
     const completedTasks = projectTasks.filter((t) => t.status === 'FINALIZADA').length;
     const pendingTasks = projectTasks.filter((t) => t.status === 'PENDIENTE').length;
     const inProgressTasks = projectTasks.filter((t) => t.status === 'EN_PROGRESO').length;
 
     // =========================================================================
-    // 1. CONTROL DE PROYECTO: CAMBIAR NOMBRE DEL PROYECTO
+    // CASO 1: INSTRUCCIÓN COMPUESTA (RENOMBRAR + GENERAR DESCRIPCIÓN)
+    // Ejemplo: "cambia el nombre del proyecto a aerius y crea una descripcion que explique de que trata, es una pagina de viajes tipo despegar"
+    // O: "queria que el proyecto se llame solo "aerius" y que aparte de cambiarle el nombre me hagas una descripcion"
     // =========================================================================
-    const renameMatch = raw.match(
-      /(?:cambia|cambiar|renombra|renombrar|actualiza|actualizar|ponele|poner|llama|llamar)\s+(?:el\s+)?(?:nombre\s+)?(?:del\s+proyecto\s+)?(?:a|por|como)\s+["']?([^"'\n]+)["']?/i
-    ) || raw.match(
-      /(?:nuevo\s+nombre\s+(?:del\s+proyecto\s+)?:?\s*)(["']?[^"'\n]+["']?)/i
-    );
+    const wantsRename =
+      /(?:cambia|cambiar|renombra|renombrar|ponele|poner|llama|llamar|se llame|nombre)\s+(?:el\s+)?(?:nombre\s+)?(?:del\s+proyecto\s+)?/i.test(promptLower) ||
+      promptLower.includes('nombre del proyecto') ||
+      promptLower.includes('se llame');
 
-    if (renameMatch && renameMatch[1] && currentProject) {
-      let newName = renameMatch[1].trim().replace(/^["']|["']$/g, '');
-      newName = newName.replace(/^(a\s+|como\s+)/i, '').trim();
+    const wantsDescription =
+      /(?:crea|crear|hagas|hacer|pone|poner|genera|generar|actualiza|actualizar|armar)\s+(?:una\s+|la\s+)?descripci[oó]n/i.test(promptLower) ||
+      promptLower.includes('descripcion') ||
+      promptLower.includes('descripción');
 
-      if (newName) {
-        updateProject(currentProject.id, { name: newName });
+    if (wantsRename && wantsDescription && currentProject) {
+      // Extraer el nombre limpio
+      let extractedName = '';
+
+      // Patrón 1: Entre comillas
+      const quotedMatch = raw.match(/["']([a-zA-Z0-9_\-\s]{2,30})["']/);
+      if (quotedMatch && quotedMatch[1]) {
+        extractedName = quotedMatch[1].trim();
+      }
+
+      // Patrón 2: Después de "a", "por", "como", "solo"
+      if (!extractedName) {
+        const nameMatch = raw.match(
+          /(?:a|por|como|solo|llamado|titulado)\s+["']?([a-zA-Z0-9_\-]{2,25})["']?(?=\s+y\s+|\s+con\s+|\s+que\s+|\s*,|\s*\.|\s*$)/i
+        );
+        if (nameMatch && nameMatch[1]) {
+          extractedName = nameMatch[1].trim();
+        }
+      }
+
+      // Fallback si aún no lo tiene: primera palabra capitalizable tras "nombre a" o "se llame"
+      if (!extractedName) {
+        const fallbackMatch = raw.match(/(?:nombre\s+(?:del\s+proyecto\s+)?a|se\s+llame\s+(?:solo\s+)?)\s*([a-zA-Z0-9_\-]+)/i);
+        if (fallbackMatch && fallbackMatch[1]) {
+          extractedName = fallbackMatch[1].trim();
+        }
+      }
+
+      const finalProjectName = extractedName
+        ? extractedName.charAt(0).toUpperCase() + extractedName.slice(1).toLowerCase()
+        : currentProject.name;
+
+      // Generar la descripción contextual
+      const generatedDescription = synthesizeProjectDescription(finalProjectName, raw);
+
+      // Calcular clave
+      const cleanKey = finalProjectName.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || currentProject.key;
+
+      // Ejecutar mutación real en el proyecto
+      updateProject(currentProject.id, {
+        name: finalProjectName,
+        description: generatedDescription,
+        key: cleanKey,
+      });
+
+      // Generar tareas recomendadas según el tema
+      const suggestedTasks = generateTopicTasks(finalProjectName, raw);
+
+      return {
+        content: `### 🧠 Análisis y Ejecución de Solicitud\n\nHe analizado tu mensaje y apliqué los siguientes cambios en **${finalProjectName}**:\n\n- 🏷️ **Nombre del Proyecto:** Actualizado a **${finalProjectName}** (Clave: \`${cleanKey}\`)\n- 📝 **Descripción Contextual Generada:**\n  *"${generatedDescription}"*\n\n---\n🎯 **Estructura de Trabajo Sugerida para ${finalProjectName}:**\nPara ayudarte a comenzar, generé **${suggestedTasks.length} tareas clave** basadas en tu temática. Podés importarlas todas al tablero con 1 clic:`,
+        generatedTasks: suggestedTasks,
+      };
+    }
+
+    // =========================================================================
+    // CASO 2: RENOMBRAR PROYECTO ÚNICAMENTE
+    // =========================================================================
+    if (wantsRename && currentProject) {
+      let cleanName = '';
+      const quoted = raw.match(/["']([a-zA-Z0-9_\-\s]{2,30})["']/);
+      if (quoted && quoted[1]) {
+        cleanName = quoted[1].trim();
+      } else {
+        const m = raw.match(
+          /(?:cambia|cambiar|renombra|renombrar|ponele|poner|llama|llamar|se llame)\s+(?:el\s+)?(?:nombre\s+)?(?:del\s+proyecto\s+)?(?:a|por|como|solo)?\s*["']?([a-zA-Z0-9_\-]{2,25})["']?/i
+        );
+        if (m && m[1]) {
+          cleanName = m[1].trim();
+        }
+      }
+
+      if (cleanName) {
+        const finalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+        const cleanKey = finalName.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || currentProject.key;
+        updateProject(currentProject.id, { name: finalName, key: cleanKey });
         return {
-          content: `🏷️ **Nombre del proyecto actualizado exitosamente:**\n\nEl proyecto ahora se llama **${newName}** (Identificador: \`${currentProject.key}\`).\n\nEl cambio ya se aplicó en toda la plataforma y base de datos.`,
+          content: `🏷️ **Nombre del proyecto actualizado:**\n\nEl proyecto ahora se llama **${finalName}** (Identificador: \`${cleanKey}\`).`,
         };
       }
     }
 
     // =========================================================================
-    // 2. CONTROL DE PROYECTO: CAMBIAR DESCRIPCIÓN
+    // CASO 3: CAMBIAR / GENERAR DESCRIPCIÓN DEL PROYECTO ÚNICAMENTE
     // =========================================================================
-    const descMatch = raw.match(
-      /(?:cambia|cambiar|actualiza|actualizar|modifica|modificar|ponele|poner)\s+(?:la\s+)?descripci[oó]n\s+(?:del\s+proyecto\s+)?(?:a|por|como|:)\s+["']?([^"'\n]+)["']?/i
-    );
-
-    if (descMatch && descMatch[1] && currentProject) {
-      const newDesc = descMatch[1].trim().replace(/^["']|["']$/g, '');
-      updateProject(currentProject.id, { description: newDesc });
+    if (wantsDescription && currentProject) {
+      const generatedDescription = synthesizeProjectDescription(currentProject.name, raw);
+      updateProject(currentProject.id, { description: generatedDescription });
       return {
-        content: `📝 **Descripción del proyecto actualizada:**\n\n*"${newDesc}"*`,
+        content: `📝 **Descripción del proyecto actualizada exitosamente:**\n\n*"${generatedDescription}"*`,
       };
     }
 
     // =========================================================================
-    // 3. CONTROL DE PROYECTO: CAMBIAR COLOR / TEMA DEL PROYECTO
+    // CASO 4: CAMBIAR COLOR DEL PROYECTO
     // =========================================================================
     const colorMatch = promptLower.match(
       /(?:cambia|cambiar|pone|poner)\s+(?:el\s+)?color\s+(?:del\s+proyecto\s+)?(?:a|por)\s+(#[0-9a-f]{3,6}|[a-záéíóú]+)/i
@@ -232,28 +366,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // 4. CONTROL DE PROYECTO: INVITAR / AGREGAR MIEMBRO
-    // =========================================================================
-    const inviteMatch = promptLower.match(
-      /(?:invita|invitar|agrega|agregar|anade|añadir)\s+(?:al\s+miembro\s+|a\s+)?([^\s@]+@[^\s@]+\.[^\s@]+)(?:\s+como\s+(admin|administrador|lider|líder|miembro|invitado))?/i
-    );
-
-    if (inviteMatch && inviteMatch[1] && currentProject) {
-      const email = inviteMatch[1].trim();
-      const rawRole = (inviteMatch[2] || 'MEMBER').toLowerCase();
-      let role: MemberRole = 'MEMBER';
-      if (rawRole.includes('admin')) role = 'ADMIN';
-      else if (rawRole.includes('lid') || rawRole.includes('líd')) role = 'LEADER';
-      else if (rawRole.includes('invit') || rawRole.includes('guest')) role = 'GUEST';
-
-      addMemberToProject(currentProject.id, email, role);
-      return {
-        content: `👥 **Miembro incorporado al equipo:**\n\n- **Email:** \`${email}\`\n- **Rol asignado:** \`${role}\`\n- **Proyecto:** **${currentProject.name}**\n\nYa puede colaborar en las tareas y el chat del canal.`,
-      };
-    }
-
-    // =========================================================================
-    // 5. ACCIÓN: BORRAR TODAS LAS TAREAS DEL PROYECTO
+    // CASO 5: BORRAR TODAS LAS TAREAS DEL PROYECTO
     // =========================================================================
     if (
       /(borra|elimina|borrar|eliminar|quitar|vaciar|limpiar)\s+(todas\s+las\s+|los\s+|las\s+)?tareas/i.test(promptLower) ||
@@ -261,7 +374,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     ) {
       if (projectTasks.length === 0) {
         return {
-          content: `El proyecto **${projectName}** no tiene tareas registradas actualmente. El tablero está completamente limpio.`,
+          content: `El proyecto **${currentProjName}** no tiene tareas registradas actualmente en el tablero.`,
         };
       }
 
@@ -269,37 +382,26 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
       projectTasks.forEach((t) => deleteTask(t.id));
 
       return {
-        content: `🗑️ **Acción ejecutada:**\n\nHe eliminado **${count} tarea(s)** del proyecto **${projectName}**.\n\nEl tablero quedó 100% limpio y listo para empezar un nuevo ciclo.`,
+        content: `🗑️ **Acción ejecutada con éxito:**\n\nHe eliminado **${count} tarea(s)** del proyecto **${currentProjName}**.\n\nEl tablero está completamente limpio.`,
       };
     }
 
     // =========================================================================
-    // 6. ACCIÓN: BORRAR TAREAS POR ESTADO (FINALIZADAS O PENDIENTES)
+    // CASO 6: BORRAR TAREAS POR ESTADO (FINALIZADAS O PENDIENTES)
     // =========================================================================
     if (/(borra|elimina|limpiar|quitar)\s+(las\s+)?(tareas\s+)?(finalizadas|completadas|terminadas)/i.test(promptLower)) {
       const finished = projectTasks.filter((t) => t.status === 'FINALIZADA');
       if (finished.length === 0) {
-        return { content: `No hay tareas en estado **FINALIZADA** para eliminar.` };
+        return { content: `No se encontraron tareas en estado **FINALIZADA** para eliminar.` };
       }
       finished.forEach((t) => deleteTask(t.id));
       return {
-        content: `🧹 **Limpieza completada:** Se eliminaron **${finished.length} tarea(s) finalizada(s)** del proyecto **${projectName}**:\n${finished.map((t) => `- \`${t.key}\`: ${t.title}`).join('\n')}`,
-      };
-    }
-
-    if (/(borra|elimina|limpiar|quitar)\s+(las\s+)?(tareas\s+)?(pendientes)/i.test(promptLower)) {
-      const pend = projectTasks.filter((t) => t.status === 'PENDIENTE');
-      if (pend.length === 0) {
-        return { content: `No hay tareas en estado **PENDIENTE** para eliminar.` };
-      }
-      pend.forEach((t) => deleteTask(t.id));
-      return {
-        content: `🧹 **Tareas pendientes eliminadas:** Se eliminaron **${pend.length} tarea(s)** pendientes.`,
+        content: `🧹 **Limpieza de tablero completada:** Se eliminaron **${finished.length} tarea(s) finalizada(s)** de **${currentProjName}**:\n${finished.map((t) => `- \`${t.key}\`: ${t.title}`).join('\n')}`,
       };
     }
 
     // =========================================================================
-    // 7. ACCIÓN: CREAR MÚLTIPLES TAREAS EN LOTE (LISTA NUMERADA O CON COMA)
+    // CASO 7: CREAR TAREAS EN LOTE (MÚLTIPLES TAREAS)
     // =========================================================================
     const isMultiTaskCreation =
       (promptLower.includes('crea') || promptLower.includes('agrega')) &&
@@ -310,7 +412,6 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
       const createdList: string[] = [];
 
       for (const line of lines) {
-        // Limpiar prefijos numéricos como "1.", "2)", "- "
         const cleanTitle = line.replace(/^(?:crea|crear|agrega|agregar|las siguientes tareas:?|\d+[\.\)]|\-\s*)\s*/i, '').trim();
         if (cleanTitle && cleanTitle.length > 2 && !cleanTitle.toLowerCase().startsWith('tarea')) {
           const t = createTask({
@@ -326,13 +427,13 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
 
       if (createdList.length > 0) {
         return {
-          content: `✅ **Se crearon e insertaron ${createdList.length} tareas en el tablero:**\n\n${createdList.join('\n')}\n\nTodas están listas en estado \`PENDIENTE\` en el proyecto **${projectName}**.`,
+          content: `✅ **Se crearon e insertaron ${createdList.length} tareas en el tablero:**\n\n${createdList.join('\n')}\n\nTodas están listas en estado \`PENDIENTE\` en **${currentProjName}**.`,
         };
       }
     }
 
     // =========================================================================
-    // 8. ACCIÓN: CREAR TAREA INDIVIDUAL CON TODOS SUS PARÁMETROS
+    // CASO 8: CREAR TAREA INDIVIDUAL
     // =========================================================================
     const createTaskMatch = raw.match(
       /(?:crea|crear|agrega|agregar|nueva|anota|anotar|generar)\s+(?:una\s+|la\s+)?tarea\s+(?:llamada\s+|titulada\s+|de\s+|para\s+)?["']?([^"'\n]+)["']?/i
@@ -365,12 +466,12 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
       });
 
       return {
-        content: `✅ **Tarea creada e insertada en el tablero:**\n\n- **Identificador:** \`${newTask.key}\`\n- **Título:** **${newTask.title}**\n- **Estado inicial:** \`PENDIENTE\`\n- **Prioridad:** \`${priority}\`\n- **Tiempo estimado:** \`${estimatedHours}h\`\n- **Etiquetas:** ${tags.length > 0 ? tags.map((tg) => `\`#${tg}\``).join(' ') : '\`#General\`'}\n\nYa la podés ver en el tablero Kanban de **${projectName}**.`,
+        content: `✅ **Tarea creada e insertada en el tablero:**\n\n- **Identificador:** \`${newTask.key}\`\n- **Título:** **${newTask.title}**\n- **Estado inicial:** \`PENDIENTE\`\n- **Prioridad:** \`${priority}\`\n- **Tiempo estimado:** \`${estimatedHours}h\`\n- **Etiquetas:** ${tags.length > 0 ? tags.map((tg) => `\`#${tg}\``).join(' ') : '\`#General\`'}\n\nYa la podés ver en el tablero Kanban de **${currentProjName}**.`,
       };
     }
 
     // =========================================================================
-    // 9. ACCIÓN: BORRAR TAREA ESPECÍFICA
+    // CASO 9: BORRAR TAREA ESPECÍFICA
     // =========================================================================
     const deleteTaskMatch = promptLower.match(
       /(?:borra|elimina|borrar|eliminar|quitar)\s+(?:la\s+)?tarea\s+(?:llamada\s+|titulada\s+|de\s+)?["']?([^"'\n]+)["']?/i
@@ -385,7 +486,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
       if (target) {
         deleteTask(target.id);
         return {
-          content: `🗑️ **Tarea eliminada con éxito:**\n- **Clave:** \`${target.key}\`\n- **Título:** **${target.title}**\n\nFue removida del tablero del proyecto **${projectName}**.`,
+          content: `🗑️ **Tarea eliminada con éxito:**\n- **Clave:** \`${target.key}\`\n- **Título:** **${target.title}**\n\nFue removida del tablero del proyecto **${currentProjName}**.`,
         };
       } else {
         return {
@@ -395,19 +496,8 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // 10. ACCIÓN: CAMBIAR ESTADO DE TAREA (INDIVIDUAL O TODAS)
+    // CASO 10: CAMBIAR ESTADO DE TAREA
     // =========================================================================
-    if (/(?:pasa|pasar|marca|marcar|cambia|cambiar)\s+todas\s+las\s+tareas\s+(?:a|como)\s+(finalizadas|completadas|en progreso|pendientes)/i.test(promptLower)) {
-      let targetStatus: TaskStatus = 'FINALIZADA';
-      if (promptLower.includes('progreso')) targetStatus = 'EN_PROGRESO';
-      else if (promptLower.includes('pendiente')) targetStatus = 'PENDIENTE';
-
-      projectTasks.forEach((t) => updateTask(t.id, { status: targetStatus }));
-      return {
-        content: `🚀 **Se actualizaron todas las tareas (${projectTasks.length}) a estado \`${targetStatus}\`.**`,
-      };
-    }
-
     const statusMatch = promptLower.match(
       /(?:marca|marcar|pasa|pasar|cambia|cambiar|mover|actualiza|actualizar)\s+(?:la\s+)?tarea\s+["']?([^"']+)["']?\s+(?:a|como)\s+(finalizada|completada|terminada|en progreso|en revision|en revisión|pendiente)/i
     );
@@ -434,7 +524,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // 11. ACCIÓN: CAMBIAR PRIORIDAD DE TAREA
+    // CASO 11: CAMBIAR PRIORIDAD DE TAREA
     // =========================================================================
     const priorityMatch = promptLower.match(
       /(?:cambia|cambiar|pone|poner|establece|establecer)\s+(?:la\s+)?prioridad\s+(?:de\s+la\s+tarea\s+)?["']?([^"']+)["']?\s+a\s+(urgente|alta|media|baja)/i
@@ -457,7 +547,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // 12. ACCIÓN: REGISTRAR HORAS TRABAJADAS
+    // CASO 12: REGISTRAR HORAS TRABAJADAS
     // =========================================================================
     const logTimeMatch = promptLower.match(
       /(?:registra|registrar|anota|anotar|agrega|agregar)\s+(\d+(?:\.\d+)?)\s*(?:horas|h|hs)\s+(?:trabajadas\s+)?(?:en|a)\s+(?:la\s+tarea\s+)?["']?([^"'\n]+)["']?/i
@@ -480,7 +570,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // 13. ACCIÓN: AGREGAR SUBTAREA
+    // CASO 13: AGREGAR SUBTAREA
     // =========================================================================
     const subtaskMatch = promptLower.match(
       /(?:agrega|agregar|anade|añadir)\s+(?:la\s+)?subtarea\s+["']?([^"']+)["']?\s+(?:a|en)\s+(?:la\s+tarea\s+)?["']?([^"']+)["']?/i
@@ -503,7 +593,28 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // 14. DESCOMPOSICIÓN DINÁMICA / PLAN DE TRABAJO TEMÁTICO
+    // CASO 14: INVITAR MIEMBRO
+    // =========================================================================
+    const inviteMatch = promptLower.match(
+      /(?:invita|invitar|agrega|agregar|anade|añadir)\s+(?:al\s+miembro\s+|a\s+)?([^\s@]+@[^\s@]+\.[^\s@]+)(?:\s+como\s+(admin|administrador|lider|líder|miembro|invitado))?/i
+    );
+
+    if (inviteMatch && inviteMatch[1] && currentProject) {
+      const email = inviteMatch[1].trim();
+      const rawRole = (inviteMatch[2] || 'MEMBER').toLowerCase();
+      let role: MemberRole = 'MEMBER';
+      if (rawRole.includes('admin')) role = 'ADMIN';
+      else if (rawRole.includes('lid') || rawRole.includes('líd')) role = 'LEADER';
+      else if (rawRole.includes('invit') || rawRole.includes('guest')) role = 'GUEST';
+
+      addMemberToProject(currentProject.id, email, role);
+      return {
+        content: `👥 **Miembro incorporado al equipo:**\n\n- **Email:** \`${email}\`\n- **Rol:** \`${role}\`\n- **Proyecto:** **${currentProject.name}**`,
+      };
+    }
+
+    // =========================================================================
+    // CASO 15: DESCOMPOSICIÓN DINÁMICA / PLAN TEMÁTICO
     // =========================================================================
     if (
       promptLower.includes('dividir') ||
@@ -513,45 +624,15 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
       promptLower.includes('crear tareas') ||
       promptLower.includes('sprint')
     ) {
-      let customTasks: GeneratedTask[] = [];
-
-      if (promptLower.includes('auth') || promptLower.includes('login') || promptLower.includes('usuario')) {
-        customTasks = [
-          { title: 'Configurar flujo de autenticación y sesiones seguras', description: 'Integrar login por correo, OAuth (Google/GitHub) y tokens JWT.', priority: 'URGENTE', estimatedHours: 5 },
-          { title: 'Diseñar interfaz de Login, Registro y Recuperación', description: 'Crear vistas con validación en tiempo real y micro-animaciones.', priority: 'MEDIA', estimatedHours: 4 },
-          { title: 'Implementar control de roles y permisos (RBAC)', description: 'Restringir rutas protegidas según roles ADMIN, LEADER y MEMBER.', priority: 'ALTA', estimatedHours: 6 },
-          { title: 'Pruebas de seguridad y auditoría de sesiones', description: 'Validar mitigación de vulnerabilidades XSS y CSRF.', priority: 'MEDIA', estimatedHours: 3 },
-        ];
-      } else if (promptLower.includes('pago') || promptLower.includes('stripe') || promptLower.includes('checkout') || promptLower.includes('ecommerce')) {
-        customTasks = [
-          { title: 'Integrar pasarela de pagos Stripe / MercadoPago', description: 'Configurar endpoints de Webhooks para confirmación de transacciones.', priority: 'URGENTE', estimatedHours: 8 },
-          { title: 'Diseñar flujo de Checkout y carrito de compras', description: 'Crear pantalla de resumen de orden con cálculo dinámico de impuestos.', priority: 'ALTA', estimatedHours: 6 },
-          { title: 'Gestión de facturación y recibos automáticos', description: 'Generar comprobantes descargables en formato PDF y envío por email.', priority: 'MEDIA', estimatedHours: 5 },
-        ];
-      } else if (promptLower.includes('api') || promptLower.includes('backend') || promptLower.includes('base de datos') || promptLower.includes('db')) {
-        customTasks = [
-          { title: 'Definir esquema de base de datos relacional y migraciones', description: 'Modelar entidades, relaciones e índices optimizados en Prisma ORM.', priority: 'ALTA', estimatedHours: 6 },
-          { title: 'Construir controladores RESTful con validaciones robustas', description: 'Implementar validación de payloads con Zod y manejo centralizado de errores.', priority: 'ALTA', estimatedHours: 7 },
-          { title: 'Configurar Rate Limiting y caché con Redis', description: 'Optimizar tiempos de respuesta y proteger endpoints críticos.', priority: 'MEDIA', estimatedHours: 4 },
-          { title: 'Suite de pruebas de integración para endpoints', description: 'Validar contratos de API con mocks de base de datos.', priority: 'MEDIA', estimatedHours: 5 },
-        ];
-      } else {
-        customTasks = [
-          { title: `Definir arquitectura y especificaciones para ${projectName}`, description: 'Documentar componentes principales, contratos de datos y flujo de trabajo.', priority: 'ALTA', estimatedHours: 6 },
-          { title: `Desarrollar vistas principales e interfaz de usuario`, description: 'Construir componentes responsivos con tema oscuro/claro y estados de carga.', priority: 'MEDIA', estimatedHours: 8 },
-          { title: `Integración de lógica de negocio y persistencia`, description: 'Conectar interfaces con base de datos y validaciones de seguridad.', priority: 'ALTA', estimatedHours: 7 },
-          { title: `Testing integral y pipeline de despliegue continuo`, description: 'Realizar pruebas de carga, verificación de rendimiento y deploy en producción.', priority: 'URGENTE', estimatedHours: 5 },
-        ];
-      }
-
+      const suggested = generateTopicTasks(currentProjName, raw);
       return {
-        content: `He diseñado una propuesta estructurada con **${customTasks.length} tareas clave** para **${projectName}**. Podés importarlas todas directamente al tablero con el botón debajo:`,
-        generatedTasks: customTasks,
+        content: `He diseñado una propuesta estructurada con **${suggested.length} tareas clave** para **${currentProjName}**. Podés importarlas todas directamente al tablero con el botón debajo:`,
+        generatedTasks: suggested,
       };
     }
 
     // =========================================================================
-    // 15. RESUMEN EJECUTIVO Y DIAGNÓSTICO DEL PROYECTO
+    // CASO 16: RESUMEN Y DIAGNÓSTICO
     // =========================================================================
     if (
       promptLower.includes('resumen') ||
@@ -568,7 +649,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
       const highCount = projectTasks.filter((t) => t.priority === 'ALTA').length;
 
       return {
-        content: `### 📊 Diagnóstico del Proyecto: **${projectName}**\n\n- **Porcentaje de Entrega:** \`${progressPercent}%\` (${completedTasks} de ${totalTasks} tareas)\n- **Distribución:**\n  - ⏳ **Pendientes:** ${pendingTasks}\n  - 🚀 **En Progreso:** ${inProgressTasks}\n  - ✅ **Finalizadas:** ${completedTasks}\n- **Prioridades Críticas:** ${urgentCount} Urgentes, ${highCount} Altas\n- **Horas Estimadas:** \`${totalEstimated}h\` | **Registradas:** \`${totalLogged}h\`\n\n**Recomendación de Nexor AI:**\n${
+        content: `### 📊 Diagnóstico del Proyecto: **${currentProjName}**\n\n- **Porcentaje de Entrega:** \`${progressPercent}%\` (${completedTasks} de ${totalTasks} tareas)\n- **Distribución:**\n  - ⏳ **Pendientes:** ${pendingTasks}\n  - 🚀 **En Progreso:** ${inProgressTasks}\n  - ✅ **Finalizadas:** ${completedTasks}\n- **Prioridades Críticas:** ${urgentCount} Urgentes, ${highCount} Altas\n- **Horas Estimadas:** \`${totalEstimated}h\` | **Registradas:** \`${totalLogged}h\`\n\n**Recomendación de Nexor AI:**\n${
           urgentCount > 0
             ? `⚠️ Hay **${urgentCount} tarea(s) urgente(s)** activas. Se sugiere destrabar esos ítems primero.`
             : totalTasks === 0
@@ -579,10 +660,10 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // 16. CONSULTORÍA TÉCNICA Y PREGUNTAS ABIERTAS
+    // CASO 17: CONSULTORÍA Y ASISTENCIA TÉCNICA ABIERTA
     // =========================================================================
     return {
-      content: `### 💡 Asistencia Técnica: ${raw}\n\nCon respecto a tu consulta sobre **${projectName}**:\n\n1. **Análisis:** He evaluado los requerimientos y el estado del proyecto (${totalTasks} tareas registradas).\n2. **Recomendación:** Podés indicarme cualquier acción sobre el tablero o pedirme que cree tareas específicas para llevar a cabo esta idea.\n\n¿Querés que cree las tareas necesarias o que modifique algún parámetro del proyecto?`,
+      content: `### 💡 Asistencia y Análisis: ${raw}\n\nCon respecto a tu consulta sobre **${currentProjName}**:\n\n1. **Evaluación:** He analizado tu solicitud en relación a los recursos actuales del proyecto (${totalTasks} tareas registradas).\n2. **Acciones Disponibles:** Podés pedirme modificar cualquier configuración (nombre, descripción, color), crear o reordenar tareas en el tablero, o planificar un nuevo módulo.\n\n¿Querés que aplique algún cambio específico en el proyecto o que creemos las tareas necesarias?`,
     };
   };
 
@@ -698,6 +779,11 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                 {line.replace('### ', '')}
               </h4>
             );
+          }
+
+          // Separador horizontal ---
+          if (line.trim() === '---') {
+            return <hr key={idx} className="my-2 border-zinc-200 dark:border-zinc-800" />;
           }
 
           // Listas con guión o bullet
