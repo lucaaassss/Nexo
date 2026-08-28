@@ -105,23 +105,83 @@ export class NexorSpaceStore {
     }
   }
 
-  /** Sincroniza proyectos y tareas desde la base de datos (Supabase prioritario) */
+  /** Sincroniza proyectos, tareas y notificaciones desde la base de datos (Supabase + API) */
   public async syncWithDatabase() {
     if (typeof window === 'undefined') return;
-    // Cargar notificaciones persistidas al mismo tiempo
+    // Cargar notificaciones persistidas desde la API
     this.fetchNotificationsFromDB();
 
     try {
-      // 1. Intentar obtener proyectos directamente desde Supabase si está configurado
+      // 1. Sincronizar con Supabase si está configurado
       if (isSupabaseConfigured) {
-        // Obtenemos los proyectos donde el creador sea el usuario actual
-        const { data: supaProjects, error } = await supabase
+        // Cargar notificaciones de Supabase
+        try {
+          const { data: supaNotifs } = await supabase
+            .from('notificaciones')
+            .select('*')
+            .eq('usuario_id', this.currentUser.id)
+            .order('fecha', { ascending: false });
+
+          if (Array.isArray(supaNotifs) && supaNotifs.length > 0) {
+            const mappedNotifs: NotificationItem[] = supaNotifs.map((n: any) => ({
+              id: String(n.id),
+              userId: n.usuario_id || this.currentUser.id,
+              title: n.titulo || 'Notificación',
+              message: n.descripcion || '',
+              type: (n.tipo || 'INVITE') as any,
+              read: Boolean(n.leida),
+              createdAt: n.fecha || new Date().toISOString(),
+            }));
+
+            const existingIds = new Set(this.notifications.map((n) => n.id));
+            const newNotifs = mappedNotifs.filter((n) => !existingIds.has(n.id));
+            if (newNotifs.length > 0) {
+              this.notifications = [...newNotifs, ...this.notifications];
+              this.persistState();
+              this.notify();
+            }
+          }
+        } catch (notifErr) {
+          console.warn('Error cargando notificaciones de Supabase:', notifErr);
+        }
+
+        // Cargar proyectos donde el usuario es creador
+        const { data: createdProjects } = await supabase
           .from('proyectos')
           .select('*')
           .eq('creador_id', this.currentUser.id)
           .order('fecha_creacion', { ascending: false });
-        if (!error && Array.isArray(supaProjects) && supaProjects.length > 0) {
-          const formattedProjects: Project[] = supaProjects.map((p: any) => {
+
+        // Cargar proyectos donde el usuario es miembro invitado
+        const { data: memberProjects } = await supabase
+          .from('proyecto_miembros')
+          .select('proyecto_id, rol, proyectos(*)')
+          .eq('usuario_id', this.currentUser.id);
+
+        const allSupaProjects: any[] = [];
+        const seenProjIds = new Set<string>();
+
+        if (Array.isArray(createdProjects)) {
+          createdProjects.forEach((p) => {
+            if (!seenProjIds.has(String(p.id))) {
+              seenProjIds.add(String(p.id));
+              allSupaProjects.push({ ...p, userRole: 'ADMIN' });
+            }
+          });
+        }
+
+        if (Array.isArray(memberProjects)) {
+          memberProjects.forEach((m: any) => {
+            const proj = Array.isArray(m.proyectos) ? m.proyectos[0] : m.proyectos;
+            if (proj && !seenProjIds.has(String(proj.id))) {
+              seenProjIds.add(String(proj.id));
+              allSupaProjects.push({ ...proj, userRole: m.rol || 'MEMBER' });
+            }
+          });
+        }
+
+        if (allSupaProjects.length > 0) {
+          const formattedProjects: Project[] = allSupaProjects.map((p: any) => {
             const rawKey = p.nombre
               ? p.nombre.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || 'PRJ'
               : 'PRJ';
@@ -141,7 +201,7 @@ export class NexorSpaceStore {
                   id: 'mem_' + p.id,
                   projectId: String(p.id),
                   userId: p.creador_id || this.currentUser.id,
-                  role: 'ADMIN' as MemberRole,
+                  role: (p.userRole || 'MEMBER') as MemberRole,
                   joinedAt: p.fecha_creacion ? new Date(p.fecha_creacion).toISOString() : new Date().toISOString(),
                   user: this.currentUser,
                 },
@@ -158,14 +218,6 @@ export class NexorSpaceStore {
             if (updatedCurrent) this.currentProject = updatedCurrent;
           }
 
-          this.persistState();
-          this.notify();
-          return;
-        } else if (!error && Array.isArray(supaProjects) && supaProjects.length === 0) {
-          // Si Supabase devuelve 0 proyectos, limpiamos el estado
-          this.projects = [];
-          this.currentProject = null;
-          this.tasks = [];
           this.persistState();
           this.notify();
           return;
@@ -695,6 +747,46 @@ export class NexorSpaceStore {
       `Invitaste a ${email} al proyecto "${project.name}" como ${roleLabels[role] || role}.`,
       'INVITE'
     );
+
+    // Si Supabase está configurado, asociar miembro y crear notificación para el invitado en Supabase
+    if (isSupabaseConfigured) {
+      const cleanEmail = email.toLowerCase().trim();
+      Promise.resolve(
+        supabase
+          .from('usuarios')
+          .select('id')
+          .eq('email', cleanEmail)
+          .maybeSingle()
+      )
+        .then(({ data: supaUser }: any) => {
+          if (supaUser && supaUser.id) {
+            // 1. Vincular en proyecto_miembros
+            supabase
+              .from('proyecto_miembros')
+              .upsert({
+                proyecto_id: projectId,
+                usuario_id: supaUser.id,
+                rol: role,
+                fecha_union: new Date().toISOString(),
+              })
+              .then(() => {});
+
+            // 2. Notificación en Supabase para el invitado
+            supabase
+              .from('notificaciones')
+              .insert({
+                usuario_id: supaUser.id,
+                titulo: '¡Fuiste invitado a un proyecto!',
+                descripcion: `${this.currentUser.name} te invitó al proyecto "${project.name}" como ${roleLabels[role] || role}.`,
+                tipo: 'INVITE',
+                leida: false,
+                fecha: new Date().toISOString(),
+              })
+              .then(() => {});
+          }
+        })
+        .catch((e: any) => console.warn('Error sincronizando miembro con Supabase:', e));
+    }
 
     this.persistState();
   }
