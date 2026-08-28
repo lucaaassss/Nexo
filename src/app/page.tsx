@@ -6,9 +6,10 @@ import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { supabase } from '@/lib/supabase';
 import { ProjectModal } from '@/components/projects/ProjectModal';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { NotificationsDropdown } from '@/components/layout/NotificationsDropdown';
 import { NexorSpaceAiModal } from '@/components/ai/NexorSpaceAiModal';
 import { ProfileModal } from '@/components/profile/ProfileModal';
-import { getInitials } from '@/lib/utils';
+import { getInitials, formatDateTime } from '@/lib/utils';
 import {
   Plus,
   Sparkles,
@@ -22,6 +23,7 @@ import {
   Clock,
   Users,
   Loader2,
+  UserPlus,
 } from 'lucide-react';
 
 /**
@@ -31,7 +33,7 @@ import {
  */
 export default function HomePage() {
   const router = useRouter();
-  const { projects, setCurrentProject, createProject, currentUser } = useNexorSpace();
+  const { projects, setCurrentProject, createProject, currentUser, notifications } = useNexorSpace();
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -57,6 +59,8 @@ export default function HomePage() {
     await supabase.auth.signOut();
     router.replace('/login');
   };
+
+  const pendingInvites = notifications.filter((n) => n.type === 'INVITE');
 
   if (isCheckingAuth) {
     return (
@@ -89,6 +93,9 @@ export default function HomePage() {
             <Sparkles className="w-4 h-4 animate-pulse" />
             <span>Nexor-Space AI</span>
           </button>
+
+          {/* Campanita de Notificaciones */}
+          <NotificationsDropdown />
 
           <ThemeToggle />
 
@@ -146,6 +153,50 @@ export default function HomePage() {
               : `Tenés ${projects.length} proyecto${projects.length !== 1 ? 's' : ''} activo${projects.length !== 1 ? 's' : ''}.`}
           </p>
         </div>
+
+        {/* Banner de Invitaciones Pendientes */}
+        {pendingInvites.length > 0 && (
+          <div className="mb-8 space-y-3">
+            {pendingInvites.map((invite) => (
+              <div
+                key={invite.id}
+                className="bg-gradient-to-r from-violet-900/30 via-indigo-950/40 to-purple-950/30 border border-violet-500/40 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl shadow-violet-950/20 animate-in fade-in duration-200"
+              >
+                <div className="flex items-start gap-3.5">
+                  <div className="p-3 rounded-2xl bg-violet-600/20 border border-violet-500/30 text-violet-400 shrink-0 mt-0.5">
+                    <UserPlus className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-full bg-violet-500/20 border border-violet-500/30 text-violet-300 text-[10px] font-bold uppercase tracking-wider">
+                        Invitación de Equipo
+                      </span>
+                      <span className="text-[11px] text-zinc-400">
+                        {formatDateTime(invite.createdAt)}
+                      </span>
+                    </div>
+                    <h3 className="text-base font-bold text-zinc-100 mt-1">
+                      {invite.title}
+                    </h3>
+                    <p className="text-xs text-zinc-300 mt-0.5 leading-relaxed">
+                      {invite.message}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                  <a
+                    href={invite.linkUrl || '/dashboard'}
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/30 transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>Aceptar y Unirse</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Stats row */}
         {projects.length > 0 && (
