@@ -20,6 +20,7 @@ const EMOJI_OPTIONS = ['👍', '❤️', '🔥', '🚀', '🎉', '👀'];
 /**
  * ChatBubble
  * Burbuja flotante que abre el chat del proyecto como popup en la esquina inferior derecha.
+ * Adaptado con soporte perfecto y alto contraste para Modo Claro y Modo Oscuro.
  */
 export function ChatBubble() {
   const {
@@ -112,11 +113,11 @@ export function ChatBubble() {
         <button
           onClick={handleOpen}
           aria-label="Abrir chat del proyecto"
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-500 text-white shadow-2xl shadow-violet-600/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 ring-2 ring-white/10"
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-500 text-white shadow-2xl shadow-violet-600/40 flex items-center justify-center transition-all hover:scale-110 active:scale-95 ring-2 ring-white/20 cursor-pointer"
         >
           <MessageSquare className="w-6 h-6" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-rose-500 text-[10px] font-bold text-white flex items-center justify-center ring-2 ring-zinc-950 animate-bounce">
+            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-rose-500 text-[10px] font-bold text-white flex items-center justify-center ring-2 ring-white dark:ring-zinc-950 animate-bounce">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -126,22 +127,22 @@ export function ChatBubble() {
       {/* Panel del Chat Popup */}
       {isOpen && (
         <div
-          className={`fixed bottom-6 right-6 z-50 w-[380px] flex flex-col rounded-2xl border border-zinc-800/80 bg-zinc-950 shadow-2xl shadow-black/50 overflow-hidden transition-all duration-300 ${
+          className={`fixed bottom-6 right-6 z-50 w-[380px] flex flex-col rounded-3xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 shadow-2xl shadow-black/20 dark:shadow-black/60 overflow-hidden transition-all duration-300 ${
             isMinimized ? 'h-14' : 'h-[540px]'
           }`}
           style={{ maxHeight: 'calc(100vh - 5rem)' }}
         >
           {/* Header */}
-          <div className="h-14 shrink-0 px-4 flex items-center justify-between bg-gradient-to-r from-zinc-900 to-zinc-950 border-b border-zinc-800/80">
+          <div className="h-14 shrink-0 px-4 flex items-center justify-between bg-zinc-50/90 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800/80">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400">
+              <div className="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-600/20 border border-violet-200 dark:border-violet-500/30 flex items-center justify-center text-violet-700 dark:text-violet-400">
                 <MessageSquare className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xs font-bold text-zinc-100 leading-none">
+                <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-none">
                   {currentProject?.name ?? 'Chat del Proyecto'}
                 </p>
-                <p className="text-[10px] text-zinc-500 mt-0.5 leading-none">
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1 leading-none">
                   {filteredMessages.length} mensajes
                 </p>
               </div>
@@ -150,14 +151,14 @@ export function ChatBubble() {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setIsSearchOpen((s) => !s)}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 aria-label="Buscar mensajes"
               >
                 <Search className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => setIsMinimized((m) => !m)}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 aria-label={isMinimized ? 'Expandir chat' : 'Minimizar chat'}
               >
                 {isMinimized ? (
@@ -168,7 +169,7 @@ export function ChatBubble() {
               </button>
               <button
                 onClick={handleClose}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 transition-colors"
+                className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 aria-label="Cerrar chat"
               >
                 <X className="w-3.5 h-3.5" />
@@ -178,15 +179,15 @@ export function ChatBubble() {
 
           {/* Barra de búsqueda */}
           {!isMinimized && isSearchOpen && (
-            <div className="px-3 py-2 border-b border-zinc-800/60 bg-zinc-950">
+            <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-950">
               <div className="relative">
-                <Search className="w-3 h-3 absolute left-2.5 top-2.5 text-zinc-500" />
+                <Search className="w-3 h-3 absolute left-2.5 top-2.5 text-zinc-400 dark:text-zinc-500" />
                 <input
                   type="text"
                   placeholder="Buscar en el chat..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-7 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-violet-500"
+                  className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg pl-7 pr-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500"
                   autoFocus
                 />
               </div>
@@ -196,11 +197,11 @@ export function ChatBubble() {
           {/* Mensajes */}
           {!isMinimized && (
             <>
-              <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-zinc-950/90">
+              <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-zinc-50/60 dark:bg-zinc-950/90">
                 {filteredMessages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-zinc-600 text-xs py-10">
-                    <MessageSquare className="w-7 h-7 mb-2 opacity-30 text-violet-400" />
-                    <p>El canal está listo. Sé el primero en escribir.</p>
+                  <div className="h-full flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-500 text-xs py-10">
+                    <MessageSquare className="w-7 h-7 mb-2 opacity-40 text-violet-600 dark:text-violet-400" />
+                    <p className="font-medium text-zinc-600 dark:text-zinc-400">El canal está listo. Sé el primero en escribir.</p>
                   </div>
                 ) : (
                   filteredMessages.map((msg) => {
@@ -212,27 +213,27 @@ export function ChatBubble() {
                         key={msg.id}
                         className={`flex gap-2 group ${isMine ? 'flex-row-reverse' : 'flex-row'}`}
                       >
-                        <div className="w-6 h-6 rounded-full bg-violet-600/30 text-violet-300 font-bold text-[9px] flex items-center justify-center border border-violet-500/30 shrink-0 mt-0.5">
+                        <div className="w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-600/30 text-violet-700 dark:text-violet-300 font-bold text-[9px] flex items-center justify-center border border-violet-200 dark:border-violet-500/30 shrink-0 mt-0.5 shadow-xs">
                           {getInitials(msg.sender?.name || 'U')}
                         </div>
 
                         <div className={`max-w-[260px] space-y-0.5 ${isMine ? 'text-right' : 'text-left'}`}>
-                          <div className="flex items-center gap-1.5 text-[9px] text-zinc-500 px-1">
-                            <span className="font-semibold text-zinc-400">{msg.sender?.name || 'Usuario'}</span>
+                          <div className="flex items-center gap-1.5 text-[9px] text-zinc-500 dark:text-zinc-400 px-1">
+                            <span className="font-semibold text-zinc-700 dark:text-zinc-300">{msg.sender?.name || 'Usuario'}</span>
                             <span>{formatDateTime(msg.createdAt)}</span>
                           </div>
 
                           {parentMsg && (
-                            <div className="text-[9px] p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-500 italic mb-0.5">
+                            <div className="text-[9px] p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 italic mb-0.5">
                               ↩ {parentMsg.content.substring(0, 35)}...
                             </div>
                           )}
 
                           <div
-                            className={`py-2 px-3 rounded-2xl text-xs leading-relaxed inline-block shadow ${
+                            className={`py-2 px-3 rounded-2xl text-xs leading-relaxed inline-block shadow-sm ${
                               isMine
                                 ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-tr-none'
-                                : 'bg-zinc-900 border border-zinc-800/80 text-zinc-200 rounded-tl-none'
+                                : 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 text-zinc-800 dark:text-zinc-200 rounded-tl-none'
                             }`}
                           >
                             {msg.content}
@@ -244,7 +245,7 @@ export function ChatBubble() {
                                 <button
                                   key={r.id}
                                   onClick={() => toggleMessageReaction(msg.id, r.emoji)}
-                                  className="px-1 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-[9px] flex items-center gap-0.5 hover:border-violet-500/40"
+                                  className="px-1.5 py-0.5 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[9px] flex items-center gap-0.5 hover:border-violet-500/40 text-zinc-700 dark:text-zinc-300"
                                 >
                                   <span>{r.emoji}</span>
                                 </button>
@@ -257,14 +258,15 @@ export function ChatBubble() {
                               <button
                                 key={emoji}
                                 onClick={() => toggleMessageReaction(msg.id, emoji)}
-                                className="hover:scale-125 transition-transform"
+                                className="hover:scale-125 transition-transform cursor-pointer"
                               >
                                 {emoji}
                               </button>
                             ))}
                             <button
                               onClick={() => setReplyingTo(msg)}
-                              className="text-zinc-500 hover:text-violet-400 ml-1"
+                              className="text-zinc-400 hover:text-violet-600 dark:text-zinc-500 dark:hover:text-violet-400 ml-1 cursor-pointer"
+                              title="Responder"
                             >
                               <Reply className="w-3 h-3" />
                             </button>
@@ -278,15 +280,15 @@ export function ChatBubble() {
               </div>
 
               {isTyping && (
-                <div className="px-3 py-1 text-[9px] text-violet-400 italic animate-pulse bg-zinc-950/90">
+                <div className="px-3 py-1 text-[9px] text-violet-600 dark:text-violet-400 italic animate-pulse bg-zinc-50 dark:bg-zinc-950/90">
                   Alguien está escribiendo...
                 </div>
               )}
 
               {replyingTo && (
-                <div className="px-3 py-1.5 bg-zinc-900 border-t border-zinc-800 flex items-center justify-between text-[10px] text-zinc-400">
+                <div className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-[10px] text-zinc-700 dark:text-zinc-400">
                   <span>↩ {replyingTo.content.substring(0, 40)}...</span>
-                  <button onClick={() => setReplyingTo(null)} className="hover:text-white">
+                  <button onClick={() => setReplyingTo(null)} className="hover:text-zinc-900 dark:hover:text-white">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
@@ -294,9 +296,9 @@ export function ChatBubble() {
 
               <form
                 onSubmit={handleSendMessage}
-                className="p-2.5 border-t border-zinc-800/80 bg-zinc-950/90 flex items-center gap-1.5"
+                className="p-2.5 border-t border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-950/90 flex items-center gap-1.5"
               >
-                <label className="p-1.5 text-zinc-500 hover:text-white rounded-lg hover:bg-zinc-900 cursor-pointer transition-colors">
+                <label className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-white rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900 cursor-pointer transition-colors">
                   <Paperclip className="w-3.5 h-3.5" />
                   <input type="file" onChange={handleChatFileUpload} className="hidden" />
                 </label>
@@ -306,13 +308,13 @@ export function ChatBubble() {
                   placeholder="Escribe un mensaje..."
                   value={messageInput}
                   onChange={handleInputChange}
-                  className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-violet-500 transition-colors"
+                  className="flex-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors"
                 />
 
                 <button
                   type="submit"
                   disabled={!messageInput.trim()}
-                  className="p-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white shadow shadow-violet-600/30 transition-all"
+                  className="p-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white shadow shadow-violet-600/30 transition-all cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
                 </button>

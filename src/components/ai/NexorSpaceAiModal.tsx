@@ -12,13 +12,9 @@ import {
   Plus,
   Copy,
   Check,
-  CornerDownLeft,
-  Layers,
-  ArrowRight,
   ListTodo,
   FileSpreadsheet,
   Clock,
-  AlertCircle,
 } from 'lucide-react';
 import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { formatDateTime, getInitials } from '@/lib/utils';
@@ -74,7 +70,7 @@ const QUICK_PROMPTS = [
  * Chat unificado e interactivo con Inteligencia Artificial.
  * Comparte el diseño premium y la experiencia fluida del chat del proyecto,
  * permitiendo ejecutar todas las funciones (descomposición, resúmenes, subtareas, Q&A)
- * en una sola conversación continua.
+ * en una sola conversación continua, con soporte perfecto para Modo Claro y Modo Oscuro.
  */
 export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
   const { currentProject, projectTasks, currentUser, createTask, addSubtask } = useNexorSpace();
@@ -277,7 +273,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
 
       setMessages((prev) => [...prev, aiMessage]);
       setIsGenerating(false);
-    }, 700);
+    }, 600);
   };
 
   /** Importar tareas sugeridas por la IA al proyecto */
@@ -333,14 +329,14 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
   const renderFormattedText = (text: string) => {
     const lines = text.split('\n');
     return (
-      <div className="space-y-1.5 leading-relaxed">
+      <div className="space-y-1.5 leading-relaxed text-zinc-800 dark:text-zinc-200">
         {lines.map((line, idx) => {
           if (!line.trim()) return <div key={idx} className="h-1" />;
 
           // Títulos Markdown ###
           if (line.startsWith('### ')) {
             return (
-              <h4 key={idx} className="font-bold text-sm text-violet-300 pt-1">
+              <h4 key={idx} className="font-bold text-sm text-violet-700 dark:text-violet-300 pt-1">
                 {line.replace('### ', '')}
               </h4>
             );
@@ -350,8 +346,8 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
           if (line.startsWith('- ') || line.startsWith('* ')) {
             const content = line.substring(2);
             return (
-              <div key={idx} className="flex items-start gap-2 pl-1 text-xs">
-                <span className="text-violet-400 mt-0.5">•</span>
+              <div key={idx} className="flex items-start gap-2 pl-1 text-xs sm:text-sm">
+                <span className="text-violet-600 dark:text-violet-400 mt-0.5">•</span>
                 <span dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(content) }} />
               </div>
             );
@@ -362,8 +358,8 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
             const match = line.match(/^(\d+\.)\s(.*)/);
             if (match) {
               return (
-                <div key={idx} className="flex items-start gap-2 pl-1 text-xs">
-                  <span className="font-mono text-violet-400 font-semibold">{match[1]}</span>
+                <div key={idx} className="flex items-start gap-2 pl-1 text-xs sm:text-sm">
+                  <span className="font-mono text-violet-700 dark:text-violet-400 font-semibold">{match[1]}</span>
                   <span dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(match[2]) }} />
                 </div>
               );
@@ -373,7 +369,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
           return (
             <p
               key={idx}
-              className="text-xs"
+              className="text-xs sm:text-sm"
               dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(line) }}
             />
           );
@@ -382,37 +378,37 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     );
   };
 
-  /** Formatea negrita, código en línea y saltos */
+  /** Formatea negrita y código en línea */
   const formatInlineMarkdown = (str: string) => {
     return str
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-zinc-100 font-semibold">$1</strong>')
-      .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-zinc-800 text-violet-300 rounded font-mono text-[11px]">$1</code>');
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-zinc-900 dark:text-zinc-100 font-semibold">$1</strong>')
+      .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-violet-700 dark:text-violet-300 rounded font-mono text-[11px] border border-zinc-200 dark:border-zinc-700">$1</code>');
   };
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-3xl h-[85vh] max-h-[750px] overflow-hidden shadow-2xl flex flex-col justify-between ring-1 ring-white/10">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/90 rounded-3xl w-full max-w-3xl h-[85vh] max-h-[750px] overflow-hidden shadow-2xl flex flex-col justify-between ring-1 ring-black/5 dark:ring-white/10">
         {/* HEADER DEL CHAT DE IA */}
-        <div className="px-5 py-3.5 border-b border-zinc-800/80 bg-zinc-950/90 flex items-center justify-between shrink-0">
+        <div className="px-5 py-3.5 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-50 dark:bg-zinc-950/90 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             {/* Avatar Bot con halo de brillo */}
             <div className="relative">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-violet-500/30 border border-white/20">
                 <Bot className="w-5 h-5 animate-pulse" />
               </div>
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 absolute -bottom-0.5 -right-0.5 ring-2 ring-zinc-950" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 absolute -bottom-0.5 -right-0.5 ring-2 ring-white dark:ring-zinc-950" />
             </div>
 
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-1.5">
+                <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
                   Nexor-Space AI
                 </h3>
-                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-500/30">
                   Asistente Unificado
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-400">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                 {currentProject ? `Proyecto activo: ${currentProject.name}` : 'Asistente de productividad inteligente'}
               </p>
             </div>
@@ -423,7 +419,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
             <button
               onClick={handleClearHistory}
               title="Reiniciar chat"
-              className="p-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 rounded-xl transition-colors text-xs flex items-center gap-1.5"
+              className="p-2 text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-colors text-xs flex items-center gap-1.5 cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
               <span className="hidden sm:inline text-xs">Limpiar</span>
@@ -431,7 +427,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
 
             <button
               onClick={onClose}
-              className="p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-900 transition-colors"
+              className="p-2 text-zinc-400 hover:text-zinc-800 dark:hover:text-white rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -439,7 +435,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
         </div>
 
         {/* HISTORIAL DE MENSAJES */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-gradient-to-b from-zinc-950 via-zinc-950/90 to-zinc-900/40">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-zinc-50/50 dark:bg-gradient-to-b dark:from-zinc-950 dark:via-zinc-950/90 dark:to-zinc-900/40">
           {messages.map((msg) => {
             const isUser = msg.sender === 'user';
 
@@ -452,7 +448,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
               >
                 {/* Avatar */}
                 {isUser ? (
-                  <div className="w-8 h-8 rounded-full bg-violet-600/40 text-violet-200 font-bold text-xs flex items-center justify-center border border-violet-500/40 shrink-0 mt-0.5 shadow-sm">
+                  <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-600/40 text-violet-700 dark:text-violet-200 font-bold text-xs flex items-center justify-center border border-violet-200 dark:border-violet-500/40 shrink-0 mt-0.5 shadow-xs">
                     {getInitials(currentUser.name)}
                   </div>
                 ) : (
@@ -464,8 +460,8 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                 {/* Contenedor del Mensaje */}
                 <div className={`max-w-[85%] sm:max-w-[78%] space-y-1.5 ${isUser ? 'text-right' : 'text-left'}`}>
                   {/* Encabezado del mensaje */}
-                  <div className="flex items-center gap-2 text-[10px] text-zinc-500 px-1">
-                    <span className="font-semibold text-zinc-300">
+                  <div className="flex items-center gap-2 text-[10px] text-zinc-500 dark:text-zinc-400 px-1">
+                    <span className="font-semibold text-zinc-700 dark:text-zinc-300">
                       {isUser ? currentUser.name : 'Nexor AI'}
                     </span>
                     <span>{formatDateTime(msg.createdAt.toISOString())}</span>
@@ -473,10 +469,10 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
 
                   {/* Burbuja Principal */}
                   <div
-                    className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-lg relative ${
+                    className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-sm relative ${
                       isUser
                         ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-tr-none shadow-violet-600/20'
-                        : 'bg-zinc-900/90 border border-zinc-800/90 text-zinc-200 rounded-tl-none'
+                        : 'bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800/90 text-zinc-800 dark:text-zinc-200 rounded-tl-none'
                     }`}
                   >
                     {isUser ? (
@@ -489,11 +485,11 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                     {!isUser && (
                       <button
                         onClick={() => handleCopyContent(msg.id, msg.content)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2 p-1.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2 p-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white cursor-pointer"
                         title="Copiar mensaje"
                       >
                         {copiedId === msg.id ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
@@ -503,22 +499,22 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
 
                   {/* Tareas Generadas e Importables (Acción Interactiva en el Chat) */}
                   {msg.generatedTasks && msg.generatedTasks.length > 0 && (
-                    <div className="mt-3 p-3.5 rounded-2xl bg-zinc-900/80 border border-violet-500/30 space-y-2.5 shadow-md">
+                    <div className="mt-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900/80 border border-violet-200 dark:border-violet-500/30 space-y-2.5 shadow-sm">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-violet-300 flex items-center gap-1.5">
-                          <ListTodo className="w-4 h-4 text-violet-400" />
+                        <span className="text-xs font-bold text-violet-800 dark:text-violet-300 flex items-center gap-1.5">
+                          <ListTodo className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                           Tareas Propuestas ({msg.generatedTasks.length})
                         </span>
 
                         {msg.imported ? (
-                          <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-semibold flex items-center gap-1">
+                          <span className="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 text-[11px] font-semibold flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             Importadas al Tablero
                           </span>
                         ) : (
                           <button
                             onClick={() => handleImportTasks(msg.id, msg.generatedTasks)}
-                            className="px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-violet-600/30 hover:scale-105 active:scale-95"
+                            className="px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-violet-600/30 hover:scale-105 active:scale-95 cursor-pointer"
                           >
                             <Plus className="w-3.5 h-3.5" />
                             Importar Todo al Tablero
@@ -530,23 +526,23 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                         {msg.generatedTasks.map((t, idx) => (
                           <div
                             key={idx}
-                            className="p-2.5 rounded-xl bg-zinc-950/70 border border-zinc-800/80 flex items-start justify-between gap-3 text-xs"
+                            className="p-2.5 rounded-xl bg-white dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800/80 flex items-start justify-between gap-3 text-xs"
                           >
                             <div className="space-y-0.5 flex-1">
-                              <p className="font-semibold text-zinc-100">{t.title}</p>
-                              <p className="text-[11px] text-zinc-400 leading-normal">{t.description}</p>
+                              <p className="font-semibold text-zinc-900 dark:text-zinc-100">{t.title}</p>
+                              <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-normal">{t.description}</p>
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-                              <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300">
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold border border-zinc-200 dark:border-transparent">
                                 {t.estimatedHours}h
                               </span>
                               <span
                                 className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
                                   t.priority === 'URGENTE'
-                                    ? 'bg-rose-500/20 text-rose-300'
+                                    ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-transparent'
                                     : t.priority === 'ALTA'
-                                    ? 'bg-amber-500/20 text-amber-300'
-                                    : 'bg-blue-500/20 text-blue-300'
+                                    ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-transparent'
+                                    : 'bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-transparent'
                                 }`}
                               >
                                 {t.priority}
@@ -560,10 +556,10 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
 
                   {/* Subtareas recomendadas interactivas */}
                   {msg.suggestedSubtasks && msg.suggestedSubtasks.length > 0 && (
-                    <div className="mt-3 p-3.5 rounded-2xl bg-zinc-900/80 border border-violet-500/30 space-y-2.5 shadow-md">
+                    <div className="mt-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900/80 border border-violet-200 dark:border-violet-500/30 space-y-2.5 shadow-sm">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-violet-300 flex items-center gap-1.5">
-                          <Sparkles className="w-4 h-4 text-violet-400" />
+                        <span className="text-xs font-bold text-violet-800 dark:text-violet-300 flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                           Subtareas para asignar:
                         </span>
 
@@ -571,7 +567,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                           <select
                             value={selectedTaskForSubtasks}
                             onChange={(e) => setSelectedTaskForSubtasks(e.target.value)}
-                            className="bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-1 text-xs text-zinc-200 focus:outline-none focus:border-violet-500"
+                            className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-2.5 py-1 text-xs text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-violet-500"
                           >
                             <option value="">Seleccionar Tarea Destino...</option>
                             {projectTasks.map((t) => (
@@ -587,13 +583,13 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                         {msg.suggestedSubtasks.map((sub, idx) => (
                           <div
                             key={idx}
-                            className="p-2 rounded-xl bg-zinc-950/80 border border-zinc-800 flex items-center justify-between text-xs text-zinc-300"
+                            className="p-2 rounded-xl bg-white dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-800 dark:text-zinc-300"
                           >
                             <span>{sub}</span>
                             {selectedTaskForSubtasks && (
                               <button
                                 onClick={() => handleAddSubtaskToTask(sub)}
-                                className="text-[11px] text-violet-400 hover:text-violet-300 font-semibold px-2 py-1 rounded-lg hover:bg-violet-950/50 transition-colors"
+                                className="text-[11px] text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 font-semibold px-2 py-1 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-950/50 transition-colors cursor-pointer"
                               >
                                 + Agregar
                               </button>
@@ -614,12 +610,12 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
               <div className="w-8 h-8 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center border border-violet-400/30 shrink-0 shadow-md">
                 <Sparkles className="w-4 h-4 animate-spin" />
               </div>
-              <div className="p-3.5 rounded-2xl rounded-tl-none bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 flex items-center gap-2 shadow-sm">
+              <div className="p-3.5 rounded-2xl rounded-tl-none bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 flex items-center gap-2 shadow-sm">
                 <span>Nexor AI está analizando y respondiendo</span>
                 <span className="flex gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '300ms' }} />
                 </span>
               </div>
             </div>
@@ -629,7 +625,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
         </div>
 
         {/* PILLS DE ACCIÓN RÁPIDA (Sugerencias 1-Click) */}
-        <div className="px-4 py-2 bg-zinc-950 border-t border-zinc-800/80 flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <div className="px-4 py-2 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800/80 flex items-center gap-2 overflow-x-auto no-scrollbar">
           {QUICK_PROMPTS.map((qp, idx) => {
             const Icon = qp.icon;
             return (
@@ -637,9 +633,9 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                 key={idx}
                 onClick={() => handleSendMessage(qp.prompt)}
                 disabled={isGenerating}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-violet-950/40 border border-zinc-800 hover:border-violet-500/40 text-[11px] text-zinc-300 hover:text-violet-300 font-medium whitespace-nowrap transition-all active:scale-95 disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-violet-50 dark:bg-zinc-900 dark:hover:bg-violet-950/40 border border-zinc-200 hover:border-violet-300 dark:border-zinc-800 dark:hover:border-violet-500/40 text-[11px] text-zinc-700 hover:text-violet-700 dark:text-zinc-300 dark:hover:text-violet-300 font-medium whitespace-nowrap transition-all active:scale-95 disabled:opacity-50 cursor-pointer shadow-xs"
               >
-                <Icon className="w-3.5 h-3.5 text-violet-400" />
+                <Icon className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
                 <span>{qp.label}</span>
               </button>
             );
@@ -652,9 +648,9 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
             e.preventDefault();
             handleSendMessage();
           }}
-          className="p-3 sm:p-4 bg-zinc-950/95 border-t border-zinc-800/90 flex items-end gap-2 shrink-0"
+          className="p-3 sm:p-4 bg-white dark:bg-zinc-950/95 border-t border-zinc-200 dark:border-zinc-800/90 flex items-end gap-2 shrink-0"
         >
-          <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl px-3.5 py-2.5 focus-within:border-violet-500/60 focus-within:ring-1 focus-within:ring-violet-500/30 transition-all flex items-center">
+          <div className="flex-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-3.5 py-2.5 focus-within:border-violet-500/60 focus-within:ring-1 focus-within:ring-violet-500/30 transition-all flex items-center">
             <textarea
               ref={inputRef}
               rows={1}
@@ -667,14 +663,14 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                 }
               }}
               placeholder="Preguntale a Nexor AI, pedí tareas, resúmenes o ideas..."
-              className="w-full bg-transparent text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none max-h-28"
+              className="w-full bg-transparent text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none resize-none max-h-28"
             />
           </div>
 
           <button
             type="submit"
             disabled={!inputMessage.trim() || isGenerating}
-            className="p-3 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-600/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 shrink-0"
+            className="p-3 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-600/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 shrink-0 cursor-pointer"
             title="Enviar mensaje"
           >
             <Send className="w-4 h-4" />
