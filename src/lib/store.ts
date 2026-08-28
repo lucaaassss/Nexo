@@ -612,10 +612,17 @@ export class NexorSpaceStore {
     }).catch((e) => console.warn('Error al eliminar proyecto en base de datos:', e));
   }
 
-  /** Agrega un miembro a un proyecto */
+  /** Agrega un miembro a un proyecto y crea una notificación en la bandeja de entrada */
   public addMemberToProject(projectId: string, email: string, role: MemberRole) {
     const project = this.projects.find((p) => p.id === projectId);
     if (!project) return;
+
+    const roleLabels: Record<string, string> = {
+      ADMIN: 'Administrador',
+      LEADER: 'Líder',
+      MEMBER: 'Miembro',
+      GUEST: 'Invitado',
+    };
 
     const newMemberUser: User = {
       id: 'usr_' + Date.now(),
@@ -636,6 +643,15 @@ export class NexorSpaceStore {
 
     project.members = [...(project.members || []), newMembership];
     this.logActivity(projectId, 'ADD_MEMBER', 'MEMBER', newMemberUser.id, `Miembro ${email} añadido con rol ${role}`);
+
+    // Crear notificación en la bandeja de entrada del usuario que invitó
+    this.createNotification(
+      this.currentUser.id,
+      'Invitación enviada',
+      `Invitaste a ${email} al proyecto "${project.name}" como ${roleLabels[role] || role}.`,
+      'INVITE'
+    );
+
     this.persistState();
   }
 
