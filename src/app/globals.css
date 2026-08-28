@@ -277,9 +277,9 @@ html.light .bg-violet-100 {
   border-color: #c4b5fd !important;
 }
 
-/* --- Inputs, Textareas y Formularios --- */
-html.light input,
-html.light textarea,
+/* --- Inputs, Textareas y Formularios Generales --- */
+html.light input:not(.ai-chat-input):not(.bg-transparent),
+html.light textarea:not(.ai-chat-input):not(.bg-transparent),
 html.light select {
   background-color: #ffffff !important;
   color: #0f172a !important;
@@ -291,11 +291,32 @@ html.light textarea::placeholder {
   color: #64748b !important;
 }
 
-html.light input:focus,
-html.light textarea:focus,
+html.light input:not(.ai-chat-input):focus,
+html.light textarea:not(.ai-chat-input):focus,
 html.light select:focus {
   border-color: #7c3aed !important;
   box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15) !important;
+}
+
+/* --- Exclusión para Textareas e Inputs Integrados en Chat (Evita doble borde y fondo blanco) --- */
+html.light textarea.ai-chat-input,
+html.light input.ai-chat-input,
+html.light textarea.bg-transparent,
+html.light input.bg-transparent {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #0f172a !important;
+}
+
+html.light textarea.ai-chat-input:focus,
+html.light input.ai-chat-input:focus,
+html.light textarea.bg-transparent:focus,
+html.light input.bg-transparent:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 /* --- Selectores de Fecha (input type="date") --- */
