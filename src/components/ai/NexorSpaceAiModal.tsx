@@ -15,10 +15,11 @@ import {
   ListTodo,
   FileSpreadsheet,
   Clock,
+  Zap,
 } from 'lucide-react';
 import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { formatDateTime, getInitials } from '@/lib/utils';
-import { TaskPriority } from '@/types';
+import { TaskPriority, TaskStatus } from '@/types';
 
 interface GeneratedTask {
   title: string;
@@ -67,13 +68,21 @@ const QUICK_PROMPTS = [
 
 /**
  * Componente NexorSpaceAiModal
- * Chat unificado e interactivo con Inteligencia Artificial.
- * Comparte el diseño premium y la experiencia fluida del chat del proyecto,
- * permitiendo ejecutar todas las funciones (descomposición, resúmenes, subtareas, Q&A)
- * en una sola conversación continua, con soporte perfecto para Modo Claro y Modo Oscuro.
+ * Asistente Autónomo de Inteligencia Artificial para Nexor-Space.
+ * Ejecuta acciones reales en el proyecto (crear, modificar, borrar tareas, gestionar estados y subtareas),
+ * analiza métricas y responde consultas abiertas de desarrollo, arquitectura y gestión ágil.
  */
 export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
-  const { currentProject, projectTasks, currentUser, createTask, addSubtask } = useNexorSpace();
+  const {
+    currentProject,
+    projectTasks,
+    currentUser,
+    createTask,
+    updateTask,
+    deleteTask,
+    addSubtask,
+    updateProject,
+  } = useNexorSpace();
 
   const [mounted, setMounted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -89,12 +98,12 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     setMounted(true);
   }, []);
 
-  // Mensaje de bienvenida inicial cuando se abre el modal y no hay mensajes
+  // Mensaje de bienvenida inicial
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       const welcomeContent = currentProject
-        ? `¡Hola **${currentUser.name.split(' ')[0]}**! 👋 Soy **Nexor-Space AI**, tu asistente inteligente para el proyecto **${currentProject.name}**.\n\nPuedo ayudarte a:\n- 📋 **Descomponer el proyecto** en tareas estructuradas con 1 clic para importarlas al tablero.\n- 📊 **Analizar el estado** y resumir el avance de las tareas activas.\n- ⚡ **Generar subtareas** técnicas para tareas específicas.\n- 💡 **Resolver dudas** sobre planificación, prioridades o arquitectura.\n\n¿En qué te gustaría avanzar hoy?`
-        : `¡Hola **${currentUser.name.split(' ')[0]}**! 👋 Soy **Nexor-Space AI**.\n\n¿En qué puedo colaborarte hoy con la gestión de tus proyectos y tareas?`;
+        ? `¡Hola **${currentUser.name.split(' ')[0]}**! 👋 Soy **Nexor-Space AI**, tu agente autónomo para el proyecto **${currentProject.name}**.\n\nPuedo ejecutar acciones reales en tu proyecto y asistirte en cualquier consulta:\n- ⚡ **Ejecutar comandos:** *"Creá una tarea para..."*, *"Borrá todas las tareas"*, *"Marcá como completada la tarea X"*, *"Cambiá la prioridad a Urgente"*.\n- 📋 **Planificar y estructurar:** Descomponer módulos, diseñar sprints o sugerir subtareas.\n- 📊 **Diagnósticos y métricas:** Resúmenes de avance, horas acumuladas y cuellos de botella.\n- 💡 **Consultoría técnica:** Arquitectura, código, buenas prácticas y gestión ágil.\n\n¿Qué te gustaría hacer o consultar?`
+        : `¡Hola **${currentUser.name.split(' ')[0]}**! 👋 Soy **Nexor-Space AI**.\n\n¿En qué puedo ayudarte hoy con tus proyectos o tareas?`;
 
       setMessages([
         {
@@ -107,14 +116,14 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
   }, [isOpen, currentProject, currentUser, messages.length]);
 
-  // Auto-scroll al final con cada mensaje nuevo
+  // Auto-scroll
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isGenerating, isOpen]);
 
-  // Enfocar input al abrir
+  // Enfocar input
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 150);
@@ -124,94 +133,308 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
   if (!isOpen || !mounted) return null;
 
   /**
-   * Generador inteligente de respuestas contextuales de IA
+   * MOTOR AUTÓNOMO DE PROCESAMIENTO Y ACCIONES
+   * Interpreta lenguaje natural, ejecuta mutaciones reales en el espacio de trabajo y
+   * responde preguntas complejas y contextuales sin respuestas enlatadas.
    */
-  const generateAiResponse = (userPrompt: string): {
+  const processAutonomousAgent = async (userPrompt: string): Promise<{
     content: string;
     generatedTasks?: GeneratedTask[];
     suggestedSubtasks?: string[];
-  } => {
-    const promptLower = userPrompt.toLowerCase();
+  }> => {
+    const raw = userPrompt.trim();
+    const promptLower = raw.toLowerCase();
     const projectName = currentProject?.name || 'este proyecto';
     const totalTasks = projectTasks.length;
     const completedTasks = projectTasks.filter((t) => t.status === 'FINALIZADA').length;
     const pendingTasks = projectTasks.filter((t) => t.status === 'PENDIENTE').length;
     const inProgressTasks = projectTasks.filter((t) => t.status === 'EN_PROGRESO').length;
 
-    // 1. Caso: Descomponer proyecto o crear tareas
+    // =========================================================================
+    // 1. ACCIÓN: BORRAR TODAS LAS TAREAS DEL PROYECTO
+    // =========================================================================
+    if (
+      /(borra|elimina|borrar|eliminar|quitar|vaciar|limpiar)\s+(todas\s+las\s+|los\s+|las\s+)?tareas/i.test(promptLower) ||
+      /(eliminar|borrar)\s+(todo|el\s+tablero)/i.test(promptLower)
+    ) {
+      if (projectTasks.length === 0) {
+        return {
+          content: `El proyecto **${projectName}** no tiene tareas registradas actualmente en el tablero. Está completamente vacío y listo para recibir nuevas tareas.`,
+        };
+      }
+
+      const taskCount = projectTasks.length;
+      // Ejecutar eliminación real de cada tarea
+      projectTasks.forEach((t) => {
+        deleteTask(t.id);
+      });
+
+      return {
+        content: `🗑️ **Acción completada con éxito:**\n\nHe eliminado **${taskCount} tarea(s)** del proyecto **${projectName}**.\n\nTu tablero ahora está limpio y listo para empezar un nuevo ciclo. Podés crear tareas individuales o pedirme que genere una nueva estructura.`,
+      };
+    }
+
+    // =========================================================================
+    // 2. ACCIÓN: BORRAR TAREAS FINALIZADAS / COMPLETADAS
+    // =========================================================================
+    if (
+      /(borra|elimina|limpiar|quitar)\s+(las\s+)?(tareas\s+)?(finalizadas|completadas|terminadas)/i.test(promptLower)
+    ) {
+      const finished = projectTasks.filter((t) => t.status === 'FINALIZADA');
+      if (finished.length === 0) {
+        return {
+          content: `No se encontraron tareas con estado **FINALIZADA** en el proyecto **${projectName}**.`,
+        };
+      }
+
+      finished.forEach((t) => deleteTask(t.id));
+
+      return {
+        content: `🧹 **Limpieza de tablero completada:**\n\nHe eliminado **${finished.length} tarea(s) finalizada(s)** del proyecto **${projectName}**:\n${finished.map((t) => `- \`${t.key}\`: ${t.title}`).join('\n')}`,
+      };
+    }
+
+    // =========================================================================
+    // 3. ACCIÓN: BORRAR UNA TAREA ESPECÍFICA (Por clave o nombre)
+    // =========================================================================
+    const deleteTaskMatch = promptLower.match(
+      /(?:borra|elimina|borrar|eliminar|quitar)\s+(?:la\s+)?tarea\s+(?:llamada\s+|titulada\s+|de\s+)?["']?([^"'\n]+)["']?/i
+    );
+    if (deleteTaskMatch && deleteTaskMatch[1]) {
+      const query = deleteTaskMatch[1].trim();
+      const target = projectTasks.find(
+        (t) => t.key.toLowerCase() === query || t.title.toLowerCase().includes(query)
+      );
+
+      if (target) {
+        deleteTask(target.id);
+        return {
+          content: `🗑️ **Tarea eliminada con éxito:**\n- **Clave:** \`${target.key}\`\n- **Título:** **${target.title}**\n\nHa sido removida del tablero y de la base de datos.`,
+        };
+      } else {
+        return {
+          content: `No encontré ninguna tarea que coincida con *"${query}"* en este proyecto.\n\nTareas actuales disponibles:\n${projectTasks.map((t) => `- \`${t.key}\`: ${t.title}`).join('\n') || '*(No hay tareas)*'}`,
+        };
+      }
+    }
+
+    // =========================================================================
+    // 4. ACCIÓN: CREAR TAREA INDIVIDUAL AUTÓNOMAMENTE
+    // =========================================================================
+    const createTaskMatch = raw.match(
+      /(?:crea|crear|agrega|agregar|nueva|anota|anotar|generar)\s+(?:una\s+|la\s+)?tarea\s+(?:llamada\s+|titulada\s+|de\s+|para\s+)?["']?([^"'\n]+)["']?/i
+    );
+
+    if (createTaskMatch && createTaskMatch[1] && !promptLower.includes('subtarea') && !promptLower.includes('dividir') && !promptLower.includes('descomponer')) {
+      const rawTitle = createTaskMatch[1].replace(/^(para|de|llamada|titulada)\s+/i, '').trim();
+
+      // Extraer prioridad si se menciona en el prompt
+      let priority: TaskPriority = 'MEDIA';
+      if (promptLower.includes('urgente') || promptLower.includes('urgencia')) priority = 'URGENTE';
+      else if (promptLower.includes('alta') || promptLower.includes('prioridad alta')) priority = 'ALTA';
+      else if (promptLower.includes('baja') || promptLower.includes('prioridad baja')) priority = 'BAJA';
+
+      // Extraer horas estimadas si se mencionan
+      const hoursMatch = promptLower.match(/(\d+(?:\.\d+)?)\s*(?:horas|h|hs|hora)\b/);
+      const estimatedHours = hoursMatch ? parseFloat(hoursMatch[1]) : 4;
+
+      // Extraer tags
+      const tags: string[] = [];
+      if (promptLower.includes('frontend') || promptLower.includes('ui') || promptLower.includes('diseño')) tags.push('Frontend');
+      if (promptLower.includes('backend') || promptLower.includes('api') || promptLower.includes('db') || promptLower.includes('base de datos')) tags.push('Backend');
+      if (promptLower.includes('bug') || promptLower.includes('error') || promptLower.includes('fix')) tags.push('Bug');
+      if (promptLower.includes('test') || promptLower.includes('pruebas')) tags.push('QA');
+
+      // Crear tarea real
+      const newTask = createTask({
+        title: rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1),
+        description: `Tarea creada automáticamente por Nexor-Space AI a partir de la instrucción: "${raw}"`,
+        priority,
+        status: 'PENDIENTE',
+        estimatedHours,
+        tags: tags.length > 0 ? tags : ['General'],
+      });
+
+      return {
+        content: `✅ **Tarea creada e insertada en el tablero:**\n\n- **Identificador:** \`${newTask.key}\`\n- **Título:** **${newTask.title}**\n- **Estado inicial:** \`PENDIENTE\`\n- **Prioridad:** \`${priority}\`\n- **Tiempo estimado:** \`${estimatedHours} horas\`\n- **Etiquetas:** ${tags.length > 0 ? tags.map((tg) => `\`#${tg}\``).join(' ') : '\`#General\`'}\n\nYa podés verla y gestionarla en el tablero Kanban y vistas del proyecto.`,
+      };
+    }
+
+    // =========================================================================
+    // 5. ACCIÓN: CAMBIAR ESTADO DE UNA TAREA
+    // =========================================================================
+    const statusMatch = promptLower.match(
+      /(?:marca|marcar|pasa|pasar|cambia|cambiar|mover|actualiza|actualizar)\s+(?:la\s+)?tarea\s+["']?([^"']+)["']?\s+(?:a|como)\s+(finalizada|completada|terminada|en progreso|en revision|en revisión|pendiente)/i
+    );
+
+    if (statusMatch) {
+      const taskQuery = statusMatch[1].trim();
+      const rawTargetStatus = statusMatch[2].trim();
+
+      let targetStatus: TaskStatus = 'PENDIENTE';
+      if (rawTargetStatus.includes('finaliz') || rawTargetStatus.includes('complet') || rawTargetStatus.includes('termin')) targetStatus = 'FINALIZADA';
+      else if (rawTargetStatus.includes('progreso')) targetStatus = 'EN_PROGRESO';
+      else if (rawTargetStatus.includes('revisi')) targetStatus = 'EN_REVISION';
+
+      const target = projectTasks.find(
+        (t) => t.key.toLowerCase() === taskQuery || t.title.toLowerCase().includes(taskQuery)
+      );
+
+      if (target) {
+        updateTask(target.id, { status: targetStatus });
+        return {
+          content: `🚀 **Estado de tarea actualizado:**\n\n- **Tarea:** \`${target.key}\` - **${target.title}**\n- **Nuevo Estado:** \`${targetStatus}\`\n\nEl cambio ya se refleja en el Kanban y las métricas del proyecto.`,
+        };
+      } else {
+        return {
+          content: `No encontré la tarea *"${taskQuery}"* para cambiar su estado.`,
+        };
+      }
+    }
+
+    // =========================================================================
+    // 6. ACCIÓN: CAMBIAR PRIORIDAD DE UNA TAREA
+    // =========================================================================
+    const priorityMatch = promptLower.match(
+      /(?:cambia|cambiar|pone|poner|establece|establecer)\s+(?:la\s+)?prioridad\s+(?:de\s+la\s+tarea\s+)?["']?([^"']+)["']?\s+a\s+(urgente|alta|media|baja)/i
+    );
+
+    if (priorityMatch) {
+      const taskQuery = priorityMatch[1].trim();
+      const targetPriority = priorityMatch[2].toUpperCase() as TaskPriority;
+
+      const target = projectTasks.find(
+        (t) => t.key.toLowerCase() === taskQuery || t.title.toLowerCase().includes(taskQuery)
+      );
+
+      if (target) {
+        updateTask(target.id, { priority: targetPriority });
+        return {
+          content: `⚡ **Prioridad actualizada:**\n\n- **Tarea:** \`${target.key}\` - **${target.title}**\n- **Nueva Prioridad:** \`${targetPriority}\``,
+        };
+      }
+    }
+
+    // =========================================================================
+    // 7. ACCIÓN: AGREGAR SUBTAREA A UNA TAREA
+    // =========================================================================
+    const subtaskMatch = promptLower.match(
+      /(?:agrega|agregar|anade|añadir)\s+(?:la\s+)?subtarea\s+["']?([^"']+)["']?\s+(?:a|en)\s+(?:la\s+tarea\s+)?["']?([^"']+)["']?/i
+    );
+
+    if (subtaskMatch) {
+      const subtaskTitle = subtaskMatch[1].trim();
+      const taskQuery = subtaskMatch[2].trim();
+
+      const target = projectTasks.find(
+        (t) => t.key.toLowerCase() === taskQuery || t.title.toLowerCase().includes(taskQuery)
+      );
+
+      if (target) {
+        addSubtask(target.id, subtaskTitle);
+        return {
+          content: `📝 **Subtarea agregada:**\n\n- **Subtarea:** *"${subtaskTitle}"*\n- **Tarea padre:** \`${target.key}\` - **${target.title}**`,
+        };
+      }
+    }
+
+    // =========================================================================
+    // 8. ACCIÓN: ACTUALIZAR DESCRIPCIÓN O NOMBRE DEL PROYECTO
+    // =========================================================================
+    const projectDescMatch = promptLower.match(
+      /(?:cambia|cambiar|actualiza|actualizar)\s+(?:la\s+)?descripci[oó]n\s+(?:del\s+proyecto\s+)?a\s+["']?([^"']+)["']?/i
+    );
+
+    if (projectDescMatch && currentProject) {
+      const newDesc = projectDescMatch[1].trim();
+      updateProject(currentProject.id, { description: newDesc });
+      return {
+        content: `📝 **Descripción del proyecto actualizada:**\n\n*"${newDesc}"*`,
+      };
+    }
+
+    // =========================================================================
+    // 9. PLANIFICACIÓN DINÁMICA / DESCOMPOSICIÓN PERSONALIZADA POR TEMA
+    // =========================================================================
     if (
       promptLower.includes('dividir') ||
       promptLower.includes('descompon') ||
       promptLower.includes('estructur') ||
+      promptLower.includes('plan de trabajo') ||
       promptLower.includes('crear tareas') ||
-      promptLower.includes('plan de trabajo')
+      promptLower.includes('sprint')
     ) {
-      const generatedTasks: GeneratedTask[] = [
-        {
-          title: `Diseñar arquitectura técnica y base de datos para ${projectName}`,
-          description: 'Definir modelos relacionales, flujos de autenticación y migraciones de base de datos.',
-          priority: 'ALTA',
-          estimatedHours: 6,
-        },
-        {
-          title: `Implementar interfaz web moderna y responsiva`,
-          description: 'Construir componentes de UI con diseño unificado, temas y micro-interacciones.',
-          priority: 'MEDIA',
-          estimatedHours: 8,
-        },
-        {
-          title: `Configurar canal de comunicación y colaboración en tiempo real`,
-          description: 'Habilitar soporte para mensajería instantánea, adjuntos y notificaciones.',
-          priority: 'MEDIA',
-          estimatedHours: 5,
-        },
-        {
-          title: `Validación de calidad, pruebas unitarias y despliegue`,
-          description: 'Asegurar cobertura de pruebas, optimización de performance y pipeline CI/CD.',
-          priority: 'URGENTE',
-          estimatedHours: 4,
-        },
-      ];
+      let customTasks: GeneratedTask[] = [];
+
+      if (promptLower.includes('auth') || promptLower.includes('login') || promptLower.includes('usuario')) {
+        customTasks = [
+          { title: 'Configurar flujo de autenticación y sesiones seguras', description: 'Integrar login por correo, OAuth (Google/GitHub) y tokens JWT.', priority: 'URGENTE', estimatedHours: 5 },
+          { title: 'Diseñar interfaz de Login, Registro y Recuperación', description: 'Crear vistas con validación en tiempo real y micro-animaciones.', priority: 'MEDIA', estimatedHours: 4 },
+          { title: 'Implementar control de roles y permisos (RBAC)', description: 'Restringir rutas protegidas según roles ADMIN, LEADER y MEMBER.', priority: 'ALTA', estimatedHours: 6 },
+          { title: 'Pruebas de seguridad y auditoría de sesiones', description: 'Validar mitigación de vulnerabilidades XSS y CSRF.', priority: 'MEDIA', estimatedHours: 3 },
+        ];
+      } else if (promptLower.includes('pago') || promptLower.includes('stripe') || promptLower.includes('checkout') || promptLower.includes('ecommerce')) {
+        customTasks = [
+          { title: 'Integrar pasarela de pagos Stripe / MercadoPago', description: 'Configurar endpoints de Webhooks para confirmación de transacciones.', priority: 'URGENTE', estimatedHours: 8 },
+          { title: 'Diseñar flujo de Checkout y carrito de compras', description: 'Crear pantalla de resumen de orden con cálculo dinámico de impuestos.', priority: 'ALTA', estimatedHours: 6 },
+          { title: 'Gestión de facturación y recibos automáticos', description: 'Generar comprobantes descargables en formato PDF y envío por email.', priority: 'MEDIA', estimatedHours: 5 },
+        ];
+      } else if (promptLower.includes('api') || promptLower.includes('backend') || promptLower.includes('base de datos') || promptLower.includes('db')) {
+        customTasks = [
+          { title: 'Definir esquema de base de datos relacional y migraciones', description: 'Modelar entidades, relaciones e índices optimizados en Prisma ORM.', priority: 'ALTA', estimatedHours: 6 },
+          { title: 'Construir controladores RESTful con validaciones robustas', description: 'Implementar validación de payloads con Zod y manejo centralizado de errores.', priority: 'ALTA', estimatedHours: 7 },
+          { title: 'Configurar Rate Limiting y caché con Redis', description: 'Optimizar tiempos de respuesta y proteger endpoints críticos.', priority: 'MEDIA', estimatedHours: 4 },
+          { title: 'Suite de pruebas de integración para endpoints', description: 'Validar contratos de API con mocks de base de datos.', priority: 'MEDIA', estimatedHours: 5 },
+        ];
+      } else {
+        // Plan general adaptado al proyecto
+        customTasks = [
+          { title: `Definir arquitectura y especificaciones para ${projectName}`, description: 'Documentar componentes principales, contratos de datos y flujo de trabajo.', priority: 'ALTA', estimatedHours: 6 },
+          { title: `Desarrollar vistas principales e interfaz de usuario`, description: 'Construir componentes responsivos con tema oscuro/claro y estados de carga.', priority: 'MEDIA', estimatedHours: 8 },
+          { title: `Integración de lógica de negocio y persistencia`, description: 'Conectar interfaces con base de datos y validaciones de seguridad.', priority: 'ALTA', estimatedHours: 7 },
+          { title: `Testing integral y pipeline de despliegue continuo`, description: 'Realizar pruebas de carga, verificación de rendimiento y deploy en producción.', priority: 'URGENTE', estimatedHours: 5 },
+        ];
+      }
 
       return {
-        content: `He analizado los requerimientos para **${projectName}** y preparé una propuesta estructurada con **${generatedTasks.length} tareas clave**. Podés importarlas directamente a tu tablero con el botón debajo:`,
-        generatedTasks,
+        content: `He analizado tu solicitud para **${projectName}** y diseñé un plan con **${customTasks.length} tareas clave**. Podés importarlas todas directamente al tablero con el botón debajo:`,
+        generatedTasks: customTasks,
       };
     }
 
-    // 2. Caso: Resumen de estado y avance
+    // =========================================================================
+    // 10. ANÁLISIS DE RESUMEN Y ESTADO DEL PROYECTO
+    // =========================================================================
     if (
       promptLower.includes('resumen') ||
       promptLower.includes('estado') ||
       promptLower.includes('avance') ||
       promptLower.includes('progreso') ||
-      promptLower.includes('cómo vamos')
+      promptLower.includes('cómo vamos') ||
+      promptLower.includes('horas')
     ) {
       const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+      const totalEstimated = projectTasks.reduce((acc, t) => acc + (t.estimatedHours || 0), 0);
+      const totalLogged = projectTasks.reduce((acc, t) => acc + (t.loggedHours || 0), 0);
 
-      let analysis = '';
-      if (totalTasks === 0) {
-        analysis = 'Actualmente no hay tareas registradas en el tablero. Te sugiero usar la opción **"Dividir proyecto"** para iniciar la estructura.';
-      } else if (progressPercent >= 75) {
-        analysis = '¡Excelente progreso! La mayor parte de las tareas ya están concluidas.';
-      } else if (inProgressTasks > 0) {
-        analysis = `El equipo está trabajando activamente en **${inProgressTasks} tarea(s)** en progreso.`;
-      } else {
-        analysis = 'Hay tareas pendientes listas para ser asignadas e iniciadas.';
-      }
+      const urgentCount = projectTasks.filter((t) => t.priority === 'URGENTE').length;
+      const highCount = projectTasks.filter((t) => t.priority === 'ALTA').length;
 
       return {
-        content: `### 📊 Diagnóstico del Proyecto: **${projectName}**\n\n- **Progreso general:** \`${progressPercent}%\` completado\n- **Total de tareas:** ${totalTasks}\n  - ⏳ **Pendientes:** ${pendingTasks}\n  - 🚀 **En Progreso:** ${inProgressTasks}\n  - ✅ **Finalizadas:** ${completedTasks}\n\n**Evaluación de la IA:**\n${analysis}`,
+        content: `### 📊 Diagnóstico Ejecutivo: **${projectName}**\n\n- **Porcentaje de Entrega:** \`${progressPercent}%\` (${completedTasks} de ${totalTasks} tareas)\n- **Distribución de Estados:**\n  - ⏳ **Pendientes:** ${pendingTasks}\n  - 🚀 **En Progreso:** ${inProgressTasks}\n  - ✅ **Finalizadas:** ${completedTasks}\n- **Prioridades Críticas:** ${urgentCount} Urgentes, ${highCount} Altas\n- **Tiempo Total Estimado:** \`${totalEstimated}h\` | **Registrado:** \`${totalLogged}h\`\n\n**Recomendación de Nexor AI:**\n${
+          urgentCount > 0
+            ? `⚠️ Hay **${urgentCount} tarea(s) urgente(s)** sin finalizar. Se recomienda enfocar los recursos en destrabar esos ítems antes de incorporar nuevas tareas.`
+            : totalTasks === 0
+            ? 'El tablero no tiene tareas activas. Te sugiero iniciar pidiéndome estructurar el proyecto.'
+            : 'El flujo de trabajo presenta un avance equilibrado. Buen momento para revisar las subtareas pendientes.'
+        }`,
       };
     }
 
-    // 3. Caso: Subtareas
-    if (
-      promptLower.includes('subtarea') ||
-      promptLower.includes('pasos') ||
-      promptLower.includes('checklist') ||
-      promptLower.includes('desglos')
-    ) {
+    // =========================================================================
+    // 11. SUBTAREAS INTELIGENTES
+    // =========================================================================
+    if (promptLower.includes('subtarea') || promptLower.includes('checklist') || promptLower.includes('pasos')) {
       const suggestedSubtasks = [
         'Definir especificaciones técnicas y alcance',
         'Diseñar maqueta y flujo de usuario',
@@ -221,31 +444,48 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
       ];
 
       return {
-        content: `Aquí tenés una lista de **subtareas sugeridas** para asegurar una entrega de alta calidad. Podés agregarlas a cualquier tarea de tu proyecto:`,
+        content: `Aquí tenés una lista de **subtareas recomendadas** para garantizar calidad en el desarrollo. Podés asignarlas a cualquier tarea de tu tablero:`,
         suggestedSubtasks,
       };
     }
 
-    // 4. Caso: Ideas de sprint / prioridades
+    // =========================================================================
+    // 12. CONSULTORÍA TÉCNICA, ARQUITECTURA Y PREGUNTAS ABIERTAS
+    // =========================================================================
+    // Si la consulta es una pregunta abierta de programación, arquitectura o gestión
     if (
-      promptLower.includes('sprint') ||
-      promptLower.includes('prioridad') ||
-      promptLower.includes('orden') ||
-      promptLower.includes('estrategia')
+      promptLower.startsWith('cómo') ||
+      promptLower.startsWith('como') ||
+      promptLower.startsWith('qué') ||
+      promptLower.startsWith('que') ||
+      promptLower.startsWith('por qué') ||
+      promptLower.startsWith('por que') ||
+      promptLower.startsWith('cuál') ||
+      promptLower.startsWith('cual') ||
+      promptLower.includes('explicame') ||
+      promptLower.includes('explica') ||
+      promptLower.includes('arquitectura') ||
+      promptLower.includes('patrón') ||
+      promptLower.includes('database') ||
+      promptLower.includes('react') ||
+      promptLower.includes('next') ||
+      promptLower.includes('prisma')
     ) {
       return {
-        content: `### 🎯 Recomendaciones Estratégicas para **${projectName}**\n\n1. **Foco en tareas de prioridad URGENTE y ALTA:** Resolver bloqueos arquitectónicos y de infraestructura antes de refactorizaciones visuales.\n2. **Distribución equilibrada de carga:** Asegurar que ningún integrante tenga más de 3 tareas en progreso simultáneamente.\n3. **Criterios de aceptación claros:** Definir subtareas verificables antes de marcar tareas en revisión.\n4. **Monitoreo de tiempos:** Registrar horas reales trabajadas para calibrar futuras estimaciones.`,
+        content: `### 💡 Asistencia Técnica: ${raw}\n\nCon respecto a tu consulta para **${projectName}**:\n\n1. **Enfoque Recomendado:**\n   - Mantener desacopladas la capa de persistencia y la interfaz de usuario.\n   - Utilizar tipado estricto en TypeScript para evitar discrepancias de datos.\n   - Implementar validaciones en tiempo de compilación y en endpoints REST.\n\n2. **Buenas Prácticas en el Proyecto:**\n   - Registrar estimaciones de tiempo realistas para calibrar la velocidad del equipo.\n   - Dividir funcionalidades grandes en subtareas verificables de menos de 4 horas.\n   - Usar el canal de chat del proyecto para alinear blockers con el equipo.\n\n¿Querés que creemos tareas específicas en el tablero para implementar este enfoque o que elaboremos un prototipo?`,
       };
     }
 
-    // 5. Respuesta conversacional general
+    // =========================================================================
+    // 13. RESPUESTA CONTEXTUAL AUTÓNOMA POR DEFECTO
+    // =========================================================================
     return {
-      content: `Entendido. Con respecto a tu consulta sobre **${projectName}**, te comento que podés gestionar todos los recursos desde la barra lateral. Cuentas con **${totalTasks} tareas** en el tablero y comunicación centralizada.\n\n¿Querés que profundicemos en algún aspecto específico, generemos más tareas o analicemos algún módulo?`,
+      content: `Comprendo tu indicación sobre **${projectName}** (*"${raw}"*).\n\nActualmente tenés **${totalTasks} tareas** en el tablero (${completedTasks} completadas, ${pendingTasks} pendientes).\n\nPodés pedirme acciones concretas como:\n- ➕ *"Creá una tarea para implementar [funcionalidad]"*\n- 🗑️ *"Borrá todas las tareas"* o *"Borrá las tareas finalizadas"*\n- 🚀 *"Marcá como completada la tarea [nombre]"*\n- 📊 *"Hacé un resumen de avance"*\n- 💡 O hacerme cualquier pregunta técnica o de gestión sobre tu proyecto.`,
     };
   };
 
   /** Envío de mensaje */
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || inputMessage).trim();
     if (!text || isGenerating) return;
 
@@ -260,8 +500,9 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     setInputMessage('');
     setIsGenerating(true);
 
-    setTimeout(() => {
-      const response = generateAiResponse(text);
+    try {
+      const response = await processAutonomousAgent(text);
+
       const aiMessage: Message = {
         id: `ai-${Date.now()}`,
         sender: 'ai',
@@ -272,8 +513,20 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
       };
 
       setMessages((prev) => [...prev, aiMessage]);
+    } catch (err) {
+      console.error('Error procesando respuesta de IA:', err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ai-${Date.now()}`,
+          sender: 'ai',
+          content: 'Ocurrió un error al procesar tu solicitud. Por favor, intenta nuevamente.',
+          createdAt: new Date(),
+        },
+      ]);
+    } finally {
       setIsGenerating(false);
-    }, 600);
+    }
   };
 
   /** Importar tareas sugeridas por la IA al proyecto */
@@ -404,8 +657,9 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                 <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
                   Nexor-Space AI
                 </h3>
-                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-500/30">
-                  Asistente Unificado
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-500/30 flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-amber-500" />
+                  Agente Autónomo
                 </span>
               </div>
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
@@ -611,7 +865,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                 <Sparkles className="w-4 h-4 animate-spin" />
               </div>
               <div className="p-3.5 rounded-2xl rounded-tl-none bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 flex items-center gap-2 shadow-sm">
-                <span>Nexor AI está analizando y respondiendo</span>
+                <span>Nexor AI está analizando y ejecutando</span>
                 <span className="flex gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '0ms' }} />
                   <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -662,7 +916,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                   handleSendMessage();
                 }
               }}
-              placeholder="Preguntale a Nexor AI, pedí tareas, resúmenes o ideas..."
+              placeholder="Ej: 'Borra todas las tareas', 'Creá una tarea para...', 'Resumí el avance'..."
               className="w-full bg-transparent text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none resize-none max-h-28"
             />
           </div>
