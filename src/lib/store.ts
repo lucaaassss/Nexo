@@ -1136,6 +1136,31 @@ export class NexorSpaceStore {
     }
   }
 
+  /** Elimina una notificación individual */
+  public deleteNotification(notificationId: string) {
+    this.notifications = this.notifications.filter((n) => n.id !== notificationId);
+    this.persistState();
+
+    fetch(`/api/notifications?id=${encodeURIComponent(notificationId)}`, {
+      method: 'DELETE',
+    }).catch((e) => console.warn('Error sincronizando borrado de notificación:', e));
+  }
+
+  /** Elimina todas las notificaciones del usuario */
+  public clearAllNotifications() {
+    this.notifications = [];
+    this.persistState();
+
+    if (this.currentUser.id || this.currentUser.email) {
+      const param = this.currentUser.id
+        ? `userId=${encodeURIComponent(this.currentUser.id)}`
+        : `email=${encodeURIComponent(this.currentUser.email)}`;
+      fetch(`/api/notifications?${param}`, {
+        method: 'DELETE',
+      }).catch((e) => console.warn('Error borrando todas las notificaciones:', e));
+    }
+  }
+
   /** Registra una acción en el historial de auditoría */
   private logActivity(projectId: string, action: string, entityType: 'TASK' | 'PROJECT' | 'CHAT' | 'FILE' | 'MEMBER', entityId: string, details: string) {
     const item: ActivityItem = {

@@ -164,5 +164,7 @@ export function useNexorSpace() {
     uploadFile: (name: string, url: string, size: number, type: string, taskId?: string) => store.uploadFile(name, url, size, type, taskId),
     deleteFile: (fileId: string) => store.deleteFile(fileId),
     markNotificationsAsRead: () => store.markNotificationsAsRead(),
+    deleteNotification: (notificationId: string) => store.deleteNotification(notificationId),
+    clearAllNotifications: () => store.clearAllNotifications(),
   };
 }

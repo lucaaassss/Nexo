@@ -1,7 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bell, CheckCheck, Inbox, UserPlus, ClipboardList, MessageSquare, AtSign, Info } from 'lucide-react';
+import {
+  Bell,
+  CheckCheck,
+  Inbox,
+  UserPlus,
+  ClipboardList,
+  MessageSquare,
+  AtSign,
+  Info,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { formatDateTime } from '@/lib/utils';
 import { NotificationItem } from '@/types';
@@ -47,12 +58,11 @@ const NOTIF_CONFIG: Record<
 
 /**
  * Componente NotificationsDropdown
- * Menú desplegable para visualizar notificaciones en tiempo real con indicador de no leídos.
- * Totalmente compatible con Modo Claro y Modo Oscuro.
+ * Menú desplegable para visualizar notificaciones en tiempo real con botones visibles para eliminarlas.
  */
 export function NotificationsDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, markNotificationsAsRead } = useNexorSpace();
+  const { notifications, markNotificationsAsRead, deleteNotification, clearAllNotifications } = useNexorSpace();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -94,19 +104,32 @@ export function NotificationsDropdown() {
                 <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Notificaciones</h3>
                 {unreadCount > 0 && (
                   <span className="px-2 py-0.5 rounded-full bg-violet-600 text-[10px] font-bold text-white leading-none">
-                    {unreadCount} nueva{unreadCount !== 1 ? 's' : ''}
+                    {unreadCount}
                   </span>
                 )}
               </div>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markNotificationsAsRead}
-                  className="flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-semibold transition-colors cursor-pointer"
-                >
-                  <CheckCheck className="w-3.5 h-3.5" />
-                  Marcar leídas
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markNotificationsAsRead}
+                    title="Marcar todas como leídas"
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 font-semibold transition-colors cursor-pointer"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5" />
+                    <span>Leídas</span>
+                  </button>
+                )}
+                {notifications.length > 0 && (
+                  <button
+                    onClick={clearAllNotifications}
+                    title="Eliminar todas las notificaciones"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800/50 font-semibold transition-all cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Borrar todo</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Lista de Notificaciones */}
@@ -114,7 +137,7 @@ export function NotificationsDropdown() {
               {notifications.length === 0 ? (
                 <div className="p-8 text-center text-zinc-500">
                   <Inbox className="w-8 h-8 mx-auto mb-2 opacity-40 text-violet-500" />
-                  <p className="text-xs font-medium">No tienes notificaciones pendientes</p>
+                  <p className="text-xs font-medium">No tienes notificaciones</p>
                 </div>
               ) : (
                 notifications.map((notif) => {
@@ -122,7 +145,7 @@ export function NotificationsDropdown() {
                   return (
                     <div
                       key={notif.id}
-                      className={`p-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/40 ${
+                      className={`group relative p-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/40 ${
                         !notif.read ? 'bg-violet-50/60 dark:bg-violet-950/20' : ''
                       }`}
                     >
@@ -142,7 +165,7 @@ export function NotificationsDropdown() {
                                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${config.dot}`} />
                               )}
                             </div>
-                            <span className="text-[10px] text-zinc-500 flex-shrink-0 mt-0.5 font-mono">
+                            <span className="text-[10px] text-zinc-500 flex-shrink-0 font-mono">
                               {formatDateTime(notif.createdAt)}
                             </span>
                           </div>
@@ -150,18 +173,30 @@ export function NotificationsDropdown() {
                             {notif.message}
                           </p>
 
-                          {notif.linkUrl && (
-                            <div className="mt-2.5">
+                          {/* Botones de acción en cada notificación */}
+                          <div className="flex items-center gap-2 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800/40">
+                            {notif.linkUrl && (
                               <a
                                 href={notif.linkUrl}
                                 onClick={() => setIsOpen(false)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white shadow-xs transition-all cursor-pointer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white shadow-xs transition-all cursor-pointer"
                               >
-                                <span>Aceptar / Ver invitación</span>
+                                <span>Aceptar / Ver</span>
                                 <span aria-hidden="true">&rarr;</span>
                               </a>
-                            </div>
-                          )}
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotification(notif.id);
+                              }}
+                              title="Eliminar notificación"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/50 transition-all cursor-pointer ml-auto"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Eliminar</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>

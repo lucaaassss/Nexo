@@ -22,6 +22,7 @@ import {
   Users,
   Loader2,
   UserPlus,
+  Trash2,
 } from 'lucide-react';
 
 /**
@@ -31,7 +32,14 @@ import {
  */
 export default function HomePage() {
   const router = useRouter();
-  const { projects, setCurrentProject, createProject, currentUser, notifications } = useNexorSpace();
+  const {
+    projects,
+    setCurrentProject,
+    createProject,
+    currentUser,
+    notifications,
+    deleteNotification,
+  } = useNexorSpace();
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -176,11 +184,19 @@ export default function HomePage() {
                 <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
                   <a
                     href={invite.linkUrl || '/dashboard'}
-                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/30 transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                    className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/30 transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <span>Aceptar y Unirse</span>
                     <ArrowRight className="w-4 h-4" />
                   </a>
+                  <button
+                    onClick={() => deleteNotification(invite.id)}
+                    title="Descartar invitación"
+                    aria-label="Descartar invitación"
+                    className="p-2.5 rounded-xl text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 border border-zinc-700/60 hover:border-rose-500/30 transition-all cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             ))}
