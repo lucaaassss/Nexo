@@ -107,7 +107,7 @@ export function NotificationsDropdown() {
             </div>
 
             {/* Lista de Notificaciones */}
-            <div className="max-h-80 overflow-y-auto divide-y divide-zinc-800/40">
+            <div className="max-h-80 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-800/40">
               {notifications.length === 0 ? (
                 <div className="p-8 text-center text-zinc-500">
                   <Inbox className="w-8 h-8 mx-auto mb-2 opacity-50 text-violet-400" />
@@ -119,8 +119,8 @@ export function NotificationsDropdown() {
                   return (
                     <div
                       key={notif.id}
-                      className={`p-4 transition-colors hover:bg-zinc-800/40 ${
-                        !notif.read ? 'bg-violet-950/15' : ''
+                      className={`p-4 transition-colors hover:bg-zinc-100/80 dark:hover:bg-zinc-800/40 ${
+                        !notif.read ? 'bg-violet-50/70 dark:bg-violet-950/15' : ''
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -132,7 +132,7 @@ export function NotificationsDropdown() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <h4 className="text-xs font-semibold text-zinc-200 leading-tight">{notif.title}</h4>
+                              <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-200 leading-tight">{notif.title}</h4>
                               {!notif.read && (
                                 <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${config.dot}`} />
                               )}
@@ -141,7 +141,20 @@ export function NotificationsDropdown() {
                               {formatDateTime(notif.createdAt)}
                             </span>
                           </div>
-                          <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">{notif.message}</p>
+                          <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 leading-relaxed">{notif.message}</p>
+
+                          {notif.linkUrl && (
+                            <div className="mt-2">
+                              <a
+                                href={notif.linkUrl}
+                                onClick={() => setIsOpen(false)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-xs transition-colors"
+                              >
+                                <span>Ver invitación</span>
+                                <span aria-hidden="true">&rarr;</span>
+                              </a>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

@@ -63,9 +63,53 @@ export class NexorSpaceStore {
     }
   }
 
+  /** Carga las notificaciones persistidas del usuario desde la API */
+  public async fetchNotificationsFromDB() {
+    if (typeof window === 'undefined') return;
+    const userId = this.currentUser.id;
+    const email = this.currentUser.email;
+    if (!userId && !email) return;
+
+    try {
+      const params = new URLSearchParams();
+      if (userId && userId !== 'usr_admin_1') params.set('userId', userId);
+      if (email) params.set('email', email);
+
+      const res = await fetch(`/api/notifications?${params.toString()}`);
+      if (!res.ok) return;
+      const dbNotifs = await res.json();
+      if (!Array.isArray(dbNotifs) || dbNotifs.length === 0) return;
+
+      // Convertir al formato interno NotificationItem
+      const incoming: NotificationItem[] = dbNotifs.map((n: any) => ({
+        id: n.id,
+        userId: n.userId,
+        title: n.title,
+        message: n.message,
+        type: n.type as 'TASK_ASSIGNED' | 'MENTION' | 'COMMENT' | 'SYSTEM' | 'INVITE',
+        read: Boolean(n.read),
+        linkUrl: n.linkUrl || undefined,
+        createdAt: n.createdAt ? new Date(n.createdAt).toISOString() : new Date().toISOString(),
+      }));
+
+      // Mezclar con las locales sin duplicar por ID
+      const existingIds = new Set(this.notifications.map((n) => n.id));
+      const newOnes = incoming.filter((n) => !existingIds.has(n.id));
+      if (newOnes.length > 0) {
+        this.notifications = [...newOnes, ...this.notifications];
+        this.persistState();
+        this.notify();
+      }
+    } catch (e) {
+      console.warn('Error cargando notificaciones desde DB:', e);
+    }
+  }
+
   /** Sincroniza proyectos y tareas desde la base de datos (Supabase prioritario) */
   public async syncWithDatabase() {
     if (typeof window === 'undefined') return;
+    // Cargar notificaciones persistidas al mismo tiempo
+    this.fetchNotificationsFromDB();
 
     try {
       // 1. Intentar obtener proyectos directamente desde Supabase si está configurado
@@ -985,6 +1029,17 @@ export class NexorSpaceStore {
   public markNotificationsAsRead() {
     this.notifications = this.notifications.map((n) => ({ ...n, read: true }));
     this.persistState();
+
+    if (this.currentUser.id || this.currentUser.email) {
+      fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: this.currentUser.id,
+          email: this.currentUser.email,
+        }),
+      }).catch((e) => console.warn('Error sincronizando notificaciones leídas:', e));
+    }
   }
 
   /** Registra una acción en el historial de auditoría */

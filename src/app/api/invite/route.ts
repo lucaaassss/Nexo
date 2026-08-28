@@ -1,5 +1,20 @@
 import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
 
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Administrador',
+  LEADER: 'Líder',
+  MEMBER: 'Miembro',
+  GUEST: 'Invitado',
+};
+
+/**
+ * POST /api/invite
+ * Envía una invitación por correo electrónico (vía Resend) y crea una notificación
+ * en la bandeja de entrada del usuario invitado.
+ *
+ * Body: { email, projectId, projectName, role, inviterName, inviteLink }
+ */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -12,16 +27,83 @@ export async function POST(req: Request) {
       );
     }
 
+    const cleanEmail = email.toLowerCase().trim();
+    const roleDisplay = role ? (ROLE_LABELS[role] || role) : 'Miembro';
+    const senderName = inviterName || 'Un integrante de Nexo';
+
+    // ──────────────────────────────────────────────────────────────
+    // 1. Crear notificación en la bandeja de entrada de la persona invitada
+    // ──────────────────────────────────────────────────────────────
+    try {
+      let targetUser = await db.user.findUnique({ where: { email: cleanEmail } });
+      if (!targetUser) {
+        targetUser = await db.user.create({
+          data: {
+            email: cleanEmail,
+            name: cleanEmail.split('@')[0],
+            password: '',
+            role: 'MEMBER',
+          },
+        });
+      }
+
+      await db.notification.create({
+        data: {
+          userId: targetUser.id,
+          title: '¡Fuiste invitado a un proyecto!',
+          message: `${senderName} te invitó al proyecto "${projectName}" con el rol de ${roleDisplay}.`,
+          type: 'INVITE',
+          linkUrl: inviteLink || `/invite/${projectId}`,
+        },
+      });
+    } catch (dbErr) {
+      console.warn('Error guardando notificación en la base de datos:', dbErr);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // 2. Enviar correo electrónico vía Resend
+    // ──────────────────────────────────────────────────────────────
     const apiKey = process.env.RESEND_API_KEY;
 
     if (!apiKey) {
-      // Simular un retardo para la demo
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Sin API key → simular envío con delay para demo/desarrollo local
+      await new Promise((resolve) => setTimeout(resolve, 600));
       return NextResponse.json({ success: true, simulated: true });
     }
 
+    const htmlTemplate = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #6d28d9; margin: 0; font-size: 28px; font-weight: 800;">NEXO</h1>
+          <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Gestión de Proyectos</p>
+        </div>
+        
+        <div style="background-color: white; padding: 32px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          <h2 style="margin-top: 0; color: #111827; font-size: 20px;">¡Te han invitado a unirte a un proyecto!</h2>
+          <p style="font-size: 16px; line-height: 1.5; color: #4b5563;">
+            Hola,<br><br>
+            <strong>${senderName}</strong> te ha invitado a colaborar en el proyecto <strong>"${projectName}"</strong> con el rol de <strong>${roleDisplay}</strong>.
+          </p>
+          
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${inviteLink}" style="display: inline-block; background-color: #7c3aed; color: white; font-weight: 600; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-size: 16px;">
+              Aceptar Invitación
+            </a>
+          </div>
+          
+          <p style="font-size: 14px; color: #6b7280; text-align: center; margin-bottom: 0;">
+            Si el botón no funciona, copiá y pegá este enlace en tu navegador:<br>
+            <a href="${inviteLink}" style="color: #7c3aed; word-break: break-all;">${inviteLink}</a>
+          </p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
+          <p>© ${new Date().getFullYear()} Nexo. Todos los derechos reservados.</p>
+        </div>
+      </div>
+    `;
+
     try {
-      // Intentar envío dinámico con Resend si está disponible
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -30,9 +112,9 @@ export async function POST(req: Request) {
         },
         body: JSON.stringify({
           from: 'Nexo <onboarding@resend.dev>',
-          to: [email],
+          to: [cleanEmail],
           subject: `Invitación al proyecto: ${projectName}`,
-          html: `<div style="font-family: sans-serif; padding: 20px;"><h2>Invitación a ${projectName}</h2><p>Te han invitado con el rol de ${role}.</p><a href="${inviteLink}">Aceptar Invitación</a></div>`,
+          html: htmlTemplate,
         }),
       });
 
@@ -40,6 +122,9 @@ export async function POST(req: Request) {
         const data = await res.json();
         return NextResponse.json({ success: true, data });
       }
+
+      const errData = await res.json().catch(() => ({}));
+      console.warn('Resend respondió con advertencia/error:', errData);
     } catch (e) {
       console.warn('Error enviando con Resend API:', e);
     }
@@ -47,6 +132,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, simulated: true });
   } catch (error: any) {
     console.error('Error procesando invitación:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Error interno' }, { status: 500 });
   }
 }
