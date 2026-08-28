@@ -236,7 +236,13 @@ export default function DashboardPage() {
       <ProjectModal isOpen={isNewProjectModalOpen} onClose={() => setIsNewProjectModalOpen(false)} />
       <TaskModal isOpen={isNewTaskModalOpen} onClose={() => setIsNewTaskModalOpen(false)} />
       <InviteMemberModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
-      <NexorSpaceAiModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
+      <NexorSpaceAiModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        activePage="dashboard"
+        activeTab={activeTab}
+        taskViewMode={taskViewMode}
+      />
       <ChatBubble />
     </div>
   );

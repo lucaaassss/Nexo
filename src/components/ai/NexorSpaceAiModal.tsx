@@ -16,6 +16,9 @@ import {
   Clock,
   Zap,
   ArrowUp,
+  FolderKanban,
+  LayoutDashboard,
+  Layers,
 } from 'lucide-react';
 import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { formatDateTime, getInitials } from '@/lib/utils';
@@ -41,11 +44,19 @@ interface Message {
 interface NexorSpaceAiModalProps {
   isOpen: boolean;
   onClose: () => void;
+  activePage?: 'home' | 'dashboard';
+  activeTab?: string;
+  taskViewMode?: string;
 }
 
 const QUICK_PROMPTS = [
   {
-    label: 'Dividir proyecto',
+    label: 'Crear nuevo proyecto',
+    icon: FolderKanban,
+    prompt: 'Creá un nuevo proyecto completo para una aplicación de reservas de viajes llamada Aerius.',
+  },
+  {
+    label: 'Dividir en tareas',
     icon: ListTodo,
     prompt: 'Descomponé este proyecto en las tareas principales necesarias para completarlo.',
   },
@@ -58,11 +69,6 @@ const QUICK_PROMPTS = [
     label: 'Sugerir subtareas',
     icon: Sparkles,
     prompt: 'Generá una lista de subtareas recomendadas para las tareas pendientes del proyecto.',
-  },
-  {
-    label: 'Ideas de sprint',
-    icon: Clock,
-    prompt: '¿Qué prioridades y objetivos deberíamos abordar en el próximo sprint según nuestras tareas?',
   },
 ];
 
@@ -152,13 +158,23 @@ function generateTopicTasks(projectName: string, contextPrompt: string): Generat
 
 /**
  * Componente NexorSpaceAiModal
- * Asistente Autónomo con Razonamiento Multi-Intención y Control Total sobre el Proyecto.
+ * Asistente Autónomo con Conciencia de Página, Multi-Cuenta y Control Total de Proyectos y Tareas.
  */
-export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
+export function NexorSpaceAiModal({
+  isOpen,
+  onClose,
+  activePage = 'dashboard',
+  activeTab = 'tasks',
+  taskViewMode = 'kanban',
+}: NexorSpaceAiModalProps) {
   const {
     currentProject,
+    projects,
     projectTasks,
     currentUser,
+    createProject,
+    setCurrentProject,
+    deleteProject,
     createTask,
     updateTask,
     deleteTask,
@@ -182,12 +198,29 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     setMounted(true);
   }, []);
 
-  // Mensaje inicial
+  // Construir nombre de la ubicación contextual
+  const getLocationLabel = () => {
+    if (activePage === 'home') {
+      return 'Inicio (Vista General de Proyectos)';
+    }
+    const tabMap: Record<string, string> = {
+      tasks: `Tablero (${taskViewMode.toUpperCase()})`,
+      files: 'Bóveda de Archivos',
+      analytics: 'Métricas y Analíticas',
+      activity: 'Historial de Actividad',
+      settings: 'Configuración del Proyecto',
+    };
+    const tabName = tabMap[activeTab] || activeTab;
+    return `${currentProject ? currentProject.name : 'Proyecto'} > ${tabName}`;
+  };
+
+  // Mensaje inicial con contexto de página
   useEffect(() => {
     if (isOpen && messages.length === 0) {
+      const locationText = getLocationLabel();
       const welcomeContent = currentProject
-        ? `¡Hola **${currentUser.name.split(' ')[0]}**! 👋 Soy **Nexor-Space AI**, tu agente con **Control Total** sobre el proyecto **${currentProject.name}**.\n\nPuedo procesar instrucciones compuestas y gestionar todo tu espacio de trabajo:\n- 🏷️ *"Cambiá el nombre del proyecto a Aerius y creá una descripción para una app de viajes..."*\n- ➕ *"Creá estas 3 tareas: 1. Setup, 2. Backend, 3. UI..."*\n- 🗑️ *"Borrá todas las tareas"* o *"Borrá las tareas finalizadas"*\n- 🚀 *"Marcá como completada la tarea X"* o *"Cambiá la prioridad a Urgente"*\n- 📝 *"Agregá la subtarea 'Revisar PR' a la tarea X"*\n- 📊 *"Resumí el avance"* o consultame cualquier duda técnica de arquitectura y código.\n\n¿Qué orden o consulta tenés para hoy?`
-        : `¡Hola **${currentUser.name.split(' ')[0]}**! 👋 Soy **Nexor-Space AI**.\n\n¿En qué puedo ayudarte hoy?`;
+        ? `¡Hola **${currentUser.name.split(' ')[0]}**! 👋 Soy **Nexor-Space AI**.\n\n📍 **Ubicación actual:** \`${locationText}\`\n👤 **Cuenta activa:** \`${currentUser.email}\`\n\nPuedo ejecutar cualquier orden que me pidas sobre tu cuenta y tus proyectos:\n- 🚀 *"Creá un nuevo proyecto para una app de viajes llamada Aerius..."*\n- 🏷️ *"Cambiá el nombre del proyecto actual a X y poné una descripción sobre..."*\n- ➕ *"Creá 3 tareas: 1. Setup, 2. Backend, 3. UI..."*\n- 🗑️ *"Borrá todas las tareas"* o *"Borrá las finalizadas"*\n- 🔄 *"Cambiá al proyecto [Nombre]"* o *"Listá todos mis proyectos"*\n- 📊 *"Resumí el avance"* o preguntame cualquier duda técnica de arquitectura y código.\n\n¿Qué querés hacer?`
+        : `¡Hola **${currentUser.name.split(' ')[0]}**! 👋 Soy **Nexor-Space AI**.\n\n📍 **Ubicación actual:** \`${locationText}\`\n\nPodés pedirme crear un nuevo proyecto, planificar tareas o consultarme cualquier duda.`;
 
       setMessages([
         {
@@ -225,9 +258,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
   if (!isOpen || !mounted) return null;
 
   /**
-   * MOTOR DE RAZONAMIENTO Y EJECUCIÓN MULTI-INTENCIÓN (Deep Intent & Action Pipeline)
-   * Analiza la estructura completa del mensaje, extrae entidades limpias, detecta múltiples
-   * acciones simultáneas (renombrar + generar descripción + crear tareas) y las ejecuta.
+   * MOTOR DE RAZONAMIENTO Y EJECUCIÓN CONTEXTUAL Y MULTI-CUENTA
    */
   const processAutonomousAgent = async (userPrompt: string): Promise<{
     content: string;
@@ -243,9 +274,119 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     const inProgressTasks = projectTasks.filter((t) => t.status === 'EN_PROGRESO').length;
 
     // =========================================================================
-    // CASO 1: INSTRUCCIÓN COMPUESTA (RENOMBRAR + GENERAR DESCRIPCIÓN)
+    // 1. CREAR UN NUEVO PROYECTO (First-Class Project Creation)
+    // Ejemplo: "crea un proyecto llamado aerius", "crea un nuevo proyecto de viajes tipo despegar que se llame aerius"
+    // =========================================================================
+    const wantsCreateProject =
+      /(?:crea|crear|armar|arma|nuevo|nueva|generar|hace|hacer|inicializar)\s+(?:un\s+|el\s+)?(?:nuevo\s+)?proyecto/i.test(promptLower) ||
+      (promptLower.includes('proyecto nuevo') || promptLower.includes('nuevo proyecto'));
+
+    if (wantsCreateProject) {
+      // Extraer nombre del nuevo proyecto
+      let newProjectName = '';
+
+      const quoted = raw.match(/["']([a-zA-Z0-9_\-\s]{2,30})["']/);
+      if (quoted && quoted[1]) {
+        newProjectName = quoted[1].trim();
+      } else {
+        const nameMatch = raw.match(
+          /(?:llamado|titulado|se llame|nombre|a|como)\s+["']?([a-zA-Z0-9_\-]{2,25})["']?(?=\s+y\s+|\s+con\s+|\s+que\s+|\s*,|\s*\.|\s*$)/i
+        );
+        if (nameMatch && nameMatch[1]) {
+          newProjectName = nameMatch[1].trim();
+        }
+      }
+
+      if (!newProjectName) {
+        // Buscar primera palabra sustantiva tras "proyecto"
+        const pMatch = raw.match(/proyecto\s+(?:llamado\s+|para\s+|de\s+)?([a-zA-Z0-9_\-]{2,25})/i);
+        if (pMatch && pMatch[1] && !['nuevo', 'para', 'de', 'un', 'una'].includes(pMatch[1].toLowerCase())) {
+          newProjectName = pMatch[1].trim();
+        } else {
+          newProjectName = `Proyecto ${projects.length + 1}`;
+        }
+      }
+
+      const formattedName = newProjectName.charAt(0).toUpperCase() + newProjectName.slice(1);
+      const cleanKey = formattedName.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || 'PRJ';
+      const synthesizedDesc = synthesizeProjectDescription(formattedName, raw);
+
+      // Crear el proyecto de forma persistente en la cuenta activa
+      const createdProj = createProject({
+        name: formattedName,
+        key: cleanKey,
+        description: synthesizedDesc,
+        color: '#7C3AED',
+      });
+
+      // Establecer como proyecto activo
+      if (createdProj && createdProj.id) {
+        setCurrentProject(createdProj.id);
+      }
+
+      // Generar tareas recomendadas para el nuevo proyecto
+      const suggestedTasks = generateTopicTasks(formattedName, raw);
+
+      return {
+        content: `🎉 **¡Nuevo Proyecto Creado e Inicializado con Éxito!**\n\n- 🏷️ **Nombre:** **${formattedName}**\n- 🔑 **Clave identificadora:** \`${cleanKey}\`\n- 📝 **Descripción generada:**\n  *"${synthesizedDesc}"*\n- 👤 **Creador:** \`${currentUser.name}\` (\`${currentUser.email}\`)\n\nEl proyecto ha sido creado en la base de datos y ahora es tu **proyecto activo**.\n\n---\n📋 **Estructura de Tareas Recomendadas para ${formattedName}:**\n¿Querés que importe estas 4 tareas clave para empezar?`,
+        generatedTasks: suggestedTasks,
+      };
+    }
+
+    // =========================================================================
+    // 2. CAMBIAR / NAVEGAR DE PROYECTO
+    // Ejemplo: "cambia al proyecto Aerius", "abrir el proyecto X", "ir a Nexor"
+    // =========================================================================
+    const switchMatch = promptLower.match(
+      /(?:cambia|cambiar|pasa|pasar|abrir|abre|ir|selecciona|seleccionar)\s+(?:al|el)?\s*proyecto\s+["']?([^"'\n]+)["']?/i
+    );
+
+    if (switchMatch && switchMatch[1]) {
+      const targetQuery = switchMatch[1].trim().replace(/^["']|["']$/g, '');
+      const found = projects.find(
+        (p) => p.name.toLowerCase().includes(targetQuery) || p.key.toLowerCase() === targetQuery
+      );
+
+      if (found) {
+        setCurrentProject(found.id);
+        return {
+          content: `🔄 **Proyecto Activo Cambiado:**\n\nAhora estás trabajando en **${found.name}** (Clave: \`${found.key}\`).\nTareas cargadas: **${projectTasks.filter((t) => t.projectId === found.id).length}**.`,
+        };
+      } else {
+        return {
+          content: `No encontré ningún proyecto llamado *"${targetQuery}"* en tu cuenta.\n\nTus proyectos disponibles son:\n${projects.map((p) => `- **${p.name}** (\`${p.key}\`)`).join('\n')}`,
+        };
+      }
+    }
+
+    // =========================================================================
+    // 3. LISTAR TODOS LOS PROYECTOS DE LA CUENTA
+    // Ejemplo: "¿cuáles son mis proyectos?", "listar proyectos", "ver proyectos"
+    // =========================================================================
+    if (
+      promptLower.includes('mis proyectos') ||
+      promptLower.includes('listar proyectos') ||
+      promptLower.includes('ver proyectos') ||
+      promptLower.includes('mostrar proyectos') ||
+      promptLower.includes('qué proyectos tengo')
+    ) {
+      if (projects.length === 0) {
+        return { content: `Actualmente no tenés proyectos creados. Podés pedirme: *"Creá un proyecto llamado..."* para comenzar.` };
+      }
+
+      const listItems = projects.map(
+        (p) =>
+          `- ${p.id === currentProject?.id ? '👉 **[ACTIVO]**' : '•'} **${p.name}** (\`${p.key}\`) - *${p.description || 'Sin descripción'}*`
+      );
+
+      return {
+        content: `📂 **Tus Proyectos Registrados (${projects.length}):**\n\n${listItems.join('\n')}\n\nPodés pedirme cambiar a cualquiera diciendo: *"Cambiá al proyecto [Nombre]"*.`,
+      };
+    }
+
+    // =========================================================================
+    // 4. INSTRUCCIÓN COMPUESTA (RENOMBRAR + GENERAR DESCRIPCIÓN)
     // Ejemplo: "cambia el nombre del proyecto a aerius y crea una descripcion que explique de que trata, es una pagina de viajes tipo despegar"
-    // O: "queria que el proyecto se llame solo "aerius" y que aparte de cambiarle el nombre me hagas una descripcion"
     // =========================================================================
     const wantsRename =
       /(?:cambia|cambiar|renombra|renombrar|ponele|poner|llama|llamar|se llame|nombre)\s+(?:el\s+)?(?:nombre\s+)?(?:del\s+proyecto\s+)?/i.test(promptLower) ||
@@ -258,16 +399,13 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
       promptLower.includes('descripción');
 
     if (wantsRename && wantsDescription && currentProject) {
-      // Extraer el nombre limpio
       let extractedName = '';
 
-      // Patrón 1: Entre comillas
       const quotedMatch = raw.match(/["']([a-zA-Z0-9_\-\s]{2,30})["']/);
       if (quotedMatch && quotedMatch[1]) {
         extractedName = quotedMatch[1].trim();
       }
 
-      // Patrón 2: Después de "a", "por", "como", "solo"
       if (!extractedName) {
         const nameMatch = raw.match(
           /(?:a|por|como|solo|llamado|titulado)\s+["']?([a-zA-Z0-9_\-]{2,25})["']?(?=\s+y\s+|\s+con\s+|\s+que\s+|\s*,|\s*\.|\s*$)/i
@@ -277,7 +415,6 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
         }
       }
 
-      // Fallback si aún no lo tiene: primera palabra capitalizable tras "nombre a" o "se llame"
       if (!extractedName) {
         const fallbackMatch = raw.match(/(?:nombre\s+(?:del\s+proyecto\s+)?a|se\s+llame\s+(?:solo\s+)?)\s*([a-zA-Z0-9_\-]+)/i);
         if (fallbackMatch && fallbackMatch[1]) {
@@ -289,30 +426,25 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
         ? extractedName.charAt(0).toUpperCase() + extractedName.slice(1).toLowerCase()
         : currentProject.name;
 
-      // Generar la descripción contextual
       const generatedDescription = synthesizeProjectDescription(finalProjectName, raw);
-
-      // Calcular clave
       const cleanKey = finalProjectName.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || currentProject.key;
 
-      // Ejecutar mutación real en el proyecto
       updateProject(currentProject.id, {
         name: finalProjectName,
         description: generatedDescription,
         key: cleanKey,
       });
 
-      // Generar tareas recomendadas según el tema
       const suggestedTasks = generateTopicTasks(finalProjectName, raw);
 
       return {
-        content: `### 🧠 Análisis y Ejecución de Solicitud\n\nHe analizado tu mensaje y apliqué los siguientes cambios en **${finalProjectName}**:\n\n- 🏷️ **Nombre del Proyecto:** Actualizado a **${finalProjectName}** (Clave: \`${cleanKey}\`)\n- 📝 **Descripción Contextual Generada:**\n  *"${generatedDescription}"*\n\n---\n🎯 **Estructura de Trabajo Sugerida para ${finalProjectName}:**\nPara ayudarte a comenzar, generé **${suggestedTasks.length} tareas clave** basadas en tu temática. Podés importarlas todas al tablero con 1 clic:`,
+        content: `### 🧠 Análisis y Ejecución de Solicitud\n\nHe analizado tu mensaje en el contexto de **${finalProjectName}**:\n\n- 🏷️ **Nombre del Proyecto:** Actualizado a **${finalProjectName}** (Clave: \`${cleanKey}\`)\n- 📝 **Descripción Contextual Generada:**\n  *"${generatedDescription}"*\n\n---\n🎯 **Estructura de Trabajo Sugerida:**\n¿Querés que importe estas 4 tareas clave para comenzar?`,
         generatedTasks: suggestedTasks,
       };
     }
 
     // =========================================================================
-    // CASO 2: RENOMBRAR PROYECTO ÚNICAMENTE
+    // 5. RENOMBRAR PROYECTO ACTUAL
     // =========================================================================
     if (wantsRename && currentProject) {
       let cleanName = '';
@@ -339,7 +471,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 3: CAMBIAR / GENERAR DESCRIPCIÓN DEL PROYECTO ÚNICAMENTE
+    // 6. CAMBIAR DESCRIPCIÓN DEL PROYECTO ACTUAL
     // =========================================================================
     if (wantsDescription && currentProject) {
       const generatedDescription = synthesizeProjectDescription(currentProject.name, raw);
@@ -350,7 +482,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 4: CAMBIAR COLOR DEL PROYECTO
+    // 7. CAMBIAR COLOR DEL PROYECTO
     // =========================================================================
     const colorMatch = promptLower.match(
       /(?:cambia|cambiar|pone|poner)\s+(?:el\s+)?color\s+(?:del\s+proyecto\s+)?(?:a|por)\s+(#[0-9a-f]{3,6}|[a-záéíóú]+)/i
@@ -361,12 +493,12 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
       const mappedColor = COLOR_MAP[rawColor] || (rawColor.startsWith('#') ? rawColor : '#7C3AED');
       updateProject(currentProject.id, { color: mappedColor });
       return {
-        content: `🎨 **Color del proyecto actualizado:**\n\nSe aplicó el color **${rawColor}** (\`${mappedColor}\`) al proyecto **${currentProject.name}**.`,
+        content: `🎨 **Color del proyecto actualizado:**\n\nSe aplicó el color **${rawColor}** (\`${mappedColor}\`) a **${currentProject.name}**.`,
       };
     }
 
     // =========================================================================
-    // CASO 5: BORRAR TODAS LAS TAREAS DEL PROYECTO
+    // 8. BORRAR TODAS LAS TAREAS DEL PROYECTO
     // =========================================================================
     if (
       /(borra|elimina|borrar|eliminar|quitar|vaciar|limpiar)\s+(todas\s+las\s+|los\s+|las\s+)?tareas/i.test(promptLower) ||
@@ -374,7 +506,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     ) {
       if (projectTasks.length === 0) {
         return {
-          content: `El proyecto **${currentProjName}** no tiene tareas registradas actualmente en el tablero.`,
+          content: `El proyecto **${currentProjName}** no tiene tareas registradas actualmente.`,
         };
       }
 
@@ -387,7 +519,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 6: BORRAR TAREAS POR ESTADO (FINALIZADAS O PENDIENTES)
+    // 9. BORRAR TAREAS POR ESTADO (FINALIZADAS O PENDIENTES)
     // =========================================================================
     if (/(borra|elimina|limpiar|quitar)\s+(las\s+)?(tareas\s+)?(finalizadas|completadas|terminadas)/i.test(promptLower)) {
       const finished = projectTasks.filter((t) => t.status === 'FINALIZADA');
@@ -401,7 +533,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 7: CREAR TAREAS EN LOTE (MÚLTIPLES TAREAS)
+    // 10. CREAR TAREAS EN LOTE
     // =========================================================================
     const isMultiTaskCreation =
       (promptLower.includes('crea') || promptLower.includes('agrega')) &&
@@ -433,13 +565,13 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 8: CREAR TAREA INDIVIDUAL
+    // 11. CREAR TAREA INDIVIDUAL
     // =========================================================================
     const createTaskMatch = raw.match(
       /(?:crea|crear|agrega|agregar|nueva|anota|anotar|generar)\s+(?:una\s+|la\s+)?tarea\s+(?:llamada\s+|titulada\s+|de\s+|para\s+)?["']?([^"'\n]+)["']?/i
     );
 
-    if (createTaskMatch && createTaskMatch[1] && !promptLower.includes('subtarea') && !promptLower.includes('dividir') && !promptLower.includes('descomponer')) {
+    if (createTaskMatch && createTaskMatch[1] && !promptLower.includes('subtarea') && !promptLower.includes('dividir') && !promptLower.includes('descomponer') && !promptLower.includes('proyecto')) {
       const rawTitle = createTaskMatch[1].replace(/^(para|de|llamada|titulada)\s+/i, '').trim().replace(/^["']|["']$/g, '');
 
       let priority: TaskPriority = 'MEDIA';
@@ -471,7 +603,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 9: BORRAR TAREA ESPECÍFICA
+    // 12. BORRAR TAREA ESPECÍFICA
     // =========================================================================
     const deleteTaskMatch = promptLower.match(
       /(?:borra|elimina|borrar|eliminar|quitar)\s+(?:la\s+)?tarea\s+(?:llamada\s+|titulada\s+|de\s+)?["']?([^"'\n]+)["']?/i
@@ -496,7 +628,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 10: CAMBIAR ESTADO DE TAREA
+    // 13. CAMBIAR ESTADO DE TAREA
     // =========================================================================
     const statusMatch = promptLower.match(
       /(?:marca|marcar|pasa|pasar|cambia|cambiar|mover|actualiza|actualizar)\s+(?:la\s+)?tarea\s+["']?([^"']+)["']?\s+(?:a|como)\s+(finalizada|completada|terminada|en progreso|en revision|en revisión|pendiente)/i
@@ -524,7 +656,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 11: CAMBIAR PRIORIDAD DE TAREA
+    // 14. CAMBIAR PRIORIDAD DE TAREA
     // =========================================================================
     const priorityMatch = promptLower.match(
       /(?:cambia|cambiar|pone|poner|establece|establecer)\s+(?:la\s+)?prioridad\s+(?:de\s+la\s+tarea\s+)?["']?([^"']+)["']?\s+a\s+(urgente|alta|media|baja)/i
@@ -547,7 +679,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 12: REGISTRAR HORAS TRABAJADAS
+    // 15. REGISTRAR HORAS TRABAJADAS
     // =========================================================================
     const logTimeMatch = promptLower.match(
       /(?:registra|registrar|anota|anotar|agrega|agregar)\s+(\d+(?:\.\d+)?)\s*(?:horas|h|hs)\s+(?:trabajadas\s+)?(?:en|a)\s+(?:la\s+tarea\s+)?["']?([^"'\n]+)["']?/i
@@ -570,7 +702,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 13: AGREGAR SUBTAREA
+    // 16. AGREGAR SUBTAREA
     // =========================================================================
     const subtaskMatch = promptLower.match(
       /(?:agrega|agregar|anade|añadir)\s+(?:la\s+)?subtarea\s+["']?([^"']+)["']?\s+(?:a|en)\s+(?:la\s+tarea\s+)?["']?([^"']+)["']?/i
@@ -593,7 +725,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 14: INVITAR MIEMBRO
+    // 17. INVITAR MIEMBRO
     // =========================================================================
     const inviteMatch = promptLower.match(
       /(?:invita|invitar|agrega|agregar|anade|añadir)\s+(?:al\s+miembro\s+|a\s+)?([^\s@]+@[^\s@]+\.[^\s@]+)(?:\s+como\s+(admin|administrador|lider|líder|miembro|invitado))?/i
@@ -614,7 +746,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 15: DESCOMPOSICIÓN DINÁMICA / PLAN TEMÁTICO
+    // 18. DESCOMPOSICIÓN DINÁMICA / PLAN TEMÁTICO
     // =========================================================================
     if (
       promptLower.includes('dividir') ||
@@ -632,7 +764,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 16: RESUMEN Y DIAGNÓSTICO
+    // 19. RESUMEN Y DIAGNÓSTICO
     // =========================================================================
     if (
       promptLower.includes('resumen') ||
@@ -660,10 +792,10 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
     }
 
     // =========================================================================
-    // CASO 17: CONSULTORÍA Y ASISTENCIA TÉCNICA ABIERTA
+    // 20. CONSULTORÍA Y ASISTENCIA TÉCNICA ABIERTA
     // =========================================================================
     return {
-      content: `### 💡 Asistencia y Análisis: ${raw}\n\nCon respecto a tu consulta sobre **${currentProjName}**:\n\n1. **Evaluación:** He analizado tu solicitud en relación a los recursos actuales del proyecto (${totalTasks} tareas registradas).\n2. **Acciones Disponibles:** Podés pedirme modificar cualquier configuración (nombre, descripción, color), crear o reordenar tareas en el tablero, o planificar un nuevo módulo.\n\n¿Querés que aplique algún cambio específico en el proyecto o que creemos las tareas necesarias?`,
+      content: `### 💡 Asistencia y Análisis: ${raw}\n\nCon respecto a tu consulta en **${getLocationLabel()}**:\n\n1. **Evaluación:** He analizado tu mensaje considerando los recursos actuales (${totalTasks} tareas, ${projects.length} proyectos en tu cuenta).\n2. **Acciones Disponibles:** Podés pedirme crear un nuevo proyecto, modificar el actual, crear o reordenar tareas en el tablero, o planificar un nuevo módulo.\n\n¿Querés que aplique algún cambio específico o que creemos las tareas necesarias?`,
     };
   };
 
@@ -756,7 +888,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
           {
             id: `welcome-${Date.now()}`,
             sender: 'ai',
-            content: `Conversación reiniciada. ¿Qué orden o consulta tenés sobre **${currentProject?.name || 'tu proyecto'}**?`,
+            content: `Conversación reiniciada. ¿Qué orden o consulta tenés sobre tu espacio de trabajo?`,
             createdAt: new Date(),
           },
         ]);
@@ -853,8 +985,9 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                   Control Total Activo
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                {currentProject ? `Proyecto: ${currentProject.name}` : 'Asistente de productividad'}
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-violet-500" />
+                <span>{getLocationLabel()}</span>
               </p>
             </div>
           </div>
@@ -1056,7 +1189,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                 <Sparkles className="w-4 h-4 animate-spin" />
               </div>
               <div className="p-3.5 rounded-2xl rounded-tl-none bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 flex items-center gap-2 shadow-sm">
-                <span>Nexor AI está analizando y ejecutando cambios</span>
+                <span>Nexor AI está analizando el contexto y ejecutando</span>
                 <span className="flex gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '0ms' }} />
                   <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -1087,7 +1220,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
           })}
         </div>
 
-        {/* TEXTBOX REDISEÑADO: CARD FLOTANTE MODERNA SIN BORDES DOBLES */}
+        {/* TEXTBOX REDISEÑADO: CARD FLOTANTE MODERNA */}
         <div className="p-3 sm:p-4 bg-white/95 dark:bg-zinc-950/95 border-t border-zinc-200 dark:border-zinc-800/80 shrink-0">
           <form
             onSubmit={(e) => {
@@ -1096,7 +1229,6 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
             }}
             className="rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/80 focus-within:bg-white dark:focus-within:bg-zinc-900 focus-within:border-violet-500/70 focus-within:ring-2 focus-within:ring-violet-500/20 transition-all p-2.5 sm:p-3 shadow-xs flex flex-col gap-1.5"
           >
-            {/* Textarea sin bordes, transparente y fluido */}
             <textarea
               ref={textareaRef}
               rows={1}
@@ -1108,7 +1240,7 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
                   handleSendMessage();
                 }
               }}
-              placeholder="Ordená cualquier acción: 'Cambiá el nombre a...', 'Creá 3 tareas...', 'Borrá las tareas'..."
+              placeholder="Ordená cualquier acción: 'Creá un proyecto para...', 'Cambiá al proyecto X', 'Borrá las tareas'..."
               className="ai-chat-input w-full bg-transparent border-0 outline-none text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 resize-none max-h-32 min-h-[38px] leading-relaxed p-1"
             />
 
@@ -1117,9 +1249,9 @@ export function NexorSpaceAiModal({ isOpen, onClose }: NexorSpaceAiModalProps) {
               <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 dark:text-zinc-500 select-none">
                 <span className="font-semibold text-violet-600 dark:text-violet-400 flex items-center gap-1">
                   <Zap className="w-3 h-3" />
-                  Control Total
+                  Control Total Multi-Cuenta
                 </span>
-                <span className="hidden sm:inline">• ↵ Enviar • ⇧↵ Salto de línea</span>
+                <span className="hidden sm:inline">• ↵ Enviar • ⇧↵ Salto</span>
               </div>
 
               <button
