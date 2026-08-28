@@ -78,11 +78,11 @@ export class NexorSpaceStore {
       const res = await fetch(`/api/notifications?${params.toString()}`);
       if (!res.ok) return;
       const dbNotifs = await res.json();
-      if (!Array.isArray(dbNotifs) || dbNotifs.length === 0) return;
+      if (!Array.isArray(dbNotifs)) return;
 
       // Convertir al formato interno NotificationItem
       const incoming: NotificationItem[] = dbNotifs.map((n: any) => ({
-        id: n.id,
+        id: String(n.id),
         userId: n.userId,
         title: n.title,
         message: n.message,
@@ -92,11 +92,12 @@ export class NexorSpaceStore {
         createdAt: n.createdAt ? new Date(n.createdAt).toISOString() : new Date().toISOString(),
       }));
 
-      // Mezclar con las locales sin duplicar por ID
-      const existingIds = new Set(this.notifications.map((n) => n.id));
-      const newOnes = incoming.filter((n) => !existingIds.has(n.id));
-      if (newOnes.length > 0) {
-        this.notifications = [...newOnes, ...this.notifications];
+      // Sincronizar estado si hay cambios
+      const currentSignature = this.notifications.map((n) => `${n.id}_${n.read}`).join(',');
+      const incomingSignature = incoming.map((n) => `${n.id}_${n.read}`).join(',');
+
+      if (currentSignature !== incomingSignature) {
+        this.notifications = incoming;
         this.persistState();
         this.notify();
       }
@@ -465,6 +466,7 @@ export class NexorSpaceStore {
         localStorage.setItem('nexorspace_current_user', JSON.stringify(user));
       } catch (e) {}
     }
+    this.fetchNotificationsFromDB();
     this.notify();
   }
 
