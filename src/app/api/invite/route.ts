@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Administrador',
@@ -11,7 +12,7 @@ const ROLE_LABELS: Record<string, string> = {
 /**
  * POST /api/invite
  * Envía una invitación por correo electrónico (vía Resend) y crea una notificación
- * en la bandeja de entrada del usuario invitado.
+ * en la bandeja de entrada del usuario invitado (tanto en Supabase como en base de datos local).
  *
  * Body: { email, projectId, projectName, role, inviterName, inviteLink }
  */
@@ -32,7 +33,42 @@ export async function POST(req: Request) {
     const senderName = inviterName || 'Un integrante de Nexo';
 
     // ──────────────────────────────────────────────────────────────
-    // 1. Crear notificación en la bandeja de entrada de la persona invitada
+    // 1. Crear notificación y membresía en Supabase si está disponible
+    // ──────────────────────────────────────────────────────────────
+    if (isSupabaseConfigured) {
+      try {
+        const { data: supaUser } = await supabase
+          .from('usuarios')
+          .select('id')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+
+        if (supaUser && supaUser.id) {
+          // Asociar en proyecto_miembros
+          await supabase.from('proyecto_miembros').upsert({
+            proyecto_id: projectId,
+            usuario_id: supaUser.id,
+            rol: role,
+            fecha_union: new Date().toISOString(),
+          });
+
+          // Notificación en Supabase
+          await supabase.from('notificaciones').insert({
+            usuario_id: supaUser.id,
+            titulo: '¡Fuiste invitado a un proyecto!',
+            descripcion: `${senderName} te invitó al proyecto "${projectName}" como ${roleDisplay}.`,
+            tipo: 'INVITE',
+            leida: false,
+            fecha: new Date().toISOString(),
+          });
+        }
+      } catch (supaErr) {
+        console.warn('Error sincronizando invitación con Supabase:', supaErr);
+      }
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // 2. Crear notificación en la base de datos Prisma (fallback / local)
     // ──────────────────────────────────────────────────────────────
     try {
       let targetUser = await db.user.findUnique({ where: { email: cleanEmail } });
@@ -51,17 +87,17 @@ export async function POST(req: Request) {
         data: {
           userId: targetUser.id,
           title: '¡Fuiste invitado a un proyecto!',
-          message: `${senderName} te invitó al proyecto "${projectName}" con el rol de ${roleDisplay}.`,
+          message: `${senderName} te invitó al proyecto "${projectName}" como ${roleDisplay}.`,
           type: 'INVITE',
           linkUrl: inviteLink || `/invite/${projectId}`,
         },
       });
     } catch (dbErr) {
-      console.warn('Error guardando notificación en la base de datos:', dbErr);
+      console.warn('Error guardando notificación en Prisma SQLite:', dbErr);
     }
 
     // ──────────────────────────────────────────────────────────────
-    // 2. Enviar correo electrónico vía Resend
+    // 3. Enviar correo electrónico vía Resend
     // ──────────────────────────────────────────────────────────────
     const apiKey = process.env.RESEND_API_KEY;
 

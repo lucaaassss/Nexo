@@ -103,9 +103,21 @@ export function useNexorSpace() {
       });
     });
 
+    // Polling en tiempo real para recibir notificaciones nuevas automáticamente
+    const intervalId = setInterval(() => {
+      store.fetchNotificationsFromDB();
+    }, 5000);
+
+    const onFocus = () => {
+      store.fetchNotificationsFromDB();
+    };
+    window.addEventListener('focus', onFocus);
+
     return () => {
       unsubscribe();
       subscription.unsubscribe();
+      clearInterval(intervalId);
+      window.removeEventListener('focus', onFocus);
     };
   }, []);
 
