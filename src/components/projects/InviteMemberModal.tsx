@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, UserPlus, Mail, Link as LinkIcon, Check } from 'lucide-react';
+import { X, UserPlus, Mail, Link as LinkIcon, Check, Loader2, AlertCircle } from 'lucide-react';
 import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { MemberRole } from '@/types';
 
@@ -16,23 +16,64 @@ interface InviteMemberModalProps {
  * Con soporte para Modo Claro y Modo Oscuro.
  */
 export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
-  const { currentProject, addMemberToProject } = useNexorSpace();
+  const { currentProject, addMemberToProject, currentUser } = useNexorSpace();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<MemberRole>('MEMBER');
   const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   if (!isOpen || !currentProject) return null;
 
   const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://nexor-space.app'}/invite/${currentProject.id}?token=nexorspace_${Date.now()}`;
 
   /** Procesa la invitación por correo electrónico */
-  const handleInvite = (e: React.FormEvent) => {
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
 
-    addMemberToProject(currentProject.id, email.trim(), role);
-    setEmail('');
-    onClose();
+    setIsLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const res = await fetch('/api/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          projectId: currentProject.id,
+          projectName: currentProject.name,
+          role: role,
+          inviterName: currentUser.name,
+          inviteLink: inviteLink
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al enviar la invitación');
+      }
+
+      // Añadir miembro en el sistema local
+      addMemberToProject(currentProject.id, email.trim(), role);
+      
+      setSuccessMsg('¡Invitación enviada con éxito!');
+      setEmail('');
+      
+      // Cerrar después de unos segundos
+      setTimeout(() => {
+        setSuccessMsg('');
+        onClose();
+      }, 2000);
+      
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Error inesperado al enviar correo');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   /** Copia el enlace de invitación al portapapeles */
@@ -78,7 +119,8 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                 placeholder="colaborador@empresa.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-9 pr-3.5 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-violet-500 shadow-xs"
+                disabled={isLoading}
+                className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-9 pr-3.5 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-violet-500 disabled:opacity-70 shadow-xs"
               />
             </div>
 
@@ -106,11 +148,33 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
               ))}
             </div>
 
+            {errorMsg && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[11px] font-medium mt-2">
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+            
+            {successMsg && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-medium mt-2">
+                <Check className="w-3.5 h-3.5" />
+                <span>{successMsg}</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full py-2.5 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/25 transition-all mt-2 cursor-pointer"
+              disabled={isLoading || !!successMsg}
+              className="w-full py-2.5 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/25 transition-all mt-2 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer flex justify-center items-center gap-2"
             >
-              Enviar Invitación
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                'Enviar Invitación'
+              )}
             </button>
           </form>
 
