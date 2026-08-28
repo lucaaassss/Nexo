@@ -742,11 +742,11 @@ export class NexorSpaceStore {
     project.members = [...(project.members || []), newMembership];
     this.logActivity(projectId, 'ADD_MEMBER', 'MEMBER', newMemberUser.id, `Miembro ${email} añadido con rol ${role}`);
 
-    // Crear notificación en la bandeja de entrada del usuario que invitó
+    // Crear notificación en la bandeja de entrada para el usuario invitado
     this.createNotification(
-      this.currentUser.id,
-      'Invitación enviada',
-      `Invitaste a ${email} al proyecto "${project.name}" como ${roleLabels[role] || role}.`,
+      newMemberUser.id,
+      '¡Fuiste invitado a un proyecto!',
+      `${this.currentUser.name} te invitó al proyecto "${project.name}" como ${roleLabels[role] || role}.`,
       'INVITE'
     );
 

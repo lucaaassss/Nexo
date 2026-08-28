@@ -128,8 +128,17 @@ export function useNexorSpace() {
   const projectAttachments = state.attachments.filter((a) => a.projectId === activeProjectId);
   const projectActivities = state.activityLogs.filter((a) => a.projectId === activeProjectId);
 
+  // Filtrar notificaciones que pertenezcan al usuario actual
+  const userNotifications = state.notifications.filter(
+    (n) =>
+      !n.userId ||
+      n.userId === state.currentUser.id ||
+      (state.currentUser.email && n.userId === state.currentUser.email)
+  );
+
   return {
     ...state,
+    notifications: userNotifications,
     projectTasks,
     projectMessages,
     projectAttachments,
