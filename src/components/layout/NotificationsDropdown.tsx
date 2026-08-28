@@ -1,7 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bell, CheckCheck, Inbox, UserPlus, ClipboardList, MessageSquare, AtSign, Info } from 'lucide-react';
+import {
+  Bell,
+  CheckCheck,
+  Inbox,
+  UserPlus,
+  ClipboardList,
+  MessageSquare,
+  AtSign,
+  Info,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { useNexorSpace } from '@/hooks/useNexorSpace';
 import { formatDateTime } from '@/lib/utils';
 import { NotificationItem } from '@/types';
@@ -47,12 +58,11 @@ const NOTIF_CONFIG: Record<
 
 /**
  * Componente NotificationsDropdown
- * Menú desplegable para visualizar notificaciones en tiempo real con indicador de no leídos.
- * Totalmente compatible con Modo Claro y Modo Oscuro.
+ * Menú desplegable para visualizar notificaciones en tiempo real con opción de eliminar individualmente o todas.
  */
 export function NotificationsDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, markNotificationsAsRead } = useNexorSpace();
+  const { notifications, markNotificationsAsRead, deleteNotification, clearAllNotifications } = useNexorSpace();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -98,15 +108,28 @@ export function NotificationsDropdown() {
                   </span>
                 )}
               </div>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markNotificationsAsRead}
-                  className="flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-semibold transition-colors cursor-pointer"
-                >
-                  <CheckCheck className="w-3.5 h-3.5" />
-                  Marcar leídas
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markNotificationsAsRead}
+                    title="Marcar todas como leídas"
+                    className="flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-semibold transition-colors cursor-pointer"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5" />
+                    <span>Leídas</span>
+                  </button>
+                )}
+                {notifications.length > 0 && (
+                  <button
+                    onClick={clearAllNotifications}
+                    title="Eliminar todas las notificaciones"
+                    className="flex items-center gap-1 text-xs text-zinc-400 hover:text-rose-500 font-medium transition-colors cursor-pointer ml-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Borrar todo</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Lista de Notificaciones */}
@@ -122,7 +145,7 @@ export function NotificationsDropdown() {
                   return (
                     <div
                       key={notif.id}
-                      className={`p-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/40 ${
+                      className={`group relative p-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/40 ${
                         !notif.read ? 'bg-violet-50/60 dark:bg-violet-950/20' : ''
                       }`}
                     >
@@ -132,7 +155,7 @@ export function NotificationsDropdown() {
                           {config.icon}
                         </div>
 
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 pr-6">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
@@ -163,6 +186,19 @@ export function NotificationsDropdown() {
                             </div>
                           )}
                         </div>
+
+                        {/* Botón para eliminar notificación individual */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteNotification(notif.id);
+                          }}
+                          title="Eliminar notificación"
+                          aria-label="Eliminar notificación"
+                          className="absolute top-3 right-3 p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all opacity-70 group-hover:opacity-100 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   );

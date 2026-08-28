@@ -50,8 +50,6 @@ export async function GET(req: Request) {
 /**
  * POST /api/notifications
  * Crea una notificación para un usuario destinatario.
- * Si el usuario invitado no existe aún en la base de datos local,
- * crea un registro de usuario previo para asociar la notificación.
  *
  * Body: { userId?, email?, title, message, type, linkUrl? }
  */
@@ -70,7 +68,6 @@ export async function POST(req: Request) {
       const cleanEmail = email.toLowerCase().trim();
       let user = await db.user.findUnique({ where: { email: cleanEmail } });
       if (!user) {
-        // Crear usuario placeholder para que la notificación quede registrada en su bandeja
         user = await db.user.create({
           data: {
             email: cleanEmail,
@@ -141,6 +138,54 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Error marcando notificaciones como leídas:', error);
+    return NextResponse.json({ error: error.message || 'Error interno' }, { status: 500 });
+  }
+}
+
+/**
+ * DELETE /api/notifications?id=... (o ?userId=... / ?email=...)
+ * Elimina una notificación específica por su ID o todas las de un usuario.
+ */
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    const userId = searchParams.get('userId');
+    const email = searchParams.get('email');
+
+    if (id) {
+      await db.notification.deleteMany({
+        where: { id },
+      });
+      return NextResponse.json({ success: true, message: 'Notificación eliminada' });
+    }
+
+    if (userId || email) {
+      const userIds: string[] = [];
+      if (userId) userIds.push(userId);
+
+      if (email) {
+        const users = await db.user.findMany({
+          where: { email: { equals: email.toLowerCase().trim() } },
+          select: { id: true },
+        });
+        users.forEach((u) => {
+          if (!userIds.includes(u.id)) userIds.push(u.id);
+        });
+      }
+
+      if (userIds.length > 0) {
+        await db.notification.deleteMany({
+          where: { userId: { in: userIds } },
+        });
+      }
+
+      return NextResponse.json({ success: true, message: 'Notificaciones eliminadas' });
+    }
+
+    return NextResponse.json({ error: 'Se requiere id, userId o email' }, { status: 400 });
+  } catch (error: any) {
+    console.error('Error eliminando notificaciones:', error);
     return NextResponse.json({ error: error.message || 'Error interno' }, { status: 500 });
   }
 }
