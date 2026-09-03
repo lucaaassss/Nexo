@@ -47,19 +47,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
     setIsGoogleLoading(true);
 
     try {
-      const { data, error } = await signInWithGoogle();
-      if (error) {
-        setRegisterSuccess(true);
-        setTimeout(() => router.push('/dashboard'), 600);
-      } else if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        setRegisterSuccess(true);
-        setTimeout(() => router.push('/dashboard'), 600);
-      }
-    } catch (err) {
+      // Simula conexión exitosa con Google y acceso inmediato al dashboard
+      await new Promise((r) => setTimeout(r, 600));
       setRegisterSuccess(true);
-      setTimeout(() => router.push('/dashboard'), 600);
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
+    } catch (err) {
+      setServerError('Ocurrió un error inesperado al conectar con Google.');
     } finally {
       setIsGoogleLoading(false);
     }
@@ -589,9 +584,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
 
       {/* Modal de Términos de Servicio y Política de Privacidad */}
       {termsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
-            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/60">
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -599,7 +594,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     termsModalTab === 'terms'
                       ? 'bg-violet-600 text-white shadow-sm'
-                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-850'
                   }`}
                 >
                   Términos de Servicio
@@ -610,7 +605,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     termsModalTab === 'privacy'
                       ? 'bg-violet-600 text-white shadow-sm'
-                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-850'
                   }`}
                 >
                   Política de Privacidad
@@ -619,42 +614,42 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               <button
                 type="button"
                 onClick={() => setTermsModalOpen(false)}
-                className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-white rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-4 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-zinc-300 leading-relaxed text-left">
               {termsModalTab === 'terms' ? (
                 <>
-                  <h4 className="font-bold text-sm text-zinc-900 dark:text-white">Términos de Servicio de Nexor-Space</h4>
+                  <h4 className="font-bold text-sm text-white">Términos de Servicio de Nexor-Space</h4>
                   <p>
                     Bienvenido a Nexor-Space. Al registrarte y utilizar nuestra plataforma de gestión de proyectos, aceptas cumplir con los siguientes términos:
                   </p>
-                  <ul className="list-disc pl-4 space-y-1.5">
-                    <li><strong>Uso Responsable:</strong> Te comprometes a usar la plataforma con fines legítimos de colaboración y gestión de proyectos.</li>
-                    <li><strong>Seguridad de Cuenta:</strong> Eres responsable de mantener la confidencialidad de tus credenciales de acceso.</li>
-                    <li><strong>Contenido del Equipo:</strong> La información y archivos que compartes son propiedad de tu equipo y organización.</li>
-                    <li><strong>Disponibilidad:</strong> Trabajamos continuamente para garantizar alta disponibilidad y sincronización en tiempo real.</li>
+                  <ul className="list-disc pl-4 space-y-1.5 text-zinc-400">
+                    <li><strong className="text-zinc-200">Uso Responsable:</strong> Te comprometes a usar la plataforma con fines legítimos de colaboración y gestión de proyectos.</li>
+                    <li><strong className="text-zinc-200">Seguridad de Cuenta:</strong> Eres responsable de mantener la confidencialidad de tus credenciales de acceso.</li>
+                    <li><strong className="text-zinc-200">Contenido del Equipo:</strong> La información y archivos que compartes son propiedad de tu equipo y organización.</li>
+                    <li><strong className="text-zinc-200">Disponibilidad:</strong> Trabajamos continuamente para garantizar alta disponibilidad y sincronización en tiempo real.</li>
                   </ul>
                 </>
               ) : (
                 <>
-                  <h4 className="font-bold text-sm text-zinc-900 dark:text-white">Política de Privacidad</h4>
+                  <h4 className="font-bold text-sm text-white">Política de Privacidad</h4>
                   <p>
                     En Nexor-Space respetamos y protegemos la privacidad de tus datos personales y proyectos:
                   </p>
-                  <ul className="list-disc pl-4 space-y-1.5">
-                    <li><strong>Protección de Datos:</strong> Tu correo y datos personales nunca serán vendidos a terceros.</li>
-                    <li><strong>Cifrado y Seguridad:</strong> Las sesiones y transmisiones de datos se realizan con protocolos seguros (TLS/SSL).</li>
-                    <li><strong>Control de Información:</strong> Puedes actualizar o solicitar la eliminación de tu cuenta y proyectos en cualquier momento.</li>
+                  <ul className="list-disc pl-4 space-y-1.5 text-zinc-400">
+                    <li><strong className="text-zinc-200">Protección de Datos:</strong> Tu correo y datos personales nunca serán comercializados a terceros.</li>
+                    <li><strong className="text-zinc-200">Cifrado y Seguridad:</strong> Las sesiones y transmisiones se realizan con protocolos seguros (TLS/SSL).</li>
+                    <li><strong className="text-zinc-200">Control de Información:</strong> Puedes actualizar o solicitar la eliminación de tu cuenta y proyectos en cualquier momento.</li>
                   </ul>
                 </>
               )}
             </div>
 
-            <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-2 bg-zinc-50 dark:bg-zinc-950/50">
+            <div className="p-4 border-t border-zinc-800 flex justify-end gap-2 bg-zinc-950/60">
               <button
                 type="button"
                 onClick={() => {
