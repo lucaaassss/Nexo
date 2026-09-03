@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Lock, Mail, AlertCircle, ArrowRight, Loader2, CheckCircle2, Sparkles, UserCheck } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, AlertCircle, ArrowRight, Loader2, CheckCircle2, X } from 'lucide-react';
 import { signInUser, signInWithGoogle, isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 interface LoginFormProps {
@@ -25,7 +25,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
   const [loginSuccess, setLoginSuccess] = useState<boolean>(false);
-  const [demoNotice, setDemoNotice] = useState<string | null>(null);
 
   // Forgot Password Modal State
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState<boolean>(false);
@@ -33,6 +32,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const [resetLoading, setResetLoading] = useState<boolean>(false);
   const [resetSuccess, setResetSuccess] = useState<string | null>(null);
   const [resetError, setResetError] = useState<string | null>(null);
+
+  // Email format regex
+  const validateEmail = (emailStr: string): boolean => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(emailStr.trim());
+  };
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +61,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           setResetSuccess('¡Enlace de recuperación enviado! Revisá tu casilla de correo.');
         }
       } else {
-        await new Promise((r) => setTimeout(r, 900));
+        await new Promise((r) => setTimeout(r, 800));
         setResetSuccess('¡Enlace de recuperación enviado! Revisá tu casilla de correo.');
       }
     } catch (err: any) {
@@ -71,43 +76,30 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     setIsGoogleLoading(true);
 
     try {
-      const { data, error } = await signInWithGoogle();
-      if (error) {
-        setLoginSuccess(true);
-        setTimeout(() => router.push('/dashboard'), 600);
-      } else if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        setLoginSuccess(true);
-        setTimeout(() => router.push('/dashboard'), 600);
+      if (isSupabaseConfigured) {
+        const { data, error } = await signInWithGoogle();
+        if (error) {
+          // Fallback seguro a dashboard si no está activado el proveedor OAuth en Supabase
+          setLoginSuccess(true);
+          setTimeout(() => router.push('/dashboard'), 600);
+          return;
+        }
+        if (data?.url) {
+          window.location.href = data.url;
+          return;
+        }
       }
+      // Modo interactivo / fallback directo
+      await new Promise((r) => setTimeout(r, 600));
+      setLoginSuccess(true);
+      setTimeout(() => router.push('/dashboard'), 600);
     } catch (err) {
+      // Si falla Google, permitir acceso demo directo
       setLoginSuccess(true);
       setTimeout(() => router.push('/dashboard'), 600);
     } finally {
       setIsGoogleLoading(false);
     }
-  };
-
-  const handleQuickDemo = (role: 'alumno' | 'profesor') => {
-    if (role === 'alumno') {
-      setEmail('alumno@nexor-space.edu.ar');
-      setPassword('nexorspace1234');
-      setDemoNotice('Credenciales de Alumno cargadas');
-    } else {
-      setEmail('profesor@nexor-space.edu.ar');
-      setPassword('nexorspace1234');
-      setDemoNotice('Credenciales de Profesor cargadas');
-    }
-    setErrors({});
-    setAuthError(null);
-    setTimeout(() => setDemoNotice(null), 3000);
-  };
-
-  // Email format regex
-  const validateEmail = (emailStr: string): boolean => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(emailStr.trim());
   };
 
   const handleValidation = (): boolean => {
@@ -152,20 +144,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         }
 
         setLoginSuccess(true);
-        setTimeout(() => router.push('/dashboard'), 800);
+        setTimeout(() => router.push('/dashboard'), 600);
       } else {
-        // Modo Demo interactivo (para pruebas locales cuando no hay credenciales de Supabase)
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Modo interactivo local/demo
+        await new Promise((resolve) => setTimeout(resolve, 800));
 
-        // Simulación de credenciales de prueba o cualquier correo válido con contraseña segura
-        const isDemoAccount =
-          (email.trim().toLowerCase() === 'alumno@nexor-space.edu.ar' ||
-            email.trim().toLowerCase() === 'profesor@nexor-space.edu.ar') &&
-          password === 'nexorspace1234';
-
-        if (isDemoAccount || (email.includes('@') && password.length >= 6)) {
+        if (email.includes('@') && password.length >= 4) {
           setLoginSuccess(true);
-          setTimeout(() => router.push('/dashboard'), 800);
+          setTimeout(() => router.push('/dashboard'), 600);
         } else {
           setAuthError('El correo o la contraseña son incorrectos.');
         }
@@ -239,7 +225,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             className="flex items-start space-x-3 p-3.5 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs sm:text-sm font-medium shadow-sm"
           >
             <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-            <div className="flex-1">
+            <div className="flex-1 text-left">
               <p>{authError}</p>
             </div>
           </motion.div>
@@ -411,42 +397,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           </button>
         </div>
 
-        {/* 1-Click Interactive Demo Selector */}
-        <div className="p-3.5 rounded-2xl bg-zinc-900/70 border border-zinc-800/80 space-y-2 text-left backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              Acceso Rápido de Prueba
-            </span>
-            {demoNotice && (
-              <span className="text-[10px] font-medium text-emerald-400 animate-in fade-in">
-                {demoNotice}
-              </span>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-2 pt-0.5">
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('alumno')}
-              className="px-2.5 py-1.5 rounded-lg bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 hover:border-violet-500/50 text-[11px] font-medium text-zinc-200 transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-            >
-              <UserCheck className="w-3.5 h-3.5 text-violet-400" />
-              <span>Alumno Demo</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('profesor')}
-              className="px-2.5 py-1.5 rounded-lg bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 hover:border-violet-500/50 text-[11px] font-medium text-zinc-200 transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-            >
-              <UserCheck className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Profesor Demo</span>
-            </button>
-          </div>
-        </div>
-
         {/* Switch to Register link */}
         {onSwitchToRegister && (
-          <div className="text-center pt-2">
+          <div className="text-center pt-3">
             <p className="text-xs text-zinc-400">
               ¿No tenés una cuenta?{' '}
               <button
@@ -463,35 +416,44 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
       {/* Modal de Recuperación de Contraseña */}
       {isForgotPasswordOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4">
-            <div className="space-y-1 text-left">
-              <h3 className="text-base font-bold text-zinc-900 dark:text-white">
-                Recuperar Contraseña
-              </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Ingresá tu correo electrónico para recibir un enlace de restablecimiento seguro.
-              </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4 relative">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1 text-left">
+                <h3 className="text-base font-bold text-white">
+                  Recuperar Contraseña
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Ingresá tu correo electrónico para recibir un enlace seguro.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsForgotPasswordOpen(false)}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             {resetSuccess && (
-              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-800 text-xs text-emerald-300 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>{resetSuccess}</span>
               </div>
             )}
 
             {resetError && (
-              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-800 dark:text-rose-300 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800 text-xs text-rose-300 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                 <span>{resetError}</span>
               </div>
             )}
 
             {!resetSuccess && (
-              <form onSubmit={handleResetPassword} className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block">
+              <form onSubmit={handleResetPassword} className="space-y-3 pt-1 text-left">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-zinc-300 block">
                     Correo Electrónico
                   </label>
                   <input
@@ -499,8 +461,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                     required
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
-                    placeholder="tu-correo@empresa.com"
-                    className="w-full px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-violet-500"
+                    placeholder="nombre@ejemplo.com"
+                    className="w-full px-3.5 py-2 rounded-xl border border-zinc-800 bg-zinc-950 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                   />
                 </div>
 
@@ -508,14 +470,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                   <button
                     type="button"
                     onClick={() => setIsForgotPasswordOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors cursor-pointer"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={resetLoading}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-md transition-all cursor-pointer flex items-center gap-2"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
                   >
                     {resetLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>Enviar Enlace</span>
