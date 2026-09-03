@@ -42,30 +42,32 @@ export async function POST(req: Request) {
     const roleDesc = ROLE_DESCRIPTIONS[roleKey] || 'Colaboración en el proyecto';
     const senderName = inviterName || 'Un integrante de tu equipo';
 
-    // 1. Obtener o verificar el proyecto
-    let project = await db.project.findUnique({ where: { id: projectId } });
-    if (!project) {
-      // Si el proyecto existe en la memoria o es recién creado, registrarlo o usar el nombre enviado
-      project = await db.project.create({
-        data: {
-          id: projectId,
-          name: projectName || 'Proyecto de Nexor-Space',
-          key: (projectName || 'PRJ').substring(0, 4).toUpperCase(),
-          description: 'Espacio de trabajo compartido',
-        },
-      }).catch(async () => {
-        return await db.project.findFirst({ where: { id: projectId } });
-      });
-    }
+    // Construir URL base desde los headers de la petición (siempre funciona)
+    const hostHeader = req.headers.get('x-forwarded-host') || req.headers.get('host');
+    const protoHeader = req.headers.get('x-forwarded-proto') || 'https';
+    const origin = req.headers.get('origin');
+    const appBaseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      origin ||
+      (hostHeader ? `${protoHeader}://${hostHeader}` : 'http://localhost:3000');
 
-    const resolvedProjectName = project?.name || projectName || 'Proyecto de Nexor-Space';
+    const cleanAppUrl = appBaseUrl.replace(/\/$/, '');
 
-    // 2. Generar Token Criptográfico Seguro y Expiración (7 Días)
+    // Generar Token Criptográfico Seguro y Expiración (7 Días)
     const token = crypto.randomBytes(24).toString('hex');
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 días
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const inviteLink = `${cleanAppUrl}/invite/${token}`;
 
-    // 3. Persistir Invitación en Prisma SQLite / Postgres
+    // Resolver nombre del proyecto (usar el enviado si la DB falla)
+    let resolvedProjectName = projectName || 'Proyecto de Nexor-Space';
+
+    // ── Base de datos (todo opcional — si falla, el email igual se envía) ──
     try {
+      // Buscar nombre real del proyecto
+      const project = await db.project.findUnique({ where: { id: projectId } });
+      if (project?.name) resolvedProjectName = project.name;
+
+      // Persistir invitación con token
       await db.invitation.create({
         data: {
           token,
@@ -77,23 +79,25 @@ export async function POST(req: Request) {
           expiresAt,
         },
       });
-    } catch (inviteDbErr) {
-      console.warn('Advertencia guardando invitación en base de datos:', inviteDbErr);
+
+      // Notificación para el usuario si ya existe
+      const existingUser = await db.user.findUnique({ where: { email: cleanEmail } });
+      if (existingUser) {
+        await db.notification.create({
+          data: {
+            userId: existingUser.id,
+            title: '¡Fuiste invitado a un proyecto!',
+            message: `${senderName} te invitó al proyecto "${resolvedProjectName}" como ${roleDisplay}.`,
+            type: 'INVITE',
+            linkUrl: `/invite/${token}`,
+          },
+        });
+      }
+    } catch (dbErr) {
+      console.warn('⚠️ Base de datos no disponible, continuando solo con envío de email:', dbErr);
     }
 
-    // 4. Construir Enlace Absoluto de Aceptación
-    const hostHeader = req.headers.get('x-forwarded-host') || req.headers.get('host');
-    const protoHeader = req.headers.get('x-forwarded-proto') || 'https';
-    const origin = req.headers.get('origin');
-    const appBaseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      origin ||
-      (hostHeader ? `${protoHeader}://${hostHeader}` : 'http://localhost:3000');
-
-    const cleanAppUrl = appBaseUrl.replace(/\/$/, '');
-    const inviteLink = `${cleanAppUrl}/invite/${token}`;
-
-    // 5. Notificación en Supabase si está disponible
+    // ── Supabase (opcional) ──
     if (isSupabaseConfigured) {
       try {
         const { data: supaUser } = await supabase
@@ -117,23 +121,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // 6. Notificación en Prisma para el usuario si ya existe
-    try {
-      const existingUser = await db.user.findUnique({ where: { email: cleanEmail } });
-      if (existingUser) {
-        await db.notification.create({
-          data: {
-            userId: existingUser.id,
-            title: '¡Fuiste invitado a un proyecto!',
-            message: `${senderName} te invitó al proyecto "${resolvedProjectName}" como ${roleDisplay}.`,
-            type: 'INVITE',
-            linkUrl: `/invite/${token}`,
-          },
-        });
-      }
-    } catch (notifErr) {
-      console.warn('Error creando notificación Prisma:', notifErr);
-    }
 
     // 7. Plantilla HTML con Identidad Visual Nexor-Space (Dark Theme + Violet Accent)
     const emailHtml = `
