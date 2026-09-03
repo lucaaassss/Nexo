@@ -23,10 +23,12 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [lastGeneratedLink, setLastGeneratedLink] = useState<string>('');
 
   if (!isOpen || !currentProject) return null;
 
-  const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://nexor-space.app'}/invite/${currentProject.id}?token=nexorspace_${Date.now()}`;
+  const currentBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://nexor-space.app';
+  const defaultInviteLink = lastGeneratedLink || `${currentBaseUrl}/invite/${currentProject.id}`;
 
   const validateEmail = (val: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
@@ -75,7 +77,6 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
           projectName: currentProject.name,
           role: role,
           inviterName: currentUser.name,
-          inviteLink: inviteLink
         }),
       });
 
@@ -83,6 +84,10 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
       if (!res.ok) {
         throw new Error(data.error || 'Error al enviar la invitación');
+      }
+
+      if (data.inviteLink) {
+        setLastGeneratedLink(data.inviteLink);
       }
 
       // Añadir miembro en el sistema local
@@ -95,7 +100,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
       setTimeout(() => {
         setSuccessMsg('');
         onClose();
-      }, 2200);
+      }, 2500);
 
     } catch (err: any) {
       setErrorMsg(err.message || 'Error inesperado al enviar correo');
@@ -106,7 +111,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
   /** Copia el enlace de invitación al portapapeles */
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(inviteLink);
+    navigator.clipboard.writeText(defaultInviteLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -225,7 +230,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                 const targetEmail = email.trim() || '';
                 const subject = encodeURIComponent(`Invitación al proyecto: ${currentProject.name}`);
                 const bodyText = encodeURIComponent(
-                  `¡Hola!\n\nTe invito a colaborar en el proyecto "${currentProject.name}" en Nexor con el rol de ${role}.\n\nHacé clic en el siguiente enlace para unirte directamente:\n${inviteLink}\n\n¡Saludos!\n${currentUser.name}`
+                  `¡Hola!\n\nTe invito a colaborar en el proyecto "${currentProject.name}" en Nexor con el rol de ${role}.\n\nHacé clic en el siguiente enlace para unirte directamente:\n${defaultInviteLink}\n\n¡Saludos!\n${currentUser.name}`
                 );
                 const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${targetEmail}&su=${subject}&body=${bodyText}`;
                 window.open(gmailUrl, '_blank');
@@ -244,7 +249,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
               <input
                 type="text"
                 readOnly
-                value={inviteLink}
+                value={defaultInviteLink}
                 className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-zinc-600 dark:text-zinc-400 select-all focus:outline-none"
               />
               <button
