@@ -6,11 +6,9 @@ import { useNexorSpace } from '@/hooks/useNexorSpace';
 import {
   UserPlus,
   ArrowRight,
-  FolderKanban,
   Check,
   Sparkles,
   AlertCircle,
-  Clock,
   Shield,
   Loader2,
   LogIn,
@@ -22,7 +20,7 @@ export default function InviteAcceptPage() {
   const params = useParams();
   const router = useRouter();
   const tokenOrId = (params?.id as string) || '';
-  const { currentProject, setCurrentProject, currentUser, addMemberToProject } = useNexorSpace();
+  const { setCurrentProject, currentUser, addMemberToProject } = useNexorSpace();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
