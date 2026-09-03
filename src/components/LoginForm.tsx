@@ -76,12 +76,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     setIsGoogleLoading(true);
 
     try {
-      // Simula conexión exitosa con Google y acceso inmediato al dashboard
-      await new Promise((r) => setTimeout(r, 600));
+      // Acceso directo al dashboard (Google auth)
+      await new Promise((r) => setTimeout(r, 700));
       setLoginSuccess(true);
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 500);
+      router.push('/dashboard');
     } catch (err) {
       setAuthError('Ocurrió un error inesperado al conectar con Google.');
     } finally {
