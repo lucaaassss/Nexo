@@ -210,38 +210,6 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
             </button>
           </form>
 
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
-            </div>
-            <div className="relative flex justify-center text-[10px] uppercase font-semibold text-zinc-500 bg-white dark:bg-zinc-900 px-2">
-              Otras formas de invitar
-            </div>
-          </div>
-
-          {/* Opción 2: Enviar directamente con Gmail */}
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-              Enviar desde tu propio correo
-            </label>
-            <button
-              type="button"
-              onClick={() => {
-                const targetEmail = email.trim() || '';
-                const subject = encodeURIComponent(`Invitación al proyecto: ${currentProject.name}`);
-                const bodyText = encodeURIComponent(
-                  `¡Hola!\n\nTe invito a colaborar en el proyecto "${currentProject.name}" en Nexor con el rol de ${role}.\n\nHacé clic en el siguiente enlace para unirte directamente:\n${defaultInviteLink}\n\n¡Saludos!\n${currentUser.name}`
-                );
-                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${targetEmail}&su=${subject}&body=${bodyText}`;
-                window.open(gmailUrl, '_blank');
-              }}
-              className="w-full py-2 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 text-zinc-800 dark:text-zinc-200 text-xs font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer"
-            >
-              <Mail className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-              <span>Abrir y Enviar con Gmail</span>
-            </button>
-          </div>
-
           {/* Opción 3: Enlace de Invitación Copiable */}
           <div className="space-y-2">
             <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">Enlace de Enlace Directo</label>
