@@ -59,16 +59,16 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
       // Añadir miembro en el sistema local
       addMemberToProject(currentProject.id, email.trim(), role);
-      
+
       setSuccessMsg('¡Invitación enviada con éxito!');
       setEmail('');
-      
+
       // Cerrar después de unos segundos
       setTimeout(() => {
         setSuccessMsg('');
         onClose();
       }, 2000);
-      
+
     } catch (err: any) {
       setErrorMsg(err.message || 'Error inesperado al enviar correo');
     } finally {
@@ -136,11 +136,10 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                   key={r.id}
                   type="button"
                   onClick={() => setRole(r.id as MemberRole)}
-                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                    role === r.id
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${role === r.id
                       ? 'bg-violet-50 dark:bg-violet-600/15 border-violet-300 dark:border-violet-500/50 text-violet-800 dark:text-violet-300 ring-1 ring-violet-500/20'
                       : 'bg-zinc-50 dark:bg-zinc-950/60 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/40'
-                  }`}
+                    }`}
                 >
                   <p className="text-xs font-semibold">{r.label}</p>
                   <p className="text-[10px] text-zinc-500 mt-0.5">{r.desc}</p>
@@ -154,7 +153,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                 <span>{errorMsg}</span>
               </div>
             )}
-            
+
             {successMsg && (
               <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-medium mt-2">
                 <Check className="w-3.5 h-3.5" />
