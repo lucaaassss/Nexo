@@ -47,15 +47,18 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
     setIsGoogleLoading(true);
 
     try {
-      // Simula conexión exitosa con Google y acceso inmediato al dashboard
-      await new Promise((r) => setTimeout(r, 600));
-      setRegisterSuccess(true);
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 500);
-    } catch (err) {
+      if (isSupabaseConfigured) {
+        const { error } = await signInWithGoogle();
+        if (error) {
+          setServerError(error.message || 'Error al conectar con Google.');
+          setIsGoogleLoading(false);
+        }
+      } else {
+        setServerError('Para registrarte con Google y elegir cuenta real, configurá NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en tu .env. Podés registrarte con tus datos y contraseña en el formulario abajo.');
+        setIsGoogleLoading(false);
+      }
+    } catch (err: any) {
       setServerError('Ocurrió un error inesperado al conectar con Google.');
-    } finally {
       setIsGoogleLoading(false);
     }
   };

@@ -6,7 +6,7 @@ import { LoginForm } from '@/components/LoginForm';
 import { RegisterForm } from '@/components/RegisterForm';
 import { AbstractIllustration } from '@/components/AbstractIllustration';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Sparkles, MessageSquare, BarChart3, ShieldCheck, Zap } from 'lucide-react';
 
 /**
@@ -18,6 +18,12 @@ export default function LoginPage() {
   const [view, setView] = useState<'login' | 'register'>('login');
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      // Sin Supabase real configurado, limpiar cualquier sesión en caché
+      // y asegurarse de quedarse en login para que el usuario se autentique
+      return;
+    }
+
     // Si ya hay sesión activa, ir al dashboard directamente
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {

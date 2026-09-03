@@ -76,13 +76,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     setIsGoogleLoading(true);
 
     try {
-      // Acceso directo al dashboard (Google auth)
-      await new Promise((r) => setTimeout(r, 700));
-      setLoginSuccess(true);
-      router.push('/dashboard');
-    } catch (err) {
+      if (isSupabaseConfigured) {
+        const { error } = await signInWithGoogle();
+        if (error) {
+          setAuthError(error.message || 'Error al conectar con Google.');
+          setIsGoogleLoading(false);
+        }
+      } else {
+        // Si Supabase no tiene llaves en .env, avisar para que use el formulario o configure .env
+        setAuthError('Para autenticarte con Google y elegir cuenta real, configurá NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en tu .env. Podés iniciar sesión con email y contraseña en el formulario abajo.');
+        setIsGoogleLoading(false);
+      }
+    } catch (err: any) {
       setAuthError('Ocurrió un error inesperado al conectar con Google.');
-    } finally {
       setIsGoogleLoading(false);
     }
   };
