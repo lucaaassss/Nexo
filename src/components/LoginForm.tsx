@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail, AlertCircle, ArrowRight, Loader2, CheckCircle2, Sparkles, UserCheck } from 'lucide-react';
-import { signInUser, signInWithGoogle, isSupabaseConfigured } from '@/lib/supabase';
+import { signInUser, signInWithGoogle, isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 interface LoginFormProps {
   onSwitchToRegister?: () => void;
@@ -26,6 +26,45 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
   const [loginSuccess, setLoginSuccess] = useState<boolean>(false);
   const [demoNotice, setDemoNotice] = useState<string | null>(null);
+
+  // Forgot Password Modal State
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState<boolean>(false);
+  const [resetEmail, setResetEmail] = useState<string>('');
+  const [resetLoading, setResetLoading] = useState<boolean>(false);
+  const [resetSuccess, setResetSuccess] = useState<string | null>(null);
+  const [resetError, setResetError] = useState<string | null>(null);
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError(null);
+    setResetSuccess(null);
+
+    if (!resetEmail.trim() || !validateEmail(resetEmail)) {
+      setResetError('Por favor ingresá un correo electrónico válido.');
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      if (isSupabaseConfigured) {
+        const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+          redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined,
+        });
+        if (error) {
+          setResetError(error.message || 'No se pudo enviar el enlace de recuperación.');
+        } else {
+          setResetSuccess('¡Enlace de recuperación enviado! Revisá tu casilla de correo.');
+        }
+      } else {
+        await new Promise((r) => setTimeout(r, 900));
+        setResetSuccess('¡Enlace de recuperación enviado! Revisá tu casilla de correo.');
+      }
+    } catch (err: any) {
+      setResetError('Ocurrió un error al procesar la solicitud.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const handleGoogleAuth = async () => {
     setAuthError(null);
@@ -273,13 +312,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             >
               Contraseña <span className="text-violet-400">*</span>
             </label>
-            <a
-              href="#forgot-password"
-              onClick={(e) => e.preventDefault()}
-              className="text-xs font-medium text-violet-400 hover:text-violet-300 hover:underline transition-colors focus:outline-none"
+            <button
+              type="button"
+              onClick={() => {
+                setResetEmail(email.trim());
+                setResetError(null);
+                setResetSuccess(null);
+                setIsForgotPasswordOpen(true);
+              }}
+              className="text-xs font-medium text-violet-400 hover:text-violet-300 hover:underline transition-colors focus:outline-none cursor-pointer"
             >
               ¿Olvidaste tu contraseña?
-            </a>
+            </button>
           </div>
           <div className="relative group">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-violet-400 transition-colors">
@@ -416,6 +460,83 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           </div>
         )}
       </form>
+
+      {/* Modal de Recuperación de Contraseña */}
+      {isForgotPasswordOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div className="space-y-1 text-left">
+              <h3 className="text-base font-bold text-zinc-900 dark:text-white">
+                Recuperar Contraseña
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Ingresá tu correo electrónico para recibir un enlace de restablecimiento seguro.
+              </p>
+            </div>
+
+            {resetSuccess && (
+              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span>{resetSuccess}</span>
+              </div>
+            )}
+
+            {resetError && (
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-800 dark:text-rose-300 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                <span>{resetError}</span>
+              </div>
+            )}
+
+            {!resetSuccess && (
+              <form onSubmit={handleResetPassword} className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block">
+                    Correo Electrónico
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder="tu-correo@empresa.com"
+                    className="w-full px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotPasswordOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={resetLoading}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-md transition-all cursor-pointer flex items-center gap-2"
+                  >
+                    {resetLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>Enviar Enlace</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {resetSuccess && (
+              <div className="pt-2 text-right">
+                <button
+                  onClick={() => setIsForgotPasswordOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-all cursor-pointer"
+                >
+                  Entendido
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -38,6 +38,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
   const [registerSuccess, setRegisterSuccess] = useState<boolean>(false);
 
+  // Modal de Términos y Privacidad
+  const [termsModalOpen, setTermsModalOpen] = useState<boolean>(false);
+  const [termsModalTab, setTermsModalTab] = useState<'terms' | 'privacy'>('terms');
+
   const handleGoogleAuth = async () => {
     setServerError(null);
     setIsGoogleLoading(true);
@@ -512,9 +516,31 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               />
               <label
                 htmlFor="accept-terms"
-                className="text-xs font-normal text-zinc-400 leading-normal cursor-pointer select-none"
+                className="text-xs font-normal text-zinc-400 leading-normal select-none"
               >
-                Acepto los <a href="#terms" onClick={(e) => e.preventDefault()} className="text-violet-400 hover:underline">Términos de Servicio</a> y la <a href="#privacy" onClick={(e) => e.preventDefault()} className="text-violet-400 hover:underline">Política de Privacidad</a> de Nexor-Space.
+                Acepto los{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTermsModalTab('terms');
+                    setTermsModalOpen(true);
+                  }}
+                  className="text-violet-400 hover:underline font-medium cursor-pointer"
+                >
+                  Términos de Servicio
+                </button>{' '}
+                y la{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTermsModalTab('privacy');
+                    setTermsModalOpen(true);
+                  }}
+                  className="text-violet-400 hover:underline font-medium cursor-pointer"
+                >
+                  Política de Privacidad
+                </button>{' '}
+                de Nexor-Space.
               </label>
             </div>
             {errors.acceptTerms && (
@@ -559,6 +585,90 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
             </p>
           </div>
         </form>
+      )}
+
+      {/* Modal de Términos de Servicio y Política de Privacidad */}
+      {termsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTermsModalTab('terms')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    termsModalTab === 'terms'
+                      ? 'bg-violet-600 text-white shadow-sm'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  Términos de Servicio
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTermsModalTab('privacy')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    termsModalTab === 'privacy'
+                      ? 'bg-violet-600 text-white shadow-sm'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  Política de Privacidad
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTermsModalOpen(false)}
+                className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-white rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+              {termsModalTab === 'terms' ? (
+                <>
+                  <h4 className="font-bold text-sm text-zinc-900 dark:text-white">Términos de Servicio de Nexor-Space</h4>
+                  <p>
+                    Bienvenido a Nexor-Space. Al registrarte y utilizar nuestra plataforma de gestión de proyectos, aceptas cumplir con los siguientes términos:
+                  </p>
+                  <ul className="list-disc pl-4 space-y-1.5">
+                    <li><strong>Uso Responsable:</strong> Te comprometes a usar la plataforma con fines legítimos de colaboración y gestión de proyectos.</li>
+                    <li><strong>Seguridad de Cuenta:</strong> Eres responsable de mantener la confidencialidad de tus credenciales de acceso.</li>
+                    <li><strong>Contenido del Equipo:</strong> La información y archivos que compartes son propiedad de tu equipo y organización.</li>
+                    <li><strong>Disponibilidad:</strong> Trabajamos continuamente para garantizar alta disponibilidad y sincronización en tiempo real.</li>
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <h4 className="font-bold text-sm text-zinc-900 dark:text-white">Política de Privacidad</h4>
+                  <p>
+                    En Nexor-Space respetamos y protegemos la privacidad de tus datos personales y proyectos:
+                  </p>
+                  <ul className="list-disc pl-4 space-y-1.5">
+                    <li><strong>Protección de Datos:</strong> Tu correo y datos personales nunca serán vendidos a terceros.</li>
+                    <li><strong>Cifrado y Seguridad:</strong> Las sesiones y transmisiones de datos se realizan con protocolos seguros (TLS/SSL).</li>
+                    <li><strong>Control de Información:</strong> Puedes actualizar o solicitar la eliminación de tu cuenta y proyectos en cualquier momento.</li>
+                  </ul>
+                </>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-2 bg-zinc-50 dark:bg-zinc-950/50">
+              <button
+                type="button"
+                onClick={() => {
+                  setAcceptTerms(true);
+                  if (errors.acceptTerms) setErrors((prev) => ({ ...prev, acceptTerms: undefined }));
+                  setTermsModalOpen(false);
+                }}
+                className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
+              >
+                Aceptar y Continuar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

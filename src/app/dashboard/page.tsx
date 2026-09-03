@@ -19,7 +19,7 @@ import { FileManager } from '@/components/files/FileManager';
 import { ActivityTimeline } from '@/components/activity/ActivityTimeline';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
 import { NexorSpaceAiModal } from '@/components/ai/NexorSpaceAiModal';
-import { Task } from '@/types';
+import { Task, TaskStatus } from '@/types';
 import { supabase } from '@/lib/supabase';
 import {
   Plus,
@@ -52,9 +52,17 @@ export default function DashboardPage() {
   // Estados de los Modales
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
+  const [newTaskInitialDate, setNewTaskInitialDate] = useState<string>('');
+  const [newTaskInitialStatus, setNewTaskInitialStatus] = useState<TaskStatus>('PENDIENTE');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  const handleOpenNewTask = (dateStr?: string, status?: TaskStatus) => {
+    setNewTaskInitialDate(dateStr || '');
+    setNewTaskInitialStatus(status || 'PENDIENTE');
+    setIsNewTaskModalOpen(true);
+  };
 
   // Verificar sesión activa al montar
   useEffect(() => {
@@ -83,13 +91,13 @@ export default function DashboardPage() {
           setActiveTab={setActiveTab}
           taskViewMode={taskViewMode}
           setTaskViewMode={setTaskViewMode}
-          onOpenNewTask={() => setIsNewTaskModalOpen(true)}
+          onOpenNewTask={() => handleOpenNewTask()}
           onOpenInviteModal={() => setIsInviteModalOpen(true)}
         />
 
         <main className="flex-1 p-4 md:p-8 overflow-y-auto max-h-[calc(100vh-4rem)]">
           {/* Header del Proyecto Actual */}
-          {currentProject && (
+          {currentProject ? (
             <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200 dark:border-zinc-800/80">
               <div className="flex items-center gap-3">
                 <div
@@ -124,7 +132,7 @@ export default function DashboardPage() {
                   <span>Invitar</span>
                 </button>
                 <button
-                  onClick={() => setIsNewTaskModalOpen(true)}
+                  onClick={() => handleOpenNewTask()}
                   className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 transition-all active:scale-95 cursor-pointer"
                 >
                   <Plus className="w-4 h-4 text-white" />
@@ -132,25 +140,107 @@ export default function DashboardPage() {
                 </button>
               </div>
             </div>
+          ) : (
+            <div className="p-8 my-6 text-center rounded-3xl bg-zinc-900/60 border border-zinc-800 space-y-4 max-w-lg mx-auto">
+              <h2 className="text-base font-bold text-zinc-200">No hay proyecto seleccionado</h2>
+              <p className="text-xs text-zinc-400">Seleccioná un proyecto desde el menú superior o creá uno nuevo.</p>
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => router.push('/')}
+                  className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 transition-colors cursor-pointer"
+                >
+                  Ver Mis Proyectos
+                </button>
+                <button
+                  onClick={() => setIsNewProjectModalOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white transition-colors cursor-pointer"
+                >
+                  Crear Proyecto
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Mobile Navigation Tabs & Views (md:hidden) */}
+          {currentProject && (
+            <div className="md:hidden space-y-2 mb-4 pb-2 border-b border-zinc-800/80">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                {[
+                  { id: 'tasks', label: 'Tareas' },
+                  { id: 'files', label: 'Archivos' },
+                  { id: 'analytics', label: 'Estadísticas' },
+                  { id: 'activity', label: 'Historial' },
+                  { id: 'settings', label: 'Equipo' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all cursor-pointer ${
+                      activeTab === item.id
+                        ? 'bg-violet-600 text-white shadow-sm'
+                        : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              {activeTab === 'tasks' && (
+                <div className="flex gap-1 overflow-x-auto pb-1 no-scrollbar">
+                  {[
+                    { id: 'kanban', label: 'Kanban' },
+                    { id: 'list', label: 'Lista' },
+                    { id: 'calendar', label: 'Calendario' },
+                    { id: 'timeline', label: 'Timeline' },
+                    { id: 'table', label: 'Tabla' },
+                  ].map((vm) => (
+                    <button
+                      key={vm.id}
+                      onClick={() => setTaskViewMode(vm.id as any)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium shrink-0 transition-all cursor-pointer ${
+                        taskViewMode === vm.id
+                          ? 'bg-violet-950/60 border border-violet-500/50 text-violet-300 font-semibold'
+                          : 'bg-zinc-950 text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      {vm.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {/* VISTAS DE CONTENIDO */}
           {activeTab === 'tasks' && (
             <div>
               {taskViewMode === 'kanban' && (
-                <KanbanView tasks={projectTasks} onSelectTask={(task) => setSelectedTask(task)} onOpenNewTask={() => setIsNewTaskModalOpen(true)} />
+                <KanbanView tasks={projectTasks} onSelectTask={(task) => setSelectedTask(task)} onOpenNewTask={() => handleOpenNewTask()} />
               )}
               {taskViewMode === 'list' && (
-                <ListView tasks={projectTasks} onSelectTask={(task) => setSelectedTask(task)} onOpenNewTask={() => setIsNewTaskModalOpen(true)} />
+                <ListView tasks={projectTasks} onSelectTask={(task) => setSelectedTask(task)} onOpenNewTask={() => handleOpenNewTask()} />
               )}
               {taskViewMode === 'calendar' && (
-                <CalendarView tasks={projectTasks} onSelectTask={(task) => setSelectedTask(task)} />
+                <CalendarView
+                  tasks={projectTasks}
+                  onSelectTask={(task) => setSelectedTask(task)}
+                  onOpenNewTask={(dateStr) => handleOpenNewTask(dateStr)}
+                />
               )}
               {taskViewMode === 'timeline' && (
-                <TimelineView tasks={projectTasks} onSelectTask={(task) => setSelectedTask(task)} />
+                <TimelineView
+                  tasks={projectTasks}
+                  onSelectTask={(task) => setSelectedTask(task)}
+                  onOpenNewTask={() => handleOpenNewTask()}
+                />
               )}
               {taskViewMode === 'table' && (
-                <TableView tasks={projectTasks} onSelectTask={(task) => setSelectedTask(task)} />
+                <TableView
+                  tasks={projectTasks}
+                  onSelectTask={(task) => setSelectedTask(task)}
+                  onOpenNewTask={() => handleOpenNewTask()}
+                />
               )}
             </div>
           )}
@@ -234,7 +324,12 @@ export default function DashboardPage() {
       {/* MODALES */}
       <TaskDrawer task={selectedTask} onClose={() => setSelectedTask(null)} />
       <ProjectModal isOpen={isNewProjectModalOpen} onClose={() => setIsNewProjectModalOpen(false)} />
-      <TaskModal isOpen={isNewTaskModalOpen} onClose={() => setIsNewTaskModalOpen(false)} />
+      <TaskModal
+        isOpen={isNewTaskModalOpen}
+        onClose={() => setIsNewTaskModalOpen(false)}
+        initialDueDate={newTaskInitialDate}
+        initialStatus={newTaskInitialStatus}
+      />
       <InviteMemberModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
       <NexorSpaceAiModal
         isOpen={isAiModalOpen}

@@ -9,6 +9,8 @@ import { getTodayDateString } from '@/lib/utils';
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialDueDate?: string;
+  initialStatus?: TaskStatus;
 }
 
 /**
@@ -16,15 +18,23 @@ interface TaskModalProps {
  * Formulario para crear una nueva tarea con título, descripción, responsable, prioridad y estimación.
  * Totalmente compatible con Modo Claro y Modo Oscuro.
  */
-export function TaskModal({ isOpen, onClose }: TaskModalProps) {
+export function TaskModal({ isOpen, onClose, initialDueDate = '', initialStatus = 'PENDIENTE' }: TaskModalProps) {
   const { createTask, currentProject } = useNexorSpace();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('MEDIA');
-  const [status, setStatus] = useState<TaskStatus>('PENDIENTE');
-  const [dueDate, setDueDate] = useState('');
+  const [status, setStatus] = useState<TaskStatus>(initialStatus);
+  const [dueDate, setDueDate] = useState(initialDueDate);
   const [estimatedHours, setEstimatedHours] = useState('4');
   const [tagInput, setTagInput] = useState('');
+
+  // Sincronizar props iniciales al abrir
+  React.useEffect(() => {
+    if (isOpen) {
+      if (initialDueDate) setDueDate(initialDueDate);
+      if (initialStatus) setStatus(initialStatus);
+    }
+  }, [isOpen, initialDueDate, initialStatus]);
 
   if (!isOpen) return null;
 

@@ -722,6 +722,51 @@ export function NexorSpaceAiModal({
                     )}
                   </div>
 
+                  {/* Tareas Sugeridas por la IA */}
+                  {msg.suggestedTasks && msg.suggestedTasks.length > 0 && (
+                    <div className="w-full space-y-2.5 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-violet-200 dark:border-violet-500/30">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-violet-700 dark:text-violet-300">
+                          <ListTodo className="w-4 h-4" />
+                          <span>Tareas Sugeridas ({msg.suggestedTasks.length})</span>
+                        </div>
+                        {msg.imported ? (
+                          <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800/40">
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Importadas al tablero</span>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleImportTasks(msg.id, msg.suggestedTasks!)}
+                            className="flex items-center gap-1 px-3 py-1 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Importar todas</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                        {msg.suggestedTasks.map((st, idx) => (
+                          <div
+                            key={idx}
+                            className="p-2.5 rounded-xl bg-white dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs"
+                          >
+                            <div className="min-w-0 flex-1 pr-2">
+                              <p className="font-semibold text-zinc-800 dark:text-zinc-200 truncate">{st.title}</p>
+                              {st.description && (
+                                <p className="text-[10px] text-zinc-500 truncate">{st.description}</p>
+                              )}
+                            </div>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400">
+                              {st.priority} · {st.estimatedHours}h
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Acciones ejecutadas */}
                   {msg.actionLog && msg.actionLog.length > 0 && (
                     <div className="px-3.5 py-2.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 space-y-1 w-full">
@@ -736,6 +781,31 @@ export function NexorSpaceAiModal({
               </div>
             );
           })}
+
+          {/* Quick Prompts cuando la conversación recién inicia */}
+          {displayMessages.length === 1 && !isLoading && (
+            <div className="pt-2">
+              <p className="text-[11px] font-semibold text-zinc-500 mb-2 uppercase tracking-wider">
+                Sugerencias rápidas:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  '🚀 Creame 3 tareas clave para este sprint',
+                  '📊 Resumí el estado y avance de este proyecto',
+                  '🧹 Auditar tareas pendientes y prioridades',
+                  '💡 Sugerir mejoras para el flujo de trabajo',
+                ].map((promptText) => (
+                  <button
+                    key={promptText}
+                    onClick={() => handleSend(promptText)}
+                    className="px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 hover:bg-violet-50 dark:hover:bg-violet-950/30 border border-zinc-200 dark:border-zinc-800 hover:border-violet-300 dark:hover:border-violet-500/40 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-violet-700 dark:hover:text-violet-300 transition-all text-left cursor-pointer shadow-xs"
+                  >
+                    {promptText}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {isLoading && (
             <div className="flex gap-3 items-start animate-in fade-in duration-150">
