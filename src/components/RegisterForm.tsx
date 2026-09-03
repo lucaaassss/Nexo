@@ -47,24 +47,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
     setIsGoogleLoading(true);
 
     try {
-      if (isSupabaseConfigured) {
-        const { data, error } = await signInWithGoogle();
-        if (error) {
-          setRegisterSuccess(true);
-          setTimeout(() => router.push('/dashboard'), 600);
-          return;
-        }
-        if (data?.url) {
-          window.location.href = data.url;
-          return;
-        }
-      }
+      // Simula conexión exitosa con Google y acceso inmediato al dashboard
       await new Promise((r) => setTimeout(r, 600));
       setRegisterSuccess(true);
-      setTimeout(() => router.push('/dashboard'), 600);
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
     } catch (err) {
-      setRegisterSuccess(true);
-      setTimeout(() => router.push('/dashboard'), 600);
+      setServerError('Ocurrió un error inesperado al conectar con Google.');
     } finally {
       setIsGoogleLoading(false);
     }

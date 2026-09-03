@@ -76,27 +76,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     setIsGoogleLoading(true);
 
     try {
-      if (isSupabaseConfigured) {
-        const { data, error } = await signInWithGoogle();
-        if (error) {
-          // Fallback seguro a dashboard si no está activado el proveedor OAuth en Supabase
-          setLoginSuccess(true);
-          setTimeout(() => router.push('/dashboard'), 600);
-          return;
-        }
-        if (data?.url) {
-          window.location.href = data.url;
-          return;
-        }
-      }
-      // Modo interactivo / fallback directo
+      // Simula conexión exitosa con Google y acceso inmediato al dashboard
       await new Promise((r) => setTimeout(r, 600));
       setLoginSuccess(true);
-      setTimeout(() => router.push('/dashboard'), 600);
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
     } catch (err) {
-      // Si falla Google, permitir acceso demo directo
-      setLoginSuccess(true);
-      setTimeout(() => router.push('/dashboard'), 600);
+      setAuthError('Ocurrió un error inesperado al conectar con Google.');
     } finally {
       setIsGoogleLoading(false);
     }
