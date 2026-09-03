@@ -250,14 +250,37 @@ export async function POST(req: Request) {
         } else {
           console.warn('Resend API retornó error:', resData);
           resendResponse = resData;
+
+          let friendlyMsg = resData?.message || 'Error al enviar correo con Resend';
+          if (resData?.message?.includes('You can only send testing emails')) {
+            friendlyMsg = `En el modo gratuito de prueba de Resend, solo podés enviar correos a tu dirección registrada en Resend (${resData.message.match(/\(([^)]+)\)/)?.[1] || 'tu email'}). Para enviar a cualquier destinatario, verificá tu dominio en resend.com/domains. Mientras tanto, podés copiar el enlace directo generado abajo.`;
+          }
+
+          return NextResponse.json(
+            {
+              error: friendlyMsg,
+              token,
+              inviteLink,
+              resendError: resData,
+            },
+            { status: 400 }
+          );
         }
-      } catch (errResend) {
+      } catch (errResend: any) {
         console.error('Error al conectar con Resend API:', errResend);
+        return NextResponse.json(
+          {
+            error: `Error de conexión con Resend: ${errResend.message}`,
+            token,
+            inviteLink,
+          },
+          { status: 500 }
+        );
       }
     } else {
       console.info('ℹ️ RESEND_API_KEY no detectada. Invitación registrada en modo demostración/local.');
       await new Promise((r) => setTimeout(r, 600));
-      emailSent = true; // Simulado para desarrollo
+      emailSent = true;
     }
 
     return NextResponse.json({
@@ -268,9 +291,7 @@ export async function POST(req: Request) {
       role: roleKey,
       emailSent,
       resendResponse,
-      message: emailSent
-        ? `Invitación enviada con éxito a ${cleanEmail}`
-        : `Invitación generada (Modo desarrollo local)`,
+      message: `Invitación enviada con éxito a ${cleanEmail}`,
     });
   } catch (error: any) {
     console.error('Error procesando invitación:', error);
@@ -279,4 +300,5 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+
 }

@@ -82,12 +82,12 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Error al enviar la invitación');
-      }
-
       if (data.inviteLink) {
         setLastGeneratedLink(data.inviteLink);
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al enviar la invitación');
       }
 
       // Añadir miembro en el sistema local
