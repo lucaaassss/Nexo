@@ -28,10 +28,38 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 
   const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://nexor-space.app'}/invite/${currentProject.id}?token=nexorspace_${Date.now()}`;
 
+  const validateEmail = (val: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+  };
+
   /** Procesa la invitación por correo electrónico */
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail) {
+      setErrorMsg('Por favor ingresá un correo electrónico.');
+      return;
+    }
+
+    if (!validateEmail(cleanEmail)) {
+      setErrorMsg('Por favor ingresá un correo electrónico válido (ejemplo@empresa.com).');
+      return;
+    }
+
+    if (currentUser?.email && currentUser.email.toLowerCase() === cleanEmail) {
+      setErrorMsg('No podés invitar a tu propia cuenta.');
+      return;
+    }
+
+    const isAlreadyMember = currentProject.members?.some(
+      (m) => m.user?.email?.toLowerCase() === cleanEmail
+    );
+
+    if (isAlreadyMember) {
+      setErrorMsg('Este colaborador ya es integrante del proyecto.');
+      return;
+    }
 
     setIsLoading(true);
     setErrorMsg('');
@@ -42,7 +70,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: email.trim(),
+          email: cleanEmail,
           projectId: currentProject.id,
           projectName: currentProject.name,
           role: role,
@@ -58,16 +86,16 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
       }
 
       // Añadir miembro en el sistema local
-      addMemberToProject(currentProject.id, email.trim(), role);
+      addMemberToProject(currentProject.id, cleanEmail, role);
 
-      setSuccessMsg('¡Invitación enviada con éxito!');
+      setSuccessMsg(`¡Invitación enviada a ${cleanEmail} con éxito!`);
       setEmail('');
 
       // Cerrar después de unos segundos
       setTimeout(() => {
         setSuccessMsg('');
         onClose();
-      }, 2000);
+      }, 2200);
 
     } catch (err: any) {
       setErrorMsg(err.message || 'Error inesperado al enviar correo');
