@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     const appBaseUrl =
       process.env.NEXT_PUBLIC_APP_URL ||
       origin ||
-      (hostHeader ? `${protoHeader}://${hostHeader}` : 'http://localhost:3000');
+      (hostHeader ? `${protoHeader}://${hostHeader}` : process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
 
     const cleanAppUrl = appBaseUrl.replace(/\/$/, '');
 

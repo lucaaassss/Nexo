@@ -45,13 +45,64 @@ export default function HomePage() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.replace('/login');
-      } else {
-        setIsCheckingAuth(false);
+    let timeout: NodeJS.Timeout;
+    let isSubscribed = true;
+
+    const checkAuth = async () => {
+      // Si llegamos a / con un código PKCE (ej. redirección al Site URL de Supabase)
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        if (code) {
+          try {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            if (!error && data?.session) {
+              window.history.replaceState({}, document.title, window.location.pathname);
+              if (isSubscribed) setIsCheckingAuth(false);
+              return;
+            }
+          } catch (e) {
+            console.error('Error intercambiando código OAuth en página principal:', e);
+          }
+        }
       }
-    });
+
+      // 1. Revisar si ya hay sesión activa
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        if (isSubscribed) setIsCheckingAuth(false);
+        return;
+      }
+
+      // 2. Escuchar si la sesión se recupera tras unos instantes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+        if (currentSession) {
+          subscription.unsubscribe();
+          if (isSubscribed) setIsCheckingAuth(false);
+        }
+      });
+
+      // 3. Breve margen de seguridad antes de redirigir a /login
+      timeout = setTimeout(async () => {
+        const { data: { session: retrySession } } = await supabase.auth.getSession();
+        if (!retrySession && isSubscribed) {
+          router.replace('/login');
+        } else if (retrySession && isSubscribed) {
+          setIsCheckingAuth(false);
+        }
+      }, 1500);
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    };
+
+    checkAuth();
+
+    return () => {
+      isSubscribed = false;
+      if (timeout) clearTimeout(timeout);
+    };
   }, [router]);
 
   const handleOpenProject = (projectId: string) => {

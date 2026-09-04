@@ -6,7 +6,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholde
 /**
  * Cliente Singleton de Supabase para Autenticación y Consumo de APIs en Nexor-Space
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    flowType: 'pkce',
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+});
 
 /**
  * Indica si Supabase está configurado activamente con llaves reales en las variables de entorno.
@@ -59,16 +66,36 @@ export async function signUpUser({
 }
 
 /**
+ * Obtiene la URL base de la aplicación de manera 100% dinámica.
+ * Prioriza el dominio actual en el navegador (ej: https://tu-proyecto.vercel.app),
+ * o variables de entorno de producción de Vercel.
+ */
+export function getAppUrl(): string {
+  if (typeof window !== 'undefined' && window.location.origin) {
+    return window.location.origin;
+  }
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/, '');
+  }
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`.replace(/\/+$/, '');
+  }
+  return '';
+}
+
+/**
  * Función auxiliar para Iniciar Sesión o Registrarse con Google vía OAuth
- * Redirige al flujo oficial de Google (accounts.google.com) y luego al /dashboard
+ * Redirige al flujo oficial de Google (accounts.google.com) y luego al /auth/callback en Vercel
  */
 export async function signInWithGoogle() {
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const appUrl = getAppUrl();
+  const redirectTo = appUrl ? `${appUrl}/auth/callback` : undefined;
+
   try {
     const res = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${origin}/auth/callback`,
+        redirectTo,
         queryParams: {
           access_type: 'offline',
           prompt: 'select_account',
