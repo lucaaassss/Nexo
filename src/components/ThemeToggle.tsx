@@ -10,7 +10,7 @@ export const ThemeToggle: React.FC = () => {
 
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem('nexorspace-theme');
+    const savedTheme = localStorage.getItem('nexorspace_theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
@@ -30,11 +30,11 @@ export const ThemeToggle: React.FC = () => {
     if (nextDark) {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
-      localStorage.setItem('nexorspace-theme', 'dark');
+      localStorage.setItem('nexorspace_theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
       document.documentElement.classList.add('light');
-      localStorage.setItem('nexorspace-theme', 'light');
+      localStorage.setItem('nexorspace_theme', 'light');
     }
   };
 
