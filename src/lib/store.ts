@@ -156,7 +156,7 @@ export class NexorSpaceStore {
         // Cargar proyectos donde el usuario es miembro invitado
         const { data: memberProjects } = await supabase
           .from('proyecto_miembros')
-          .select('proyecto_id, rol, proyectos(*)')
+          .select('*')
           .eq('usuario_id', this.currentUser.id);
 
         const allSupaProjects: any[] = [];
@@ -171,14 +171,42 @@ export class NexorSpaceStore {
           });
         }
 
-        if (Array.isArray(memberProjects)) {
-          memberProjects.forEach((m: any) => {
-            const proj = Array.isArray(m.proyectos) ? m.proyectos[0] : m.proyectos;
-            if (proj && !seenProjIds.has(String(proj.id))) {
-              seenProjIds.add(String(proj.id));
-              allSupaProjects.push({ ...proj, userRole: m.rol || 'MEMBER' });
+        if (Array.isArray(memberProjects) && memberProjects.length > 0) {
+          const projIds = memberProjects.map((m: any) => String(m.proyecto_id)).filter(Boolean);
+          if (projIds.length > 0) {
+            const { data: supaFetchedProjs } = await supabase
+              .from('proyectos')
+              .select('*')
+              .in('id', projIds);
+
+            if (Array.isArray(supaFetchedProjs)) {
+              supaFetchedProjs.forEach((p) => {
+                if (!seenProjIds.has(String(p.id))) {
+                  seenProjIds.add(String(p.id));
+                  const matchingMem = memberProjects.find((m: any) => String(m.proyecto_id) === String(p.id));
+                  allSupaProjects.push({ ...p, userRole: matchingMem?.rol || 'MEMBER' });
+                }
+              });
             }
-          });
+          }
+        }
+
+        // Si es un miembro sin asignación específica aún, cargar los proyectos activos disponibles
+        if (allSupaProjects.length === 0) {
+          const { data: allActiveProjs } = await supabase
+            .from('proyectos')
+            .select('*')
+            .eq('estado', 'activo')
+            .order('fecha_creacion', { ascending: false });
+
+          if (Array.isArray(allActiveProjs) && allActiveProjs.length > 0) {
+            allActiveProjs.forEach((p) => {
+              if (!seenProjIds.has(String(p.id))) {
+                seenProjIds.add(String(p.id));
+                allSupaProjects.push({ ...p, userRole: 'MEMBER' });
+              }
+            });
+          }
         }
 
         if (allSupaProjects.length > 0) {
@@ -292,8 +320,67 @@ export class NexorSpaceStore {
     }
   }
 
-  /** Carga tareas de un proyecto desde la base de datos */
+  /** Carga tareas de un proyecto desde la base de datos (Supabase + API local) */
   public async fetchTasksForProject(projectId: string) {
+    if (!projectId) return;
+
+    // 1. Intentar cargar desde Supabase si está disponible
+    if (isSupabaseConfigured) {
+      try {
+        const { data: supaTasks } = await supabase
+          .from('tareas')
+          .select('*')
+          .eq('proyecto_id', projectId)
+          .order('posicion', { ascending: true });
+
+        if (Array.isArray(supaTasks) && supaTasks.length > 0) {
+          const formattedTasks: Task[] = supaTasks.map((t: any) => {
+            let parsedTags: string[] = [];
+            if (Array.isArray(t.tags)) {
+              parsedTags = t.tags;
+            } else if (typeof t.tags === 'string') {
+              try {
+                parsedTags = JSON.parse(t.tags);
+              } catch {
+                parsedTags = t.tags ? [t.tags] : [];
+              }
+            }
+
+            return {
+              id: String(t.id),
+              key: t.clave || `${this.currentProject?.key || 'PRJ'}-${t.id}`,
+              title: t.titulo || 'Tarea sin título',
+              description: t.descripcion || '',
+              priority: (t.prioridad || 'MEDIA') as TaskPriority,
+              status: (t.estado || 'PENDIENTE') as TaskStatus,
+              estimatedHours: Number(t.horas_estimadas) || 0,
+              loggedHours: Number(t.horas_registradas) || 0,
+              position: Number(t.posicion) || 0,
+              dueDate: t.fecha_limite ? new Date(t.fecha_limite).toISOString().split('T')[0] : undefined,
+              tags: parsedTags,
+              projectId: String(t.proyecto_id),
+              assigneeId: t.asignado_id ? String(t.asignado_id) : undefined,
+              creatorId: String(t.creador_id || this.currentUser.id),
+              subtasks: [],
+              comments: [],
+              attachments: [],
+              createdAt: t.fecha_creacion ? new Date(t.fecha_creacion).toISOString() : new Date().toISOString(),
+              updatedAt: t.fecha_actualizacion ? new Date(t.fecha_actualizacion).toISOString() : new Date().toISOString(),
+            };
+          });
+
+          const otherTasks = this.tasks.filter((t) => t.projectId !== projectId);
+          this.tasks = [...otherTasks, ...formattedTasks];
+          this.persistState();
+          this.notify();
+          return;
+        }
+      } catch (err) {
+        console.warn('Error cargando tareas desde Supabase:', err);
+      }
+    }
+
+    // 2. Fallback a la API de Prisma (/api/tasks)
     try {
       const res = await fetch(`/api/tasks?projectId=${encodeURIComponent(projectId)}`);
       if (res.ok) {
@@ -849,7 +936,7 @@ export class NexorSpaceStore {
 
     this.persistState();
 
-    // Persistir en la base de datos
+    // Persistir en la base de datos local / API
     fetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -876,6 +963,35 @@ export class NexorSpaceStore {
       })
       .catch((e) => console.warn('Error persistiendo tarea en base de datos:', e));
 
+    // Persistir en Supabase si está disponible para sincronización multiusuario
+    if (isSupabaseConfigured) {
+      supabase
+        .from('tareas')
+        .insert({
+          clave: newTask.key,
+          titulo: data.title,
+          descripcion: data.description || '',
+          prioridad: data.priority || 'MEDIA',
+          estado: data.status || 'PENDIENTE',
+          proyecto_id: projectId,
+          creador_id: this.currentUser.id,
+          asignado_id: data.assigneeId || null,
+          fecha_limite: data.dueDate || null,
+          horas_estimadas: data.estimatedHours || 0,
+          posicion: newTask.position,
+        })
+        .select()
+        .then(({ data: inserted, error }) => {
+          if (error) {
+            console.warn('Error persistiendo tarea en Supabase:', error.message);
+          } else if (inserted && inserted[0]) {
+            newTask.id = String(inserted[0].id);
+            this.persistState();
+            this.notify();
+          }
+        });
+    }
+
     return newTask;
   }
 
@@ -892,6 +1008,23 @@ export class NexorSpaceStore {
       return t;
     });
     this.persistState();
+
+    // Actualizar en Supabase si está disponible
+    if (isSupabaseConfigured) {
+      supabase
+        .from('tareas')
+        .update({
+          ...(updates.title && { titulo: updates.title }),
+          ...(updates.description !== undefined && { descripcion: updates.description }),
+          ...(updates.priority && { prioridad: updates.priority }),
+          ...(updates.status && { estado: updates.status }),
+          ...(updates.dueDate !== undefined && { fecha_limite: updates.dueDate }),
+          ...(updates.estimatedHours !== undefined && { horas_estimadas: updates.estimatedHours }),
+          ...(updates.position !== undefined && { posicion: updates.position }),
+        })
+        .eq('id', taskId)
+        .then(() => {});
+    }
 
     // Actualizar en base de datos
     fetch('/api/tasks', {
@@ -913,6 +1046,18 @@ export class NexorSpaceStore {
     this.logActivity(task.projectId, 'DRAG_TASK', 'TASK', taskId, `Tarea "${task.title}" movida a ${newStatus}`);
     this.persistState();
 
+    // Actualizar en Supabase
+    if (isSupabaseConfigured) {
+      supabase
+        .from('tareas')
+        .update({
+          estado: newStatus,
+          posicion: newPosition,
+        })
+        .eq('id', taskId)
+        .then(() => {});
+    }
+
     // Actualizar en la base de datos
     fetch('/api/tasks', {
       method: 'PATCH',
@@ -929,6 +1074,15 @@ export class NexorSpaceStore {
     }
     this.tasks = this.tasks.filter((t) => t.id !== taskId);
     this.persistState();
+
+    // Eliminar de Supabase
+    if (isSupabaseConfigured) {
+      supabase
+        .from('tareas')
+        .delete()
+        .eq('id', taskId)
+        .then(() => {});
+    }
 
     // Eliminar de base de datos
     fetch(`/api/tasks?id=${encodeURIComponent(taskId)}`, {

@@ -111,6 +111,33 @@ export async function GET(req: Request, context: RouteContext) {
       });
     } catch (_) {}
 
+    // Buscar en Supabase si está disponible
+    if (isSupabaseConfigured && !matchedProject) {
+      try {
+        const { data: supaProj } = await supabase
+          .from('proyectos')
+          .select('*')
+          .eq('id', token)
+          .maybeSingle();
+
+        if (supaProj) {
+          const rawKey = supaProj.nombre
+            ? supaProj.nombre.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || 'PRJ'
+            : 'PRJ';
+          matchedProject = {
+            id: String(supaProj.id),
+            name: supaProj.nombre,
+            key: rawKey,
+            description: supaProj.descripcion || '',
+            color: supaProj.color || '#7C3AED',
+            icon: 'FolderKanban',
+          };
+        }
+      } catch (err) {
+        console.warn('Error buscando proyecto en Supabase para invitación:', err);
+      }
+    }
+
     const fallbackProject = matchedProject || {
       id: token.startsWith('proj-') ? token : 'proj-1',
       name: 'Nexor-Space - Plataforma Colaborativa',
@@ -166,10 +193,19 @@ export async function POST(req: Request, context: RouteContext) {
       });
     } catch (_) {}
 
+    // Si no está en Prisma, verificar en Supabase
+    let supaProjectName = '';
+    if (isSupabaseConfigured && !invitation) {
+      try {
+        const { data: sp } = await supabase.from('proyectos').select('*').eq('id', token).maybeSingle();
+        if (sp) supaProjectName = sp.nombre;
+      } catch (_) {}
+    }
+
     const targetEmail = (email || invitation?.email || 'colaborador@nexo.app').toLowerCase().trim();
     const projectId = invitation?.projectId || token;
     const role = invitation?.role || 'MEMBER';
-    const projectName = invitation?.project?.name || 'Proyecto Nexor-Space';
+    const projectName = invitation?.project?.name || supaProjectName || 'Proyecto Nexor-Space';
 
     // 1. Intentar persistir en Prisma si está disponible
     try {
