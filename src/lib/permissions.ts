@@ -60,7 +60,7 @@ export function getRolePermissions(role: MemberRole): Permissions {
         canEditProject: false,
         canDeleteProject: false,
         canManageMembers: false,
-        canCreateTask: true,
+        canCreateTask: false,
         canEditTask: true,
         canDeleteTask: false,
         canComment: true,

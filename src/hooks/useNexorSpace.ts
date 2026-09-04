@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { store } from '@/lib/store';
 import { Project, Task, MemberRole, TaskStatus } from '@/types';
+import { getRolePermissions } from '@/lib/permissions';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -148,12 +149,14 @@ export function useNexorSpace() {
   const userRole: MemberRole =
     currentMember?.role ||
     (state.currentUser.role === 'ADMIN' || state.currentUser.id === 'usr_admin_1' ? 'ADMIN' : 'MEMBER');
+  // Obtener permisos centralizados desde la matriz RBAC
+  const permissions = getRolePermissions(userRole);
 
   const isAdmin = userRole === 'ADMIN' || userRole === 'LEADER';
-  const canCreateTask = isAdmin;
-  const canEditTask = isAdmin;
-  const canDeleteTask = isAdmin;
-  const canManageMembers = isAdmin;
+  const canCreateTask = permissions.canCreateTask;
+  const canEditTask = permissions.canEditTask;
+  const canDeleteTask = permissions.canDeleteTask;
+  const canManageMembers = permissions.canManageMembers;
   const isMemberOnly = !isAdmin;
 
   return {
