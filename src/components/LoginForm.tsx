@@ -158,10 +158,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     <div className="w-full max-w-md mx-auto space-y-6">
       {/* Header Form Titles */}
       <div className="space-y-1.5 text-left">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
           Bienvenido a Nexor-Space
         </h1>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Iniciá sesión para acceder a tus proyectos y equipo.
         </p>
       </div>
@@ -171,10 +171,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         type="button"
         onClick={handleGoogleAuth}
         disabled={isLoading || isGoogleLoading || loginSuccess}
-        className="w-full py-3 px-4 rounded-xl border border-zinc-800 bg-zinc-900/80 hover:bg-zinc-850 hover:border-zinc-700 text-zinc-200 text-xs sm:text-sm font-semibold shadow-sm flex items-center justify-center gap-3 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 group backdrop-blur-sm"
+        className="w-full py-3 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 hover:bg-zinc-50 dark:hover:bg-zinc-850 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs sm:text-sm font-semibold shadow-xs flex items-center justify-center gap-3 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 group backdrop-blur-sm"
       >
         {isGoogleLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin text-violet-400" />
+          <Loader2 className="w-4 h-4 animate-spin text-violet-600 dark:text-violet-400" />
         ) : (
           <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
             <path
@@ -200,11 +200,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
       {/* Divisor Visual: Línea - Texto - Línea */}
       <div className="flex items-center gap-3 my-4">
-        <div className="flex-1 h-px bg-zinc-800/90" />
-        <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider shrink-0 select-none">
+        <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
+        <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider shrink-0 select-none">
           o continuar con email
         </span>
-        <div className="flex-1 h-px bg-zinc-800/90" />
+        <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
       </div>
 
       {/* Global Authentication Error Banner */}
@@ -214,9 +214,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             initial={{ opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            className="flex items-start space-x-3 p-3.5 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs sm:text-sm font-medium shadow-sm"
+            className="flex items-start space-x-3 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 text-xs sm:text-sm font-medium shadow-xs"
           >
-            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
             <div className="flex-1 text-left">
               <p>{authError}</p>
             </div>
@@ -230,9 +230,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-sm font-medium flex items-center space-x-3 shadow-md"
+            className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-sm font-medium flex items-center space-x-3 shadow-md"
           >
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>¡Autenticación exitosa! Ingresando a tu espacio...</span>
           </motion.div>
         )}
@@ -244,12 +244,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         <div className="space-y-1.5 text-left">
           <label
             htmlFor="email-input"
-            className="block text-xs font-semibold uppercase tracking-wider text-zinc-300"
+            className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
           >
-            Correo electrónico <span className="text-violet-400">*</span>
+            Correo electrónico <span className="text-violet-600 dark:text-violet-400">*</span>
           </label>
           <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-violet-400 transition-colors">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400 transition-colors">
               <Mail className="w-4 h-4" />
             </div>
             <input
@@ -263,10 +263,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               }}
               placeholder="nombre@ejemplo.com"
               disabled={isLoading || loginSuccess}
-              className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm transition-all duration-200 bg-zinc-900/70 text-white placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
+              className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm transition-all duration-200 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
                 errors.email
                   ? 'border-rose-500 focus:border-rose-500'
-                  : 'border-zinc-800 hover:border-zinc-700 focus:border-violet-500'
+                  : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 focus:border-violet-500'
               }`}
             />
           </div>
@@ -274,7 +274,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             <motion.p
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-xs font-medium text-rose-400 pt-0.5"
+              className="text-xs font-medium text-rose-600 dark:text-rose-400 pt-0.5"
             >
               {errors.email}
             </motion.p>
@@ -286,9 +286,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           <div className="flex items-center justify-between">
             <label
               htmlFor="password-input"
-              className="block text-xs font-semibold uppercase tracking-wider text-zinc-300"
+              className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
             >
-              Contraseña <span className="text-violet-400">*</span>
+              Contraseña <span className="text-violet-600 dark:text-violet-400">*</span>
             </label>
             <button
               type="button"
@@ -298,13 +298,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                 setResetSuccess(null);
                 setIsForgotPasswordOpen(true);
               }}
-              className="text-xs font-medium text-violet-400 hover:text-violet-300 hover:underline transition-colors focus:outline-none cursor-pointer"
+              className="text-xs font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline transition-colors focus:outline-none cursor-pointer"
             >
               ¿Olvidaste tu contraseña?
             </button>
           </div>
           <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-violet-400 transition-colors">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400 transition-colors">
               <Lock className="w-4 h-4" />
             </div>
             <input
@@ -318,10 +318,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               }}
               placeholder="••••••••••••"
               disabled={isLoading || loginSuccess}
-              className={`w-full pl-10 pr-11 py-2.5 rounded-xl border text-sm transition-all duration-200 bg-zinc-900/70 text-white placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
+              className={`w-full pl-10 pr-11 py-2.5 rounded-xl border text-sm transition-all duration-200 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
                 errors.password
                   ? 'border-rose-500 focus:border-rose-500'
-                  : 'border-zinc-800 hover:border-zinc-700 focus:border-violet-500'
+                  : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 focus:border-violet-500'
               }`}
             />
             <button
@@ -330,7 +330,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               tabIndex={0}
               aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-500 hover:text-zinc-200 focus:outline-none focus:text-violet-400 transition-colors cursor-pointer"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 focus:outline-none focus:text-violet-600 dark:focus:text-violet-400 transition-colors cursor-pointer"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -339,7 +339,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             <motion.p
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-xs font-medium text-rose-400 pt-0.5"
+              className="text-xs font-medium text-rose-600 dark:text-rose-400 pt-0.5"
             >
               {errors.password}
             </motion.p>
@@ -353,11 +353,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             type="checkbox"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            className="w-4 h-4 rounded border-zinc-700 text-violet-600 focus:ring-violet-500/40 bg-zinc-900 accent-violet-600 cursor-pointer"
+            className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 text-violet-600 focus:ring-violet-500/40 bg-white dark:bg-zinc-900 accent-violet-600 cursor-pointer"
           />
           <label
             htmlFor="remember-me"
-            className="text-xs font-medium text-zinc-400 cursor-pointer select-none"
+            className="text-xs font-medium text-zinc-600 dark:text-zinc-400 cursor-pointer select-none"
           >
             Recordarme en este dispositivo
           </label>
@@ -392,12 +392,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         {/* Switch to Register link */}
         {onSwitchToRegister && (
           <div className="text-center pt-3">
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               ¿No tenés una cuenta?{' '}
               <button
                 type="button"
                 onClick={onSwitchToRegister}
-                className="font-semibold text-violet-400 hover:text-violet-300 hover:underline focus:outline-none transition-colors cursor-pointer"
+                className="font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline focus:outline-none transition-colors cursor-pointer"
               >
                 Registrate acá gratis
               </button>
@@ -408,36 +408,36 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
       {/* Modal de Recuperación de Contraseña */}
       {isForgotPasswordOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4 relative">
             <div className="flex items-center justify-between">
               <div className="space-y-1 text-left">
-                <h3 className="text-base font-bold text-white">
+                <h3 className="text-base font-bold text-zinc-900 dark:text-white">
                   Recuperar Contraseña
                 </h3>
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   Ingresá tu correo electrónico para recibir un enlace seguro.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsForgotPasswordOpen(false)}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {resetSuccess && (
-              <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-800 text-xs text-emerald-300 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span>{resetSuccess}</span>
               </div>
             )}
 
             {resetError && (
-              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800 text-xs text-rose-300 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
                 <span>{resetError}</span>
               </div>
             )}
@@ -445,7 +445,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             {!resetSuccess && (
               <form onSubmit={handleResetPassword} className="space-y-3 pt-1 text-left">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300 block">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block">
                     Correo Electrónico
                   </label>
                   <input
@@ -454,7 +454,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
                     placeholder="nombre@ejemplo.com"
-                    className="w-full px-3.5 py-2 rounded-xl border border-zinc-800 bg-zinc-950 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                    className="w-full px-3.5 py-2 rounded-xl border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                   />
                 </div>
 
@@ -462,7 +462,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                   <button
                     type="button"
                     onClick={() => setIsForgotPasswordOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
                     Cancelar
                   </button>

@@ -158,10 +158,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
     <div className="w-full max-w-md mx-auto space-y-5">
       {/* Header Form Titles */}
       <div className="space-y-1.5 text-left">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
           Creá tu cuenta
         </h1>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Completá tus datos para acceder a Nexor-Space.
         </p>
       </div>
@@ -171,10 +171,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
         type="button"
         onClick={handleGoogleAuth}
         disabled={isLoading || isGoogleLoading || registerSuccess}
-        className="w-full py-2.5 px-4 rounded-xl border border-zinc-800 bg-zinc-900/80 hover:bg-zinc-850 hover:border-zinc-700 text-zinc-200 text-xs sm:text-sm font-semibold shadow-sm flex items-center justify-center gap-3 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 group backdrop-blur-sm"
+        className="w-full py-2.5 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 hover:bg-zinc-50 dark:hover:bg-zinc-850 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs sm:text-sm font-semibold shadow-xs flex items-center justify-center gap-3 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 group backdrop-blur-sm"
       >
         {isGoogleLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin text-violet-400" />
+          <Loader2 className="w-4 h-4 animate-spin text-violet-600 dark:text-violet-400" />
         ) : (
           <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
             <path
@@ -200,11 +200,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
 
       {/* Divisor Visual: Línea - Texto - Línea */}
       <div className="flex items-center gap-3 my-4">
-        <div className="flex-1 h-px bg-zinc-800/90" />
-        <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider shrink-0 select-none">
+        <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
+        <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider shrink-0 select-none">
           o completá tus datos
         </span>
-        <div className="flex-1 h-px bg-zinc-800/90" />
+        <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
       </div>
 
       {/* Global Server Error Banner */}
@@ -214,9 +214,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
             initial={{ opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            className="flex items-start space-x-3 p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs sm:text-sm font-medium shadow-sm"
+            className="flex items-start space-x-3 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 text-xs sm:text-sm font-medium shadow-xs"
           >
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
             <div className="flex-1 text-left">
               <p>{serverError}</p>
             </div>
@@ -230,13 +230,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-sm font-medium space-y-2.5 shadow-lg text-left"
+            className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-sm font-medium space-y-2.5 shadow-md text-left"
           >
             <div className="flex items-center space-x-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span className="font-bold">¡Cuenta registrada con éxito!</span>
             </div>
-            <p className="text-xs text-emerald-400/90 leading-relaxed">
+            <p className="text-xs text-emerald-700 dark:text-emerald-400/90 leading-relaxed">
               Bienvenido/a <strong>{nombre} {apellido}</strong> (@{usuario}). Si Supabase requiere confirmación de email, revisá tu casilla antes de iniciar sesión.
             </p>
             <button
@@ -259,12 +259,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
             <div className="space-y-1">
               <label
                 htmlFor="register-nombre"
-                className="block text-xs font-semibold uppercase tracking-wider text-zinc-300"
+                className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
               >
-                Nombre <span className="text-violet-400">*</span>
+                Nombre <span className="text-violet-600 dark:text-violet-400">*</span>
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-violet-400 transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400 transition-colors">
                   <User className="w-4 h-4" />
                 </div>
                 <input
@@ -279,15 +279,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                   placeholder="Milena"
                   maxLength={100}
                   disabled={isLoading}
-                  className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-200 bg-zinc-900/70 text-white placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
+                  className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-200 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
                     errors.nombre
                       ? 'border-rose-500 focus:border-rose-500'
-                      : 'border-zinc-800 hover:border-zinc-700 focus:border-violet-500'
+                      : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 focus:border-violet-500'
                   }`}
                 />
               </div>
               {errors.nombre && (
-                <p className="text-[11px] font-medium text-rose-400 pt-0.5">
+                <p className="text-[11px] font-medium text-rose-600 dark:text-rose-400 pt-0.5">
                   {errors.nombre}
                 </p>
               )}
@@ -297,12 +297,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
             <div className="space-y-1">
               <label
                 htmlFor="register-apellido"
-                className="block text-xs font-semibold uppercase tracking-wider text-zinc-300"
+                className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
               >
-                Apellido <span className="text-violet-400">*</span>
+                Apellido <span className="text-violet-600 dark:text-violet-400">*</span>
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-violet-400 transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400 transition-colors">
                   <User className="w-4 h-4" />
                 </div>
                 <input
@@ -317,15 +317,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                   placeholder="Ahumada"
                   maxLength={100}
                   disabled={isLoading}
-                  className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-200 bg-zinc-900/70 text-white placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
+                  className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-200 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
                     errors.apellido
                       ? 'border-rose-500 focus:border-rose-500'
-                      : 'border-zinc-800 hover:border-zinc-700 focus:border-violet-500'
+                      : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 focus:border-violet-500'
                   }`}
                 />
               </div>
               {errors.apellido && (
-                <p className="text-[11px] font-medium text-rose-400 pt-0.5">
+                <p className="text-[11px] font-medium text-rose-600 dark:text-rose-400 pt-0.5">
                   {errors.apellido}
                 </p>
               )}
@@ -336,12 +336,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
           <div className="space-y-1">
             <label
               htmlFor="register-usuario"
-              className="block text-xs font-semibold uppercase tracking-wider text-zinc-300"
+              className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
             >
-              Nombre de usuario <span className="text-violet-400">*</span>
+              Nombre de usuario <span className="text-violet-600 dark:text-violet-400">*</span>
             </label>
             <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-violet-400 transition-colors">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400 transition-colors">
                 <AtSign className="w-4 h-4" />
               </div>
               <input
@@ -356,10 +356,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                 placeholder="ej: milena.ahumada"
                 maxLength={50}
                 disabled={isLoading}
-                className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-200 bg-zinc-900/70 text-white placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
+                className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-200 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
                   errors.usuario
                     ? 'border-rose-500 focus:border-rose-500'
-                    : 'border-zinc-800 hover:border-zinc-700 focus:border-violet-500'
+                    : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 focus:border-violet-500'
                 }`}
               />
             </div>
@@ -367,7 +367,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               <motion.p
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-[11px] font-medium text-rose-400 pt-0.5"
+                className="text-[11px] font-medium text-rose-600 dark:text-rose-400 pt-0.5"
               >
                 {errors.usuario}
               </motion.p>
@@ -378,12 +378,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
           <div className="space-y-1">
             <label
               htmlFor="register-email"
-              className="block text-xs font-semibold uppercase tracking-wider text-zinc-300"
+              className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
             >
-              Correo electrónico <span className="text-violet-400">*</span>
+              Correo electrónico <span className="text-violet-600 dark:text-violet-400">*</span>
             </label>
             <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-violet-400 transition-colors">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400 transition-colors">
                 <Mail className="w-4 h-4" />
               </div>
               <input
@@ -398,10 +398,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                 placeholder="nombre@ejemplo.com"
                 maxLength={255}
                 disabled={isLoading}
-                className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-200 bg-zinc-900/70 text-white placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
+                className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-200 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
                   errors.email
                     ? 'border-rose-500 focus:border-rose-500'
-                    : 'border-zinc-800 hover:border-zinc-700 focus:border-violet-500'
+                    : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 focus:border-violet-500'
                 }`}
               />
             </div>
@@ -409,7 +409,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               <motion.p
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-[11px] font-medium text-rose-400 pt-0.5"
+                className="text-[11px] font-medium text-rose-600 dark:text-rose-400 pt-0.5"
               >
                 {errors.email}
               </motion.p>
@@ -422,12 +422,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
             <div className="space-y-1">
               <label
                 htmlFor="register-password"
-                className="block text-xs font-semibold uppercase tracking-wider text-zinc-300"
+                className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
               >
-                Contraseña <span className="text-violet-400">*</span>
+                Contraseña <span className="text-violet-600 dark:text-violet-400">*</span>
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-violet-400 transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400 transition-colors">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -441,22 +441,22 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                   }}
                   placeholder="Mín. 6 caract."
                   disabled={isLoading}
-                  className={`w-full pl-9 pr-9 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-200 bg-zinc-900/70 text-white placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
+                  className={`w-full pl-9 pr-9 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-200 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
                     errors.password
                       ? 'border-rose-500 focus:border-rose-500'
-                      : 'border-zinc-800 hover:border-zinc-700 focus:border-violet-500'
+                      : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 focus:border-violet-500'
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPasswordState(!showPasswordState)}
-                  className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-zinc-500 hover:text-zinc-200 cursor-pointer"
+                  className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
                 >
                   {showPasswordState ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-[10px] font-medium text-rose-400">
+                <p className="text-[10px] font-medium text-rose-600 dark:text-rose-400">
                   {errors.password}
                 </p>
               )}
@@ -466,12 +466,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
             <div className="space-y-1">
               <label
                 htmlFor="confirm-password"
-                className="block text-xs font-semibold uppercase tracking-wider text-zinc-300"
+                className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
               >
-                Confirmar <span className="text-violet-400">*</span>
+                Confirmar <span className="text-violet-600 dark:text-violet-400">*</span>
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-violet-400 transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400 transition-colors">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 <input
@@ -485,15 +485,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                   }}
                   placeholder="Repetí la clave"
                   disabled={isLoading}
-                  className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-200 bg-zinc-900/70 text-white placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
+                  className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-200 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15 ${
                     errors.confirmPassword
                       ? 'border-rose-500 focus:border-rose-500'
-                      : 'border-zinc-800 hover:border-zinc-700 focus:border-violet-500'
+                      : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 focus:border-violet-500'
                   }`}
                 />
               </div>
               {errors.confirmPassword && (
-                <p className="text-[10px] font-medium text-rose-400">
+                <p className="text-[10px] font-medium text-rose-600 dark:text-rose-400">
                   {errors.confirmPassword}
                 </p>
               )}
@@ -511,11 +511,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                   setAcceptTerms(e.target.checked);
                   if (errors.acceptTerms) setErrors((prev) => ({ ...prev, acceptTerms: undefined }));
                 }}
-                className="w-4 h-4 mt-0.5 rounded border-zinc-700 text-violet-600 focus:ring-violet-500/40 bg-zinc-900 accent-violet-600 cursor-pointer"
+                className="w-4 h-4 mt-0.5 rounded border-zinc-300 dark:border-zinc-700 text-violet-600 focus:ring-violet-500/40 bg-white dark:bg-zinc-900 accent-violet-600 cursor-pointer"
               />
               <label
                 htmlFor="accept-terms"
-                className="text-xs font-normal text-zinc-400 leading-normal select-none"
+                className="text-xs font-normal text-zinc-600 dark:text-zinc-400 leading-normal select-none"
               >
                 Acepto los{' '}
                 <button
@@ -524,7 +524,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                     setTermsModalTab('terms');
                     setTermsModalOpen(true);
                   }}
-                  className="text-violet-400 hover:underline font-medium cursor-pointer"
+                  className="text-violet-600 dark:text-violet-400 hover:underline font-medium cursor-pointer"
                 >
                   Términos de Servicio
                 </button>{' '}
@@ -535,7 +535,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                     setTermsModalTab('privacy');
                     setTermsModalOpen(true);
                   }}
-                  className="text-violet-400 hover:underline font-medium cursor-pointer"
+                  className="text-violet-600 dark:text-violet-400 hover:underline font-medium cursor-pointer"
                 >
                   Política de Privacidad
                 </button>{' '}
@@ -543,7 +543,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               </label>
             </div>
             {errors.acceptTerms && (
-              <p className="text-[11px] font-medium text-rose-400 pl-6">
+              <p className="text-[11px] font-medium text-rose-600 dark:text-rose-400 pl-6">
                 {errors.acceptTerms}
               </p>
             )}
@@ -572,12 +572,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
 
           {/* Switch to Login link */}
           <div className="text-center pt-2">
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               ¿Ya tenés una cuenta?{' '}
               <button
                 type="button"
                 onClick={onSwitchToLogin}
-                className="font-semibold text-violet-400 hover:text-violet-300 hover:underline focus:outline-none transition-colors cursor-pointer"
+                className="font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline focus:outline-none transition-colors cursor-pointer"
               >
                 Iniciá sesión acá
               </button>
@@ -588,17 +588,17 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
 
       {/* Modal de Términos de Servicio y Política de Privacidad */}
       {termsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
-            <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/60">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/60">
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setTermsModalTab('terms')}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     termsModalTab === 'terms'
-                      ? 'bg-violet-600 text-white shadow-sm'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-850'
+                      ? 'bg-violet-600 text-white shadow-xs'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-850'
                   }`}
                 >
                   Términos de Servicio
@@ -608,8 +608,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                   onClick={() => setTermsModalTab('privacy')}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     termsModalTab === 'privacy'
-                      ? 'bg-violet-600 text-white shadow-sm'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-850'
+                      ? 'bg-violet-600 text-white shadow-xs'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-850'
                   }`}
                 >
                   Política de Privacidad
@@ -618,42 +618,42 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               <button
                 type="button"
                 onClick={() => setTermsModalOpen(false)}
-                className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-white rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-4 text-xs text-zinc-300 leading-relaxed text-left">
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed text-left">
               {termsModalTab === 'terms' ? (
                 <>
-                  <h4 className="font-bold text-sm text-white">Términos de Servicio de Nexor-Space</h4>
+                  <h4 className="font-bold text-sm text-zinc-900 dark:text-white">Términos de Servicio de Nexor-Space</h4>
                   <p>
                     Bienvenido a Nexor-Space. Al registrarte y utilizar nuestra plataforma de gestión de proyectos, aceptas cumplir con los siguientes términos:
                   </p>
-                  <ul className="list-disc pl-4 space-y-1.5 text-zinc-400">
-                    <li><strong className="text-zinc-200">Uso Responsable:</strong> Te comprometes a usar la plataforma con fines legítimos de colaboración y gestión de proyectos.</li>
-                    <li><strong className="text-zinc-200">Seguridad de Cuenta:</strong> Eres responsable de mantener la confidencialidad de tus credenciales de acceso.</li>
-                    <li><strong className="text-zinc-200">Contenido del Equipo:</strong> La información y archivos que compartes son propiedad de tu equipo y organización.</li>
-                    <li><strong className="text-zinc-200">Disponibilidad:</strong> Trabajamos continuamente para garantizar alta disponibilidad y sincronización en tiempo real.</li>
+                  <ul className="list-disc pl-4 space-y-1.5 text-zinc-600 dark:text-zinc-400">
+                    <li><strong className="text-zinc-900 dark:text-zinc-200">Uso Responsable:</strong> Te comprometes a usar la plataforma con fines legítimos de colaboración y gestión de proyectos.</li>
+                    <li><strong className="text-zinc-900 dark:text-zinc-200">Seguridad de Cuenta:</strong> Eres responsable de mantener la confidencialidad de tus credenciales de acceso.</li>
+                    <li><strong className="text-zinc-900 dark:text-zinc-200">Contenido del Equipo:</strong> La información y archivos que compartes son propiedad de tu equipo y organización.</li>
+                    <li><strong className="text-zinc-900 dark:text-zinc-200">Disponibilidad:</strong> Trabajamos continuamente para garantizar alta disponibilidad y sincronización en tiempo real.</li>
                   </ul>
                 </>
               ) : (
                 <>
-                  <h4 className="font-bold text-sm text-white">Política de Privacidad</h4>
+                  <h4 className="font-bold text-sm text-zinc-900 dark:text-white">Política de Privacidad</h4>
                   <p>
                     En Nexor-Space respetamos y protegemos la privacidad de tus datos personales y proyectos:
                   </p>
-                  <ul className="list-disc pl-4 space-y-1.5 text-zinc-400">
-                    <li><strong className="text-zinc-200">Protección de Datos:</strong> Tu correo y datos personales nunca serán comercializados a terceros.</li>
-                    <li><strong className="text-zinc-200">Cifrado y Seguridad:</strong> Las sesiones y transmisiones se realizan con protocolos seguros (TLS/SSL).</li>
-                    <li><strong className="text-zinc-200">Control de Información:</strong> Puedes actualizar o solicitar la eliminación de tu cuenta y proyectos en cualquier momento.</li>
+                  <ul className="list-disc pl-4 space-y-1.5 text-zinc-600 dark:text-zinc-400">
+                    <li><strong className="text-zinc-900 dark:text-zinc-200">Protección de Datos:</strong> Tu correo y datos personales nunca serán comercializados a terceros.</li>
+                    <li><strong className="text-zinc-900 dark:text-zinc-200">Cifrado y Seguridad:</strong> Las sesiones y transmisiones se realizan con protocolos seguros (TLS/SSL).</li>
+                    <li><strong className="text-zinc-900 dark:text-zinc-200">Control de Información:</strong> Puedes actualizar o solicitar la eliminación de tu cuenta y proyectos en cualquier momento.</li>
                   </ul>
                 </>
               )}
             </div>
 
-            <div className="p-4 border-t border-zinc-800 flex justify-end gap-2 bg-zinc-950/60">
+            <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-2 bg-zinc-50 dark:bg-zinc-950/60">
               <button
                 type="button"
                 onClick={() => {

@@ -40,7 +40,7 @@ export const ThemeToggle: React.FC = () => {
 
   if (!mounted) {
     return (
-      <div className="w-9 h-9 rounded-full bg-zinc-800/40 border border-zinc-700/50" />
+      <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/50" />
     );
   }
 
@@ -50,7 +50,7 @@ export const ThemeToggle: React.FC = () => {
       onClick={toggleTheme}
       aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
       title={isDark ? 'Modo claro' : 'Modo oscuro'}
-      className="relative p-2.5 rounded-xl bg-zinc-900/60 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:text-violet-600 dark:hover:text-violet-400 hover:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all duration-200 shadow-sm"
+      className="relative p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 hover:text-violet-600 dark:hover:text-violet-400 hover:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all duration-200 shadow-xs cursor-pointer"
     >
       <motion.div
         initial={false}
