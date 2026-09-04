@@ -136,8 +136,33 @@ export function useNexorSpace() {
       (state.currentUser.email && n.userId === state.currentUser.email)
   );
 
+  // Determinar rol y permisos del usuario en el proyecto activo
+  const currentMember = state.currentProject?.members?.find(
+    (m) =>
+      m.userId === state.currentUser.id ||
+      (m.user?.email && state.currentUser.email && m.user.email.toLowerCase() === state.currentUser.email.toLowerCase())
+  );
+
+  const userRole: MemberRole =
+    currentMember?.role ||
+    (state.currentUser.role === 'ADMIN' || state.currentUser.id === 'usr_admin_1' ? 'ADMIN' : 'MEMBER');
+
+  const isAdmin = userRole === 'ADMIN' || userRole === 'LEADER';
+  const canCreateTask = isAdmin;
+  const canEditTask = isAdmin;
+  const canDeleteTask = isAdmin;
+  const canManageMembers = isAdmin;
+  const isMemberOnly = !isAdmin;
+
   return {
     ...state,
+    userRole,
+    isAdmin,
+    canCreateTask,
+    canEditTask,
+    canDeleteTask,
+    canManageMembers,
+    isMemberOnly,
     notifications: userNotifications,
     projectTasks,
     projectMessages,

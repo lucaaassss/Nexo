@@ -38,7 +38,7 @@ export function Sidebar({
   onOpenNewTask,
   onOpenInviteModal,
 }: SidebarProps) {
-  const { currentProject } = useNexorSpace();
+  const { currentProject, canCreateTask, canManageMembers, userRole } = useNexorSpace();
 
   const navigationItems = [
     { id: 'tasks', label: 'Tablero de Tareas', icon: CheckSquare },
@@ -59,14 +59,24 @@ export function Sidebar({
   return (
     <aside className="w-64 bg-white dark:bg-zinc-950/60 border-r border-zinc-200 dark:border-zinc-800/80 flex flex-col justify-between p-4 shrink-0 hidden md:flex min-h-[calc(100vh-4rem)]">
       <div className="space-y-6">
-        {/* Botón Acción Rápida: Nueva Tarea */}
-        <button
-          onClick={onOpenNewTask}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 transition-all active:scale-95 cursor-pointer"
-        >
-          <Plus className="w-4 h-4 text-white" />
-          <span className="text-white">Crear Nueva Tarea</span>
-        </button>
+        {/* Botón Acción Rápida: Nueva Tarea (Restringido por Rol) */}
+        {canCreateTask ? (
+          <button
+            onClick={onOpenNewTask}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 transition-all active:scale-95 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 text-white" />
+            <span className="text-white">Crear Nueva Tarea</span>
+          </button>
+        ) : (
+          <div
+            title="Solo los Administradores pueden crear nuevas tareas"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500 text-xs font-medium cursor-not-allowed select-none opacity-80"
+          >
+            <Plus className="w-4 h-4 text-zinc-400" />
+            <span>Crear Tarea (Solo Admin)</span>
+          </div>
+        )}
 
         {/* Sección de Vistas de Tareas */}
         {activeTab === 'tasks' && (
@@ -123,13 +133,19 @@ export function Sidebar({
 
       {/* Sección Inferior: Invitar Integrantes */}
       <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800/80 space-y-2">
-        <button
-          onClick={onOpenInviteModal}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white border border-zinc-200 dark:border-zinc-800 text-xs font-medium transition-colors cursor-pointer"
-        >
-          <UserPlus className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-          <span>Invitar al Equipo</span>
-        </button>
+        {canManageMembers ? (
+          <button
+            onClick={onOpenInviteModal}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white border border-zinc-200 dark:border-zinc-800 text-xs font-medium transition-colors cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+            <span>Invitar al Equipo</span>
+          </button>
+        ) : (
+          <div className="px-3 py-1.5 rounded-xl bg-zinc-100/50 dark:bg-zinc-900/30 border border-zinc-200/60 dark:border-zinc-800/40 text-[11px] text-zinc-500 dark:text-zinc-500 text-center font-medium">
+            Rol: <span className="text-violet-600 dark:text-violet-400 font-bold uppercase">{userRole}</span> (Miembro)
+          </div>
+        )}
 
         {currentProject && (
           <div className="px-3 py-2 bg-zinc-100/70 dark:bg-zinc-900/40 rounded-xl border border-zinc-200 dark:border-zinc-800/40 text-[11px] text-zinc-600 dark:text-zinc-500 flex items-center justify-between">

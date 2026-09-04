@@ -26,7 +26,7 @@ const KANBAN_COLUMNS: { id: TaskStatus; title: string }[] = [
  * Tablero estilo Linear con columnas de estado y arrastrar y soltar (Drag & Drop) reactivo.
  */
 export function KanbanView({ tasks, onSelectTask, onOpenNewTask }: KanbanViewProps) {
-  const { moveTaskStatus } = useNexorSpace();
+  const { moveTaskStatus, canCreateTask } = useNexorSpace();
 
   /** Maneja la finalización de un arrastre de tarjeta */
   const handleDragEnd = (result: DropResult) => {
@@ -63,12 +63,15 @@ export function KanbanView({ tasks, onSelectTask, onOpenNewTask }: KanbanViewPro
                     {colTasks.length}
                   </span>
                 </div>
-                <button
-                  onClick={onOpenNewTask}
-                  className="p-1 text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-lg hover:bg-zinc-300/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+                {canCreateTask && (
+                  <button
+                    onClick={onOpenNewTask}
+                    title="Crear nueva tarea en este proyecto"
+                    className="p-1 text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-lg hover:bg-zinc-300/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
               {/* Zona de Droppable para Tarjetas */}

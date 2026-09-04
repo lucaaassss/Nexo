@@ -39,6 +39,8 @@ export function TaskDrawer({ task, onClose }: TaskDrawerProps) {
     addComment,
     uploadFile,
     currentUser,
+    canDeleteTask,
+    canEditTask,
   } = useNexorSpace();
 
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
@@ -130,16 +132,18 @@ export function TaskDrawer({ task, onClose }: TaskDrawerProps) {
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  deleteTask(task.id);
-                  onClose();
-                }}
-                title="Eliminar tarea"
-                className="p-2 text-zinc-400 hover:text-rose-600 dark:text-zinc-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {canDeleteTask && (
+                <button
+                  onClick={() => {
+                    deleteTask(task.id);
+                    onClose();
+                  }}
+                  title="Eliminar tarea"
+                  className="p-2 text-zinc-400 hover:text-rose-600 dark:text-zinc-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
               <button
                 onClick={onClose}
                 className="p-2 text-zinc-400 hover:text-zinc-800 dark:hover:text-white rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
@@ -156,8 +160,11 @@ export function TaskDrawer({ task, onClose }: TaskDrawerProps) {
               <input
                 type="text"
                 value={task.title}
+                readOnly={!canEditTask}
                 onChange={(e) => updateTask(task.id, { title: e.target.value })}
-                className="w-full text-xl font-bold text-zinc-900 dark:text-zinc-100 bg-transparent border-b border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 focus:border-violet-500 focus:outline-none py-1 transition-colors"
+                className={`w-full text-xl font-bold text-zinc-900 dark:text-zinc-100 bg-transparent border-b border-transparent py-1 transition-colors ${
+                  canEditTask ? 'hover:border-zinc-200 dark:hover:border-zinc-800 focus:border-violet-500 focus:outline-none' : 'cursor-default'
+                }`}
               />
             </div>
 
@@ -186,8 +193,9 @@ export function TaskDrawer({ task, onClose }: TaskDrawerProps) {
                 </span>
                 <select
                   value={task.priority}
+                  disabled={!canEditTask}
                   onChange={(e) => updateTask(task.id, { priority: e.target.value as TaskPriority })}
-                  className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-xs text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-violet-500"
+                  className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-xs text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-violet-500 disabled:opacity-70"
                 >
                   <option value="BAJA">Baja</option>
                   <option value="MEDIA">Media</option>

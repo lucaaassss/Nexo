@@ -53,6 +53,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Proyecto no encontrado' }, { status: 404 });
     }
 
+    // 🔒 Validación de Permisos (RBAC Backend)
+    const userRoleHeader = req.headers.get('x-user-role') || body.userRole;
+    if (userRoleHeader === 'MEMBER' || userRoleHeader === 'GUEST') {
+      return NextResponse.json(
+        { error: 'No tenés permisos para crear tareas en este proyecto (Se requiere rol de Administrador).' },
+        { status: 403 }
+      );
+    }
+
+    if (creatorId) {
+      try {
+        const member = await db.projectMember.findFirst({
+          where: { projectId, userId: creatorId },
+        });
+        if (member && (member.role === 'MEMBER' || member.role === 'GUEST')) {
+          return NextResponse.json(
+            { error: 'No tenés permisos para crear tareas en este proyecto (Se requiere rol de Administrador).' },
+            { status: 403 }
+          );
+        }
+      } catch (_) {}
+    }
+
     // Asegurar que el creador exista en la base de datos
     let validCreatorId = creatorId;
     if (validCreatorId) {
@@ -120,6 +143,17 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: 'El ID de la tarea es obligatorio' }, { status: 400 });
     }
 
+    // 🔒 Validación de Permisos (RBAC Backend)
+    const userRoleHeader = req.headers.get('x-user-role') || body.userRole;
+    const isMember = userRoleHeader === 'MEMBER' || userRoleHeader === 'GUEST';
+
+    if (isMember && (title || priority || estimatedHours)) {
+      return NextResponse.json(
+        { error: 'No tenés permisos de administrador para modificar la configuración de esta tarea.' },
+        { status: 403 }
+      );
+    }
+
     const updatedTask = await db.task.update({
       where: { id },
       data: {
@@ -159,6 +193,15 @@ export async function DELETE(req: Request) {
 
     if (!id) {
       return NextResponse.json({ error: 'El parámetro id es requerido' }, { status: 400 });
+    }
+
+    // 🔒 Validación de Permisos (RBAC Backend)
+    const userRoleHeader = req.headers.get('x-user-role');
+    if (userRoleHeader === 'MEMBER' || userRoleHeader === 'GUEST') {
+      return NextResponse.json(
+        { error: 'No tenés permisos para eliminar tareas en este proyecto (Se requiere rol de Administrador).' },
+        { status: 403 }
+      );
     }
 
     await db.task.delete({
