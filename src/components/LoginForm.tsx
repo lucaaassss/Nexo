@@ -198,12 +198,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         <span>{isGoogleLoading ? 'Conectando con Google...' : 'Continuar con Google'}</span>
       </button>
 
-      {/* Divisor Visual */}
-      <div className="relative flex items-center justify-center my-3">
-        <div className="border-t border-zinc-800/80 w-full" />
-        <span className="bg-zinc-950 px-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider shrink-0">
+      {/* Divisor Visual: Línea - Texto - Línea */}
+      <div className="flex items-center gap-3 my-4">
+        <div className="flex-1 h-px bg-zinc-800/90" />
+        <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider shrink-0 select-none">
           o continuar con email
         </span>
+        <div className="flex-1 h-px bg-zinc-800/90" />
       </div>
 
       {/* Global Authentication Error Banner */}
