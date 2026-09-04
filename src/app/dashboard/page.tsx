@@ -44,6 +44,8 @@ export default function DashboardPage() {
     createProject,
     updateProject,
     deleteProject,
+    canCreateTask,
+    canManageMembers,
   } = useNexorSpace();
 
   const [activeTab, setActiveTab] = useState<string>('tasks');
@@ -124,20 +126,24 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  onClick={() => setIsInviteModalOpen(true)}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition-colors shadow-sm cursor-pointer"
-                >
-                  <UserPlus className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
-                  <span>Invitar</span>
-                </button>
-                <button
-                  onClick={() => handleOpenNewTask()}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 transition-all active:scale-95 cursor-pointer"
-                >
-                  <Plus className="w-4 h-4 text-white" />
-                  <span className="text-white">Nueva Tarea</span>
-                </button>
+                {canManageMembers && (
+                  <button
+                    onClick={() => setIsInviteModalOpen(true)}
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition-colors shadow-sm cursor-pointer"
+                  >
+                    <UserPlus className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+                    <span>Invitar</span>
+                  </button>
+                )}
+                {canCreateTask && (
+                  <button
+                    onClick={() => handleOpenNewTask()}
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 text-white" />
+                    <span className="text-white">Nueva Tarea</span>
+                  </button>
+                )}
               </div>
             </div>
           ) : (
@@ -219,27 +225,27 @@ export default function DashboardPage() {
                 <KanbanView tasks={projectTasks} onSelectTask={(task) => setSelectedTask(task)} onOpenNewTask={() => handleOpenNewTask()} />
               )}
               {taskViewMode === 'list' && (
-                <ListView tasks={projectTasks} onSelectTask={(task) => setSelectedTask(task)} onOpenNewTask={() => handleOpenNewTask()} />
+                <ListView tasks={projectTasks} onSelectTask={(task) => setSelectedTask(task)} onOpenNewTask={canCreateTask ? () => handleOpenNewTask() : undefined} />
               )}
               {taskViewMode === 'calendar' && (
                 <CalendarView
                   tasks={projectTasks}
                   onSelectTask={(task) => setSelectedTask(task)}
-                  onOpenNewTask={(dateStr) => handleOpenNewTask(dateStr)}
+                  onOpenNewTask={canCreateTask ? (dateStr) => handleOpenNewTask(dateStr) : undefined}
                 />
               )}
               {taskViewMode === 'timeline' && (
                 <TimelineView
                   tasks={projectTasks}
                   onSelectTask={(task) => setSelectedTask(task)}
-                  onOpenNewTask={() => handleOpenNewTask()}
+                  onOpenNewTask={canCreateTask ? () => handleOpenNewTask() : undefined}
                 />
               )}
               {taskViewMode === 'table' && (
                 <TableView
                   tasks={projectTasks}
                   onSelectTask={(task) => setSelectedTask(task)}
-                  onOpenNewTask={() => handleOpenNewTask()}
+                  onOpenNewTask={canCreateTask ? () => handleOpenNewTask() : undefined}
                 />
               )}
             </div>

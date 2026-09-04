@@ -8,7 +8,7 @@ import { getPriorityDetails, getStatusDetails, formatDate, getInitials } from '@
 interface ListViewProps {
   tasks: Task[];
   onSelectTask: (task: Task) => void;
-  onOpenNewTask: () => void;
+  onOpenNewTask?: () => void;
 }
 
 const STATUS_GROUPS: { id: TaskStatus; title: string }[] = [
@@ -62,15 +62,17 @@ export function ListView({ tasks, onSelectTask, onOpenNewTask }: ListViewProps) 
                   {groupTasks.length}
                 </span>
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenNewTask();
-                }}
-                className="p-1 text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+              {onOpenNewTask && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenNewTask();
+                  }}
+                  className="p-1 text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {/* Lista de Tareas del Grupo */}

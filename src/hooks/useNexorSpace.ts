@@ -103,13 +103,15 @@ export function useNexorSpace() {
       });
     });
 
-    // Polling en tiempo real para recibir notificaciones nuevas automáticamente
+    // Polling en tiempo real para recibir notificaciones y tareas nuevas automáticamente
     const intervalId = setInterval(() => {
       store.fetchNotificationsFromDB();
+      if (store.currentProject?.id) store.fetchTasksForProject(store.currentProject.id);
     }, 5000);
 
     const onFocus = () => {
       store.fetchNotificationsFromDB();
+      if (store.currentProject?.id) store.fetchTasksForProject(store.currentProject.id);
     };
     window.addEventListener('focus', onFocus);
 

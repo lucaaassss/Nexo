@@ -219,6 +219,10 @@ export class NexorSpaceStore {
             if (updatedCurrent) this.currentProject = updatedCurrent;
           }
 
+          if (this.currentProject?.id) {
+            await this.fetchTasksForProject(this.currentProject.id);
+          }
+
           this.persistState();
           this.notify();
           return;

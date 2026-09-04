@@ -59,8 +59,8 @@ export function Sidebar({
   return (
     <aside className="w-64 bg-white dark:bg-zinc-950/60 border-r border-zinc-200 dark:border-zinc-800/80 flex flex-col justify-between p-4 shrink-0 hidden md:flex min-h-[calc(100vh-4rem)]">
       <div className="space-y-6">
-        {/* Botón Acción Rápida: Nueva Tarea (Restringido por Rol) */}
-        {canCreateTask ? (
+        {/* Botón Acción Rápida: Nueva Tarea (Solo Admin) */}
+        {canCreateTask && (
           <button
             onClick={onOpenNewTask}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 transition-all active:scale-95 cursor-pointer"
@@ -68,14 +68,6 @@ export function Sidebar({
             <Plus className="w-4 h-4 text-white" />
             <span className="text-white">Crear Nueva Tarea</span>
           </button>
-        ) : (
-          <div
-            title="Solo los Administradores pueden crear nuevas tareas"
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500 text-xs font-medium cursor-not-allowed select-none opacity-80"
-          >
-            <Plus className="w-4 h-4 text-zinc-400" />
-            <span>Crear Tarea (Solo Admin)</span>
-          </div>
         )}
 
         {/* Sección de Vistas de Tareas */}
