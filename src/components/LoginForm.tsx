@@ -1,57 +1,118 @@
-'use client';
+'use client'; // Directiva de Next.js: indica que este componente se ejecuta en el navegador (lado del cliente) para permitir interactividad y estados de React.
 
+// Importación de React y hooks para manejo de estado
 import React, { useState } from 'react';
+// Hook de Next.js para navegación y redirecciones programáticas entre rutas
 import { useRouter } from 'next/navigation';
+// Componentes de Framer Motion para animaciones fluidas y animaciones de entrada/salida (montaje/desmontaje)
 import { motion, AnimatePresence } from 'framer-motion';
+// Íconos visuales de la librería Lucide React
 import { Eye, EyeOff, Lock, Mail, AlertCircle, ArrowRight, Loader2, CheckCircle2, X } from 'lucide-react';
+// Funciones de autenticación y cliente de Supabase importados de la configuración del proyecto
 import { signInUser, signInWithGoogle, isSupabaseConfigured, supabase } from '@/lib/supabase';
+// Store global de la aplicación (para almacenar datos de sesión y tareas en memoria/localStorage)
+import { store } from '@/lib/store';
 
+// Definición de las propiedades (props) que recibe este componente
 interface LoginFormProps {
+  // Función opcional para alternar a la vista de registro si estamos en una misma pantalla dividida
   onSwitchToRegister?: () => void;
 }
 
+// Componente principal de Login (Inicio de sesión)
 export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
+  // Instancia del router para redireccionar al usuario a otras páginas (ej: /dashboard)
   const router = useRouter();
 
-  // Form State
+  // ==========================================
+  // ESTADOS DEL FORMULARIO PRINCIPAL
+  // ==========================================
+  // Guarda el texto ingresado en el campo de correo electrónico
   const [email, setEmail] = useState<string>('');
+  // Guarda el texto ingresado en el campo de contraseña
   const [password, setPassword] = useState<string>('');
+  // Booleano para alternar entre ver la contraseña en texto plano o en asteriscos
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  // Booleano para la casilla de verificación "Recordarme"
   const [rememberMe, setRememberMe] = useState<boolean>(false);
 
-  // Validation & Submission States
+  // ==========================================
+  // ESTADOS DE VALIDACIÓN Y CONTROL DE CARGA
+  // ==========================================
+  // Guarda los mensajes de error individuales de cada campo ({ email: "...", password: "..." })
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  // Guarda mensajes de error globales provenientes del servidor o de la autenticación
   const [authError, setAuthError] = useState<string | null>(null);
+  // Indica si la petición de inicio de sesión con email/password está en curso (muestra spinner)
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  // Indica si la autenticación con Google está en curso
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
+  // Indica si el inicio de sesión fue exitoso para mostrar animación de confirmación antes de redirigir
   const [loginSuccess, setLoginSuccess] = useState<boolean>(false);
 
-  // Forgot Password Modal State
+  // ==========================================
+  // ESTADOS DEL MODAL "RECUPERAR CONTRASEÑA"
+  // ==========================================
+  // Controla la visibilidad del modal de recuperación de contraseña
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState<boolean>(false);
+  // Almacena el correo ingresado en el modal de recuperación
   const [resetEmail, setResetEmail] = useState<string>('');
+  // Indica si el envío del correo de recuperación está cargando
   const [resetLoading, setResetLoading] = useState<boolean>(false);
+  // Mensaje de éxito tras enviar el correo de recuperación
   const [resetSuccess, setResetSuccess] = useState<string | null>(null);
+  // Mensaje de error si falla el envío de recuperación
   const [resetError, setResetError] = useState<string | null>(null);
 
-  // Email format regex
+  // ==========================================
+  // VALIDACIONES
+  // ==========================================
+  // Función auxiliar con Expresión Regular para comprobar que el email tenga formato correcto (usuario@dominio.ext)
   const validateEmail = (emailStr: string): boolean => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(emailStr.trim());
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setResetError(null);
-    setResetSuccess(null);
+  // Valida los campos del formulario antes de enviarlo
+  const handleValidation = (): boolean => {
+    const newErrors: { email?: string; password?: string } = {};
 
+    // Comprobación de email vacío o con formato inválido
+    if (!email.trim()) {
+      newErrors.email = 'El correo electrónico es obligatorio.';
+    } else if (!validateEmail(email)) {
+      newErrors.email = 'Ingresá un correo electrónico válido.';
+    }
+
+    // Comprobación de contraseña obligatoria
+    if (!password) {
+      newErrors.password = 'La contraseña es obligatoria.';
+    }
+
+    // Actualizamos el estado de errores
+    setErrors(newErrors);
+    // Retorna true si no hay ningún error (objeto vacío)
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // ==========================================
+  // MANEJADOR: RECUPERACIÓN DE CONTRASEÑA
+  // ==========================================
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault(); // Evita que la página se recargue por el submit del formulario
+    setResetError(null); // Limpia errores previos
+    setResetSuccess(null); // Limpia mensajes de éxito previos
+
+    // Validar que el correo no esté vacío y tenga formato correcto
     if (!resetEmail.trim() || !validateEmail(resetEmail)) {
       setResetError('Por favor ingresá un correo electrónico válido.');
       return;
     }
 
-    setResetLoading(true);
+    setResetLoading(true); // Activa el spinner de carga en el botón del modal
     try {
       if (isSupabaseConfigured) {
+        // Si Supabase está conectado, envía el mail de reseteo oficial con enlace de retorno a /login
         const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
           redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined,
         });
@@ -61,29 +122,34 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           setResetSuccess('¡Enlace de recuperación enviado! Revisá tu casilla de correo.');
         }
       } else {
+        // Modo fallback local / simulación si no se configuró Supabase en el .env
         await new Promise((r) => setTimeout(r, 800));
         setResetSuccess('¡Enlace de recuperación enviado! Revisá tu casilla de correo.');
       }
     } catch (err: any) {
       setResetError('Ocurrió un error al procesar la solicitud.');
     } finally {
-      setResetLoading(false);
+      setResetLoading(false); // Apaga el estado de carga
     }
   };
 
+  // ==========================================
+  // MANEJADOR: INICIAR SESIÓN CON GOOGLE
+  // ==========================================
   const handleGoogleAuth = async () => {
-    setAuthError(null);
-    setIsGoogleLoading(true);
+    setAuthError(null); // Limpia errores anteriores
+    setIsGoogleLoading(true); // Activa el spinner en el botón de Google
 
     try {
       if (isSupabaseConfigured) {
+        // Dispara la redirección OAuth con Google provista por Supabase
         const { error } = await signInWithGoogle();
         if (error) {
           setAuthError(error.message || 'Error al conectar con Google.');
           setIsGoogleLoading(false);
         }
       } else {
-        // Si Supabase no tiene llaves en .env, avisar para que use el formulario o configure .env
+        // Si no están configuradas las variables de entorno de Supabase, avisa al usuario
         setAuthError('Para autenticarte con Google y elegir cuenta real, configurá NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en tu .env. Podés iniciar sesión con email y contraseña en el formulario abajo.');
         setIsGoogleLoading(false);
       }
@@ -93,70 +159,106 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     }
   };
 
-  const handleValidation = (): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
-
-    if (!email.trim()) {
-      newErrors.email = 'El correo electrónico es obligatorio.';
-    } else if (!validateEmail(email)) {
-      newErrors.email = 'Ingresá un correo electrónico válido.';
-    }
-
-    if (!password) {
-      newErrors.password = 'La contraseña es obligatoria.';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
+  // ==========================================
+  // MANEJADOR: SUBMIT DEL FORMULARIO DE LOGIN
+  // ==========================================
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError(null);
+    e.preventDefault(); // Evita recargar la página
+    setAuthError(null); // Resetea cualquier error previo
 
+    // Si la validación de campos falla, cancela el envío
     if (!handleValidation()) {
       return;
     }
 
-    setIsLoading(true);
+    setIsLoading(true); // Activa el estado de carga del botón principal
 
     try {
+      let loggedUser: any = null;
+
+      // PASO 1: Si Supabase está disponible, validamos credenciales en Supabase Auth
       if (isSupabaseConfigured) {
-        // Intento de autenticación real con Supabase
-        const { error } = await signInUser({
+        const { data, error } = await signInUser({
           email: email.trim(),
           password: password,
         });
 
+        // Si Supabase rechaza las credenciales, muestra error y detiene el flujo
         if (error) {
           setAuthError('El correo o la contraseña son incorrectos.');
           setIsLoading(false);
           return;
         }
 
-        setLoginSuccess(true);
-        setTimeout(() => router.push('/dashboard'), 600);
-      } else {
-        // Modo interactivo local/demo
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        if (email.includes('@') && password.length >= 4) {
-          setLoginSuccess(true);
-          setTimeout(() => router.push('/dashboard'), 600);
-        } else {
-          setAuthError('El correo o la contraseña son incorrectos.');
+        // Si fue exitoso, formateamos los datos del usuario obtenido
+        if (data?.user) {
+          loggedUser = {
+            id: data.user.id,
+            email: data.user.email || email.trim(),
+            name: data.user.user_metadata?.nombre || email.split('@')[0],
+            role: 'MEMBER',
+          };
         }
+      }
+
+      // PASO 2: Validar o sincronizar el usuario con el backend local (SQLite / API)
+      const loginRes = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password,
+        }),
+      });
+
+      const loginData = await loginRes.json();
+      // Si la API local falla y no estamos usando Supabase, mostramos error
+      if (!loginRes.ok && !isSupabaseConfigured) {
+        setAuthError(loginData.error || 'El correo o la contraseña son incorrectos.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Consolidamos la información del usuario activo (de la API local, de Supabase o un fallback seguro)
+      const activeUser = loginData.user || loggedUser || {
+        id: 'usr_' + Date.now(),
+        email: email.trim(),
+        name: email.split('@')[0],
+        role: email.includes('admin') ? 'ADMIN' : 'MEMBER',
+        createdAt: new Date().toISOString(),
+      };
+
+      // PASO 3: Guardamos el usuario en el store global y sincronizamos datos de la base de datos
+      store.setCurrentUser(activeUser);
+      await store.syncWithDatabase();
+
+      // PASO 4: Comprobamos si el usuario ingresó a través de un link de invitación a un espacio de trabajo
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const pendingInviteToken =
+        urlParams?.get('inviteToken') || (typeof window !== 'undefined' ? localStorage.getItem('pending_invite_token') : null);
+
+      // Activamos el cartel verde de éxito
+      setLoginSuccess(true);
+
+      // PASO 5: Redirección según corresponda (a la invitación pendiente o al dashboard)
+      if (pendingInviteToken) {
+        setTimeout(() => router.push(`/invite/${encodeURIComponent(pendingInviteToken)}`), 500);
+      } else {
+        setTimeout(() => router.push('/dashboard'), 600);
       }
     } catch (err: any) {
       setAuthError('Ocurrió un error inesperado al conectar con el servidor.');
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Desactiva el indicador de carga
     }
   };
 
+  // ==========================================
+  // RENDERIZADO DEL COMPONENTE (INTERFAZ JSX)
+  // ==========================================
   return (
     <div className="w-full max-w-md mx-auto space-y-6">
-      {/* Header Form Titles */}
+      {/* Encabezado: Título y subtítulo de bienvenida */}
       <div className="space-y-1.5 text-left">
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
           Bienvenido a Nexor-Space
@@ -166,13 +268,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         </p>
       </div>
 
-      {/* Botón de Iniciar Sesión con Google */}
+      {/* Botón de Autenticación Rápida con Google */}
       <button
         type="button"
         onClick={handleGoogleAuth}
         disabled={isLoading || isGoogleLoading || loginSuccess}
         className="w-full py-3 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 hover:bg-zinc-50 dark:hover:bg-zinc-850 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs sm:text-sm font-semibold shadow-xs flex items-center justify-center gap-3 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 group backdrop-blur-sm"
       >
+        {/* Spinner animado si está conectando con Google, de lo contrario muestra el logo SVG de Google */}
         {isGoogleLoading ? (
           <Loader2 className="w-4 h-4 animate-spin text-violet-600 dark:text-violet-400" />
         ) : (
@@ -198,7 +301,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         <span>{isGoogleLoading ? 'Conectando con Google...' : 'Continuar con Google'}</span>
       </button>
 
-      {/* Divisor Visual: Línea - Texto - Línea */}
+      {/* Separador Visual: Línea horizontal + texto "o continuar con email" */}
       <div className="flex items-center gap-3 my-4">
         <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
         <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider shrink-0 select-none">
@@ -207,7 +310,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
       </div>
 
-      {/* Global Authentication Error Banner */}
+      {/* Banner animado para Errores de Autenticación */}
       <AnimatePresence>
         {authError && (
           <motion.div
@@ -224,7 +327,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         )}
       </AnimatePresence>
 
-      {/* Success Banner */}
+      {/* Banner animado de Éxito de Inicio de Sesión */}
       <AnimatePresence>
         {loginSuccess && (
           <motion.div
@@ -238,9 +341,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         )}
       </AnimatePresence>
 
-      {/* Main Login Form */}
+      {/* Formulario Tradicional de Email y Contraseña */}
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        {/* Email Input */}
+        {/* Campo de Correo Electrónico */}
         <div className="space-y-1.5 text-left">
           <label
             htmlFor="email-input"
@@ -249,15 +352,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             Correo electrónico <span className="text-violet-600 dark:text-violet-400">*</span>
           </label>
           <div className="relative group">
+            {/* Ícono de sobre a la izquierda */}
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400 transition-colors">
               <Mail className="w-4 h-4" />
             </div>
+            {/* Input de texto para email */}
             <input
               id="email-input"
               type="email"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
+                // Si el usuario empieza a escribir, quitamos el error que existía previamente
                 if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
                 if (authError) setAuthError(null);
               }}
@@ -270,6 +376,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               }`}
             />
           </div>
+          {/* Mensaje de validación debajo del input de email */}
           {errors.email && (
             <motion.p
               initial={{ opacity: 0, y: -4 }}
@@ -281,7 +388,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           )}
         </div>
 
-        {/* Password Input */}
+        {/* Campo de Contraseña */}
         <div className="space-y-1.5 text-left">
           <div className="flex items-center justify-between">
             <label
@@ -290,10 +397,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             >
               Contraseña <span className="text-violet-600 dark:text-violet-400">*</span>
             </label>
+            {/* Enlace / Botón para abrir el modal de contraseña olvidada */}
             <button
               type="button"
               onClick={() => {
-                setResetEmail(email.trim());
+                setResetEmail(email.trim()); // Precarga el correo si ya lo escribió
                 setResetError(null);
                 setResetSuccess(null);
                 setIsForgotPasswordOpen(true);
@@ -304,15 +412,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             </button>
           </div>
           <div className="relative group">
+            {/* Ícono de candado a la izquierda */}
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400 transition-colors">
               <Lock className="w-4 h-4" />
             </div>
+            {/* Input de contraseña (alterna entre 'password' y 'text') */}
             <input
               id="password-input"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
+                // Si el usuario escribe, limpiamos errores de contraseña
                 if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
                 if (authError) setAuthError(null);
               }}
@@ -324,6 +435,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                   : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 focus:border-violet-500'
               }`}
             />
+            {/* Botón de ojito a la derecha para ver/ocultar los caracteres de la contraseña */}
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
@@ -335,6 +447,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
+          {/* Mensaje de validación debajo del input de contraseña */}
           {errors.password && (
             <motion.p
               initial={{ opacity: 0, y: -4 }}
@@ -346,7 +459,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           )}
         </div>
 
-        {/* Recordarme Checkbox */}
+        {/* Checkbox "Recordarme en este dispositivo" */}
         <div className="flex items-center space-x-2.5 pt-0.5 text-left">
           <input
             id="remember-me"
@@ -363,13 +476,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           </label>
         </div>
 
-        {/* Submit Button */}
+        {/* Botón Principal de Envío (Submit) */}
         <div className="pt-2">
           <button
             type="submit"
             disabled={isLoading || loginSuccess}
             className="relative w-full py-3.5 px-6 rounded-xl font-semibold text-sm text-white shadow-xl shadow-violet-600/30 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-500 hover:via-indigo-500 hover:to-purple-500 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-violet-500/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 group cursor-pointer"
           >
+            {/* Si está cargando muestra spinner, si tuvo éxito muestra tilde verde, de lo contrario texto normal */}
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-white" />
@@ -389,7 +503,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           </button>
         </div>
 
-        {/* Switch to Register link */}
+        {/* Enlace para cambiar a la pantalla o tab de Registro */}
         {onSwitchToRegister && (
           <div className="text-center pt-3">
             <p className="text-xs text-zinc-600 dark:text-zinc-400">
@@ -406,10 +520,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         )}
       </form>
 
-      {/* Modal de Recuperación de Contraseña */}
+      {/* ==========================================
+          MODAL DE RECUPERACIÓN DE CONTRASEÑA
+          ========================================== */}
       {isForgotPasswordOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          {/* Tarjeta interna del modal */}
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4 relative">
+            {/* Cabecera del modal con botón de cierre (X) */}
             <div className="flex items-center justify-between">
               <div className="space-y-1 text-left">
                 <h3 className="text-base font-bold text-zinc-900 dark:text-white">
@@ -428,6 +546,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               </button>
             </div>
 
+            {/* Cartel de confirmación si el email de recuperación se envió correctamente */}
             {resetSuccess && (
               <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -435,6 +554,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               </div>
             )}
 
+            {/* Cartel de error si falló el envío */}
             {resetError && (
               <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
@@ -442,6 +562,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               </div>
             )}
 
+            {/* Formulario de ingreso de email para recuperación (se oculta tras el envío exitoso) */}
             {!resetSuccess && (
               <form onSubmit={handleResetPassword} className="space-y-3 pt-1 text-left">
                 <div className="space-y-1.5">
@@ -458,6 +579,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                   />
                 </div>
 
+                {/* Botones de acción del modal: Cancelar y Enviar Enlace */}
                 <div className="flex items-center justify-end gap-2 pt-2">
                   <button
                     type="button"
@@ -478,6 +600,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               </form>
             )}
 
+            {/* Botón "Entendido" para cerrar el modal cuando ya se envió con éxito */}
             {resetSuccess && (
               <div className="pt-2 text-right">
                 <button

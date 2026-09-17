@@ -6,6 +6,11 @@ import { PrismaClient } from '@prisma/client';
  * el límite de conexiones en entornos de desarrollo y Serverless en Vercel.
  */
 
+// Asegurar que DATABASE_URL esté definida para SQLite en dev y serverless
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = 'file:./dev.db';
+}
+
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 export const db =
@@ -15,3 +20,4 @@ export const db =
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
+

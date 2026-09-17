@@ -15,8 +15,7 @@ interface RouteContext {
 
 /**
  * GET /api/invite/[token]
- * Valida un token de invitación y retorna los detalles del proyecto y rol.
- * Cuenta con fallback resistente a fallos de base de datos o enlaces directos por ID.
+ * Valida un token de invitación y retorna los detalles del proyecto y rol asignado.
  */
 export async function GET(req: Request, context: RouteContext) {
   try {
@@ -29,38 +28,34 @@ export async function GET(req: Request, context: RouteContext) {
       );
     }
 
-    let invitation: any = null;
-
-    // 1. Buscar en la base de datos si está disponible
-    try {
-      invitation = await db.invitation.findUnique({
-        where: { token },
-        include: {
-          project: {
-            select: {
-              id: true,
-              name: true,
-              key: true,
-              description: true,
-              color: true,
-              icon: true,
-            },
+    // 1. Buscar la invitación por token en Prisma
+    const invitation = await db.invitation.findUnique({
+      where: { token },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            key: true,
+            description: true,
+            color: true,
+            icon: true,
           },
         },
-      });
-    } catch (dbErr) {
-      console.warn('⚠️ Base de datos no disponible para verificar invitación:', dbErr);
-    }
+      },
+    });
 
     if (invitation) {
       if (invitation.isAccepted) {
         return NextResponse.json(
           {
             valid: false,
+            isAccepted: true,
             error: 'Esta invitación ya fue utilizada anteriormente.',
             invitation: {
               email: invitation.email,
               role: invitation.role,
+              roleLabel: ROLE_LABELS[invitation.role] || invitation.role,
               isAccepted: true,
               project: invitation.project,
             },
@@ -74,10 +69,12 @@ export async function GET(req: Request, context: RouteContext) {
         return NextResponse.json(
           {
             valid: false,
+            isExpired: true,
             error: 'La invitación ha expirado. Solicitá al equipo que te envíe un nuevo enlace.',
             invitation: {
               email: invitation.email,
               role: invitation.role,
+              roleLabel: ROLE_LABELS[invitation.role] || invitation.role,
               expiresAt: invitation.expiresAt,
               project: invitation.project,
             },
@@ -102,65 +99,37 @@ export async function GET(req: Request, context: RouteContext) {
       });
     }
 
-    // 2. Fallback de alta disponibilidad (ID de proyecto directo o DB sin sincronizar)
-    let matchedProject: any = null;
-    try {
-      matchedProject = await db.project.findUnique({
-        where: { id: token },
-        select: { id: true, name: true, key: true, description: true, color: true, icon: true },
+    // 2. Si no es un token de invitación, verificar si es un enlace directo por ID de proyecto
+    const matchedProject = await db.project.findUnique({
+      where: { id: token },
+      select: { id: true, name: true, key: true, description: true, color: true, icon: true },
+    });
+
+    if (matchedProject) {
+      return NextResponse.json({
+        valid: true,
+        invitation: {
+          id: `direct-${token}`,
+          token: token,
+          email: '',
+          role: 'MEMBER',
+          roleLabel: 'Miembro',
+          inviterName: 'Equipo de Nexor-Space',
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          createdAt: new Date().toISOString(),
+          project: matchedProject,
+        },
       });
-    } catch (_) {}
-
-    // Buscar en Supabase si está disponible
-    if (isSupabaseConfigured && !matchedProject) {
-      try {
-        const { data: supaProj } = await supabase
-          .from('proyectos')
-          .select('*')
-          .eq('id', token)
-          .maybeSingle();
-
-        if (supaProj) {
-          const rawKey = supaProj.nombre
-            ? supaProj.nombre.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || 'PRJ'
-            : 'PRJ';
-          matchedProject = {
-            id: String(supaProj.id),
-            name: supaProj.nombre,
-            key: rawKey,
-            description: supaProj.descripcion || '',
-            color: supaProj.color || '#7C3AED',
-            icon: 'FolderKanban',
-          };
-        }
-      } catch (err) {
-        console.warn('Error buscando proyecto en Supabase para invitación:', err);
-      }
     }
 
-    const fallbackProject = matchedProject || {
-      id: token.startsWith('proj-') ? token : 'proj-1',
-      name: 'Nexor-Space - Plataforma Colaborativa',
-      key: 'NEXO',
-      description: 'Espacio de trabajo compartido y gestión de proyectos.',
-      color: '#7c3aed',
-      icon: 'Layers',
-    };
-
-    return NextResponse.json({
-      valid: true,
-      invitation: {
-        id: `inv-${token}`,
-        token: token,
-        email: '',
-        role: 'MEMBER',
-        roleLabel: 'Miembro',
-        inviterName: 'Equipo de Nexor-Space',
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString(),
-        project: fallbackProject,
+    // 3. Token no encontrado y no es ID de proyecto válido
+    return NextResponse.json(
+      {
+        valid: false,
+        error: 'El enlace de invitación no es válido o ha sido cancelado.',
       },
-    });
+      { status: 404 }
+    );
 
   } catch (error: any) {
     console.error('Error validando token de invitación:', error);
@@ -173,7 +142,7 @@ export async function GET(req: Request, context: RouteContext) {
 
 /**
  * POST /api/invite/[token]
- * Acepta la invitación por token y vincula al usuario al proyecto con su rol correspondiente.
+ * Acepta la invitación y vincula al usuario al proyecto con el rol EXACTO asignado por el admin.
  */
 export async function POST(req: Request, context: RouteContext) {
   try {
@@ -185,75 +154,126 @@ export async function POST(req: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Token no especificado' }, { status: 400 });
     }
 
-    let invitation: any = null;
-    try {
-      invitation = await db.invitation.findUnique({
-        where: { token },
-        include: { project: true },
-      });
-    } catch (_) {}
+    // 1. Buscar invitación
+    let invitation = await db.invitation.findUnique({
+      where: { token },
+      include: { project: true },
+    });
 
-    // Si no está en Prisma, verificar en Supabase
-    let supaProjectName = '';
-    if (isSupabaseConfigured && !invitation) {
-      try {
-        const { data: sp } = await supabase.from('proyectos').select('*').eq('id', token).maybeSingle();
-        if (sp) supaProjectName = sp.nombre;
-      } catch (_) {}
+    let projectId = '';
+    let role = 'MEMBER';
+    let projectName = 'Proyecto Nexor-Space';
+
+    if (invitation) {
+      if (invitation.isAccepted) {
+        return NextResponse.json(
+          { error: 'Esta invitación ya fue utilizada anteriormente.' },
+          { status: 410 }
+        );
+      }
+
+      if (new Date(invitation.expiresAt) < new Date()) {
+        return NextResponse.json(
+          { error: 'La invitación ha expirado. Solicitá un nuevo enlace.' },
+          { status: 410 }
+        );
+      }
+
+      projectId = invitation.projectId;
+      role = invitation.role;
+      projectName = invitation.project?.name || projectName;
+    } else {
+      // Verificar si es un enlace directo por ID de proyecto
+      const directProject = await db.project.findUnique({ where: { id: token } });
+      if (!directProject) {
+        return NextResponse.json(
+          { error: 'Invitación o proyecto no encontrado.' },
+          { status: 404 }
+        );
+      }
+      projectId = directProject.id;
+      role = 'MEMBER';
+      projectName = directProject.name;
     }
 
-    const targetEmail = (email || invitation?.email || 'colaborador@nexo.app').toLowerCase().trim();
-    const projectId = invitation?.projectId || token;
-    const role = invitation?.role || 'MEMBER';
-    const projectName = invitation?.project?.name || supaProjectName || 'Proyecto Nexor-Space';
+    const targetEmail = (email || invitation?.email || '').toLowerCase().trim();
+    if (!targetEmail) {
+      return NextResponse.json(
+        { error: 'Debe especificar el correo del usuario que acepta la invitación.' },
+        { status: 400 }
+      );
+    }
 
-    // 1. Intentar persistir en Prisma si está disponible
-    try {
-      let targetUser: any = null;
-      if (userId) {
-        targetUser = await db.user.findUnique({ where: { id: userId } });
-      }
-      if (!targetUser && targetEmail) {
-        targetUser = await db.user.findUnique({ where: { email: targetEmail } });
-      }
-      if (!targetUser) {
-        targetUser = await db.user.create({
-          data: {
-            id: userId || undefined,
-            email: targetEmail,
-            name: userName || targetEmail.split('@')[0],
-            password: '',
-            role: role,
-          },
-        });
-      }
+    // 2. Buscar o crear el usuario en Prisma
+    let targetUser = userId ? await db.user.findUnique({ where: { id: userId } }) : null;
+    if (!targetUser) {
+      targetUser = await db.user.findUnique({ where: { email: targetEmail } });
+    }
 
-      await db.projectMember.upsert({
-        where: {
-          projectId_userId: {
-            projectId: projectId,
-            userId: targetUser.id,
-          },
-        },
-        update: { role: role },
-        create: {
-          projectId: projectId,
-          userId: targetUser.id,
+    if (!targetUser) {
+      targetUser = await db.user.create({
+        data: {
+          id: userId || undefined,
+          email: targetEmail,
+          name: userName || targetEmail.split('@')[0],
+          password: 'auth_session_user',
           role: role,
         },
       });
-
-      if (invitation) {
-        await db.invitation.update({
-          where: { token },
-          data: { isAccepted: true },
-        });
-      }
-    } catch (dbErr) {
-      console.warn('⚠️ Base de datos no disponible durante aceptación:', dbErr);
     }
 
-    // 2. Vincular en Supabase si está activo
+    // 3. Vincular al usuario como miembro del proyecto con el rol asignado
+    await db.projectMember.upsert({
+      where: {
+        projectId_userId: {
+          projectId: projectId,
+          userId: targetUser.id,
+        },
+      },
+      update: { role: role },
+      create: {
+        projectId: projectId,
+        userId: targetUser.id,
+        role: role,
+      },
+    });
+
+    // 4. Marcar invitación como aceptada (un solo uso)
+    if (invitation) {
+      await db.invitation.update({
+        where: { token },
+        data: { isAccepted: true },
+      });
+    }
+
+    // 5. Crear notificación y log de actividad
+    try {
+      const roleLabel = ROLE_LABELS[role] || role;
+      await db.notification.create({
+        data: {
+          userId: targetUser.id,
+          title: '¡Bienvenido al proyecto!',
+          message: `Te uniste al proyecto "${projectName}" como ${roleLabel}.`,
+          type: 'INVITE',
+          linkUrl: '/dashboard',
+        },
+      });
+
+      await db.activityLog.create({
+        data: {
+          projectId,
+          userId: targetUser.id,
+          action: 'JOIN_PROJECT',
+          entityType: 'MEMBER',
+          entityId: targetUser.id,
+          details: `${targetUser.name} (${targetUser.email}) se unió al equipo como ${roleLabel}.`,
+        },
+      });
+    } catch (logErr) {
+      console.warn('Advertencia registrando actividad/notificación:', logErr);
+    }
+
+    // 6. Sincronizar en Supabase si está disponible
     if (isSupabaseConfigured) {
       try {
         const { data: supaUser } = await supabase
@@ -271,7 +291,7 @@ export async function POST(req: Request, context: RouteContext) {
           });
         }
       } catch (supaErr) {
-        console.warn('Error asociando miembro en Supabase:', supaErr);
+        console.warn('Error sincronizando con Supabase:', supaErr);
       }
     }
 
@@ -280,10 +300,13 @@ export async function POST(req: Request, context: RouteContext) {
       projectId: projectId,
       projectName: projectName,
       role: role,
-      message: 'Invitación aceptada con éxito',
+      userId: targetUser.id,
+      userEmail: targetUser.email,
+      userName: targetUser.name,
+      message: `Te uniste a "${projectName}" con rol de ${ROLE_LABELS[role] || role}.`,
     });
   } catch (error: any) {
-    console.error('Error al aceptar invitación:', error);
+    console.error('Error al procesar aceptación de invitación:', error);
     return NextResponse.json(
       { error: error.message || 'Error interno al procesar la aceptación' },
       { status: 500 }

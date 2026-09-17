@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useNexorSpace } from '@/hooks/useNexorSpace';
+import { store } from '@/lib/store';
 import {
   UserPlus,
   ArrowRight,
@@ -12,6 +13,9 @@ import {
   Shield,
   Loader2,
   LogIn,
+  LogOut,
+  Clock,
+  CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -20,20 +24,49 @@ export default function InviteAcceptPage() {
   const params = useParams();
   const router = useRouter();
   const tokenOrId = (params?.id as string) || '';
-  const { setCurrentProject, currentUser, addMemberToProject } = useNexorSpace();
+  const { setCurrentProject, currentUser, addMemberToProject, setCurrentUser } = useNexorSpace();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAccepted, setIsAccepted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<'expired' | 'already_accepted' | 'not_found' | 'general' | null>(null);
   const [invitationData, setInvitationData] = useState<any>(null);
   const [hasActiveSession, setHasActiveSession] = useState<boolean>(false);
 
-  // 1. Verificar estado de autenticación
+  // 1. Detectar sesión activa (Supabase o Local)
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setHasActiveSession(!!session || !!currentUser?.email);
-    });
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email) {
+          setHasActiveSession(true);
+          return;
+        }
+      } catch (_) {}
+
+      // Verificar en localStorage
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('nexorspace_current_user');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed?.email) {
+              setHasActiveSession(true);
+              return;
+            }
+          } catch (_) {}
+        }
+      }
+
+      if (currentUser?.email && currentUser.id !== 'usr_admin_1') {
+        setHasActiveSession(true);
+      } else {
+        setHasActiveSession(false);
+      }
+    };
+
+    checkSession();
   }, [currentUser]);
 
   // 2. Cargar y Validar Invitación
@@ -42,56 +75,51 @@ export default function InviteAcceptPage() {
 
     setIsLoading(true);
     setErrorMessage(null);
+    setErrorType(null);
 
     fetch(`/api/invite/${tokenOrId}`)
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok || !data.valid) {
+          if (data.isAccepted) {
+            setErrorType('already_accepted');
+          } else if (data.isExpired) {
+            setErrorType('expired');
+          } else if (res.status === 404) {
+            setErrorType('not_found');
+          } else {
+            setErrorType('general');
+          }
           throw new Error(data.error || 'La invitación no es válida o ha expirado.');
         }
         setInvitationData(data.invitation);
       })
-      .catch(async (err) => {
-        // Fallback: Si el token es un ID de proyecto directo
-        try {
-          const resProjects = await fetch('/api/projects');
-          const projects = resProjects.ok ? await resProjects.json() : [];
-          const matched = Array.isArray(projects) ? projects.find((p: any) => p.id === tokenOrId) : null;
-          if (matched) {
-            setInvitationData({
-              token: tokenOrId,
-              email: currentUser?.email || '',
-              role: 'MEMBER',
-              roleLabel: 'Miembro',
-              inviterName: 'Equipo de Nexor-Space',
-              project: matched,
-            });
-            return;
-          }
-        } catch (_) {}
-
+      .catch((err) => {
         setErrorMessage(err.message || 'No pudimos verificar la invitación.');
       })
       .finally(() => {
         setIsLoading(false);
       });
-  }, [tokenOrId, currentUser]);
+  }, [tokenOrId]);
 
   // 3. Aceptar Invitación
-  const handleAccept = async () => {
+  const handleAccept = async (overrideEmail?: string) => {
     if (!tokenOrId) return;
 
     setIsSubmitting(true);
     setErrorMessage(null);
 
     try {
+      const emailToSend = overrideEmail || currentUser?.email || invitationData?.email;
+      const nameToSend = currentUser?.name || emailToSend?.split('@')[0] || 'Nuevo Colaborador';
+
       const res = await fetch(`/api/invite/${tokenOrId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: currentUser?.id,
-          email: currentUser?.email || invitationData?.email,
-          userName: currentUser?.name,
+          email: emailToSend,
+          userName: nameToSend,
         }),
       });
 
@@ -105,7 +133,7 @@ export default function InviteAcceptPage() {
       const projectId = data.projectId || invitationData?.project?.id;
 
       if (projectId) {
-        addMemberToProject(projectId, currentUser?.email || invitationData?.email || 'colaborador@nexo.app', assignedRole);
+        addMemberToProject(projectId, emailToSend, assignedRole);
         setCurrentProject(projectId);
       }
 
@@ -114,12 +142,15 @@ export default function InviteAcceptPage() {
         localStorage.removeItem('pending_invite_token');
       }
 
+      // Sincronizar base de datos
+      await store.syncWithDatabase();
+
       setIsAccepted(true);
       setTimeout(() => {
         router.push('/dashboard');
       }, 1200);
     } catch (err: any) {
-      setErrorMessage(err.message || 'Ocurrió un error inesperado.');
+      setErrorMessage(err.message || 'Ocurrió un error inesperado al unirte.');
       setIsSubmitting(false);
     }
   };
@@ -136,6 +167,26 @@ export default function InviteAcceptPage() {
     }
   };
 
+  // Cerrar sesión para entrar con otra cuenta
+  const handleSwitchAccount = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (_) {}
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('nexorspace_current_user');
+      localStorage.setItem('pending_invite_token', tokenOrId);
+    }
+    setCurrentUser(null as any);
+    setHasActiveSession(false);
+    router.push(`/login?inviteToken=${encodeURIComponent(tokenOrId)}`);
+  };
+
+  const isDifferentAccount =
+    hasActiveSession &&
+    currentUser?.email &&
+    invitationData?.email &&
+    currentUser.email.toLowerCase() !== invitationData.email.toLowerCase();
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans">
       {/* Background glow elements */}
@@ -143,7 +194,6 @@ export default function InviteAcceptPage() {
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md bg-zinc-900/90 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center animate-in fade-in zoom-in-95 duration-200">
-        
         {/* Ícono Superior */}
         <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 shadow-lg shadow-violet-500/10">
           <UserPlus className="w-7 h-7" />
@@ -162,29 +212,49 @@ export default function InviteAcceptPage() {
           </div>
         )}
 
-        {/* Estado: Error / Expirado */}
+        {/* Estado: Error / Expirado / Ya aceptada */}
         {!isLoading && errorMessage && !invitationData && (
-          <div className="space-y-4 my-2">
-            <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-800/60 text-left space-y-2">
-              <div className="flex items-center gap-2 text-rose-400 font-bold text-sm">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>Enlace No Disponible</span>
+          <div className="space-y-4 my-2 text-left">
+            <div className={`p-4 rounded-2xl border space-y-2 ${
+              errorType === 'already_accepted'
+                ? 'bg-amber-950/30 border-amber-800/50 text-amber-300'
+                : errorType === 'expired'
+                ? 'bg-orange-950/30 border-orange-800/50 text-orange-300'
+                : 'bg-rose-950/40 border-rose-800/60 text-rose-300'
+            }`}>
+              <div className="flex items-center gap-2 font-bold text-sm">
+                {errorType === 'already_accepted' ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="text-amber-300">Invitación ya utilizada</span>
+                  </>
+                ) : errorType === 'expired' ? (
+                  <>
+                    <Clock className="w-4 h-4 text-orange-400 shrink-0" />
+                    <span className="text-orange-300">Invitación expirada</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span className="text-rose-300">Enlace No Disponible</span>
+                  </>
+                )}
               </div>
-              <p className="text-xs text-rose-300/90 leading-relaxed">{errorMessage}</p>
+              <p className="text-xs leading-relaxed opacity-90">{errorMessage}</p>
             </div>
 
             <div className="pt-2 flex flex-col gap-2">
               <Link
                 href="/login"
-                className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-all text-center"
+                className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-all text-center cursor-pointer shadow-md"
               >
                 Ir a Iniciar Sesión
               </Link>
               <Link
-                href="/"
-                className="w-full py-2 px-4 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-all text-center"
+                href="/dashboard"
+                className="w-full py-2 px-4 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-all text-center cursor-pointer border border-zinc-700"
               >
-                Volver al Inicio
+                Ir al Dashboard
               </Link>
             </div>
           </div>
@@ -198,7 +268,7 @@ export default function InviteAcceptPage() {
                 ¡Te han invitado a colaborar!
               </h1>
               <p className="text-zinc-400 text-xs leading-relaxed">
-                <strong className="text-zinc-200">{invitationData.inviterName}</strong> te ha invitado a unirte a su equipo de trabajo.
+                <strong className="text-zinc-200">{invitationData.inviterName}</strong> te invitó a unirte al proyecto en Nexor-Space.
               </p>
             </div>
 
@@ -232,6 +302,28 @@ export default function InviteAcceptPage() {
               </div>
             </div>
 
+            {/* Banner Informativo si está conectado con OTRA cuenta */}
+            {isDifferentAccount && (
+              <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-800/60 text-left text-xs space-y-2">
+                <div className="flex items-center gap-1.5 text-amber-400 font-semibold">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>Cuentas diferentes detectadas</span>
+                </div>
+                <p className="text-[11px] text-zinc-300 leading-relaxed">
+                  Esta invitación fue enviada a <strong className="text-amber-300">{invitationData.email}</strong>, pero actualmente estás conectado como <strong className="text-white">{currentUser?.email}</strong>.
+                </p>
+                <div className="pt-1 flex items-center gap-2">
+                  <button
+                    onClick={handleSwitchAccount}
+                    className="text-[11px] font-medium text-amber-400 hover:text-amber-300 underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    Cambiar de cuenta
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Error durante la aceptación */}
             {errorMessage && (
               <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-xs text-rose-300 flex items-center gap-2 text-left">
@@ -242,28 +334,34 @@ export default function InviteAcceptPage() {
 
             {/* Acciones según estado de sesión */}
             {hasActiveSession ? (
-              <button
-                onClick={handleAccept}
-                disabled={isSubmitting || isAccepted}
-                className="w-full py-3 px-4 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-500 active:scale-[0.99] text-white shadow-lg shadow-violet-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-80"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
-                    <span>Uniendo al proyecto...</span>
-                  </>
-                ) : isAccepted ? (
-                  <>
-                    <Check className="w-4 h-4 text-emerald-300" />
-                    <span>¡Invitación Aceptada! Redirigiendo...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Aceptar y Unirme al Proyecto</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
+              <div className="space-y-3">
+                <div className="text-[11px] text-zinc-400">
+                  Conectado como: <strong className="text-zinc-200">{currentUser?.name || currentUser?.email}</strong>
+                </div>
+
+                <button
+                  onClick={() => handleAccept()}
+                  disabled={isSubmitting || isAccepted}
+                  className="w-full py-3 px-4 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-500 active:scale-[0.99] text-white shadow-lg shadow-violet-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-80"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Uniendo al proyecto...</span>
+                    </>
+                  ) : isAccepted ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-300" />
+                      <span>¡Invitación Aceptada! Redirigiendo...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Aceptar y Unirme al Proyecto</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
             ) : (
               <div className="space-y-2 pt-1">
                 <p className="text-[11px] text-zinc-400 mb-2">
@@ -299,4 +397,3 @@ export default function InviteAcceptPage() {
     </div>
   );
 }
-

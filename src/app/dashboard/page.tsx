@@ -27,6 +27,10 @@ import {
   Sparkles,
   Shield,
   Trash2,
+  Clock,
+  Link as LinkIcon,
+  RotateCcw,
+  Check,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -59,6 +63,69 @@ export default function DashboardPage() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  // Invitaciones pendientes para el panel de configuración
+  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+  const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
+
+  const fetchPendingInvites = async () => {
+    if (!currentProject?.id) return;
+    try {
+      const res = await fetch(`/api/invite?projectId=${encodeURIComponent(currentProject.id)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setPendingInvites(data.filter((i: any) => !i.isAccepted));
+        }
+      }
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    if (activeTab === 'settings' && currentProject?.id) {
+      fetchPendingInvites();
+    }
+  }, [activeTab, currentProject?.id, isInviteModalOpen]);
+
+  const handleCopyInviteLink = (invite: any) => {
+    navigator.clipboard.writeText(invite.inviteLink);
+    setCopiedInviteId(invite.id);
+    setTimeout(() => setCopiedInviteId(null), 2000);
+  };
+
+  const handleCancelInvite = async (id: string) => {
+    if (!confirm('¿Estás seguro de cancelar esta invitación pendiente?')) return;
+    try {
+      const res = await fetch(`/api/invite?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (res.ok) {
+        setPendingInvites((prev) => prev.filter((i) => i.id !== id));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleResendInvite = async (id: string) => {
+    try {
+      const res = await fetch('/api/invite/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        await fetchPendingInvites();
+        if (data.inviteLink) {
+          navigator.clipboard.writeText(data.inviteLink);
+        }
+        alert(data.message || 'Invitación renovada y copiada al portapapeles.');
+      } else {
+        alert(data.error || 'Error al reenviar invitación');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleOpenNewTask = (dateStr?: string, status?: TaskStatus) => {
     setNewTaskInitialDate(dateStr || '');
@@ -287,7 +354,18 @@ export default function DashboardPage() {
 
               {/* Roles del Equipo */}
               <div className="p-6 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 space-y-4">
-                <h3 className="text-sm font-bold text-zinc-100">Roles y Permisos</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-zinc-100">Roles y Permisos</h3>
+                  {canManageMembers && (
+                    <button
+                      onClick={() => setIsInviteModalOpen(true)}
+                      className="px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>Invitar Integrante</span>
+                    </button>
+                  )}
+                </div>
                 <div className="space-y-2">
                   {(currentProject.members || [{ id: '1', user: currentUser, role: 'ADMIN' }]).map((mem) => (
                     <div key={mem.id} className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between">
@@ -302,6 +380,81 @@ export default function DashboardPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Invitaciones Pendientes del Proyecto */}
+              {canManageMembers && (
+                <div className="p-6 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-violet-400" />
+                      <span>Invitaciones Pendientes ({pendingInvites.length})</span>
+                    </h3>
+                  </div>
+
+                  {pendingInvites.length === 0 ? (
+                    <p className="text-xs text-zinc-500 italic">No hay invitaciones pendientes para este proyecto.</p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {pendingInvites.map((inv) => (
+                        <div
+                          key={inv.id}
+                          className="p-3.5 rounded-xl bg-zinc-900/80 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left"
+                        >
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs font-bold text-zinc-200">{inv.email}</p>
+                              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-violet-950/50 text-violet-300 border border-violet-500/30">
+                                {inv.roleLabel || inv.role}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-zinc-500 mt-0.5">
+                              {inv.isExpired ? (
+                                <span className="text-rose-400 font-semibold">Expirada</span>
+                              ) : (
+                                <span>Vence: {new Date(inv.expiresAt).toLocaleDateString()}</span>
+                              )}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleCopyInviteLink(inv)}
+                              className="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              {copiedInviteId === inv.id ? (
+                                <>
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span className="text-emerald-400">¡Copiado!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <LinkIcon className="w-3.5 h-3.5 text-zinc-400" />
+                                  <span>Copiar Link</span>
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleResendInvite(inv.id)}
+                              className="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5 text-violet-400" />
+                              <span>Reenviar</span>
+                            </button>
+                            <button
+                              onClick={() => handleCancelInvite(inv.id)}
+                              className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Cancelar</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
 
               {/* Zona Peligrosa */}
               <div className="p-6 rounded-2xl bg-rose-950/20 border border-rose-500/30 space-y-3">

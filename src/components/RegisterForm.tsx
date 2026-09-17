@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail, User, AlertCircle, ArrowRight, Loader2, CheckCircle2, ShieldCheck, AtSign } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { signUpUser, signInWithGoogle, isSupabaseConfigured } from '@/lib/supabase';
+import { store } from '@/lib/store';
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
@@ -126,8 +127,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
     setIsLoading(true);
 
     try {
+      let createdUser: any = null;
       if (isSupabaseConfigured) {
-        const { error } = await signUpUser({
+        const { data, error } = await signUpUser({
           email: email.trim(),
           password: password,
           nombre: nombre.trim(),
@@ -141,12 +143,82 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
           return;
         }
 
-        setRegisterSuccess(true);
-      } else {
-        // Modo Demo simulado
-        await new Promise((resolve) => setTimeout(resolve, 1200));
-        setRegisterSuccess(true);
+        if (data?.user) {
+          createdUser = {
+            id: data.user.id,
+            email: data.user.email || email.trim(),
+            name: `${nombre.trim()} ${apellido.trim()}`.trim(),
+            role: 'MEMBER',
+          };
+        }
       }
+
+      // Persistir usuario en la base de datos local
+      const regRes = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password,
+          nombre: nombre.trim(),
+          apellido: apellido.trim(),
+          usuario: usuario.trim(),
+        }),
+      });
+
+      const regData = await regRes.json();
+      if (!regRes.ok && !isSupabaseConfigured) {
+        setServerError(regData.error || 'Error al registrar usuario en la base de datos.');
+        setIsLoading(false);
+        return;
+      }
+
+      const activeUser = regData.user || createdUser || {
+        id: 'usr_' + Date.now(),
+        email: email.trim(),
+        name: `${nombre.trim()} ${apellido.trim()}`.trim(),
+        role: 'MEMBER',
+        createdAt: new Date().toISOString(),
+      };
+
+      store.setCurrentUser(activeUser);
+
+      // Verificar si vino desde una invitación pendiente
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const pendingInviteToken =
+        urlParams?.get('inviteToken') || (typeof window !== 'undefined' ? localStorage.getItem('pending_invite_token') : null);
+
+      if (pendingInviteToken) {
+        try {
+          const inviteRes = await fetch(`/api/invite/${pendingInviteToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: activeUser.id,
+              email: activeUser.email,
+              userName: activeUser.name,
+            }),
+          });
+          const inviteResult = await inviteRes.json();
+          if (inviteRes.ok && inviteResult.projectId) {
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('pending_invite_token');
+            }
+            store.addMemberToProject(inviteResult.projectId, activeUser.email, inviteResult.role || 'MEMBER');
+            store.setCurrentProject(inviteResult.projectId);
+            await store.syncWithDatabase();
+            setRegisterSuccess(true);
+            setTimeout(() => router.push('/dashboard'), 800);
+            return;
+          }
+        } catch (e) {
+          console.warn('Error auto-vinculando invitación:', e);
+        }
+      }
+
+      await store.syncWithDatabase();
+      setRegisterSuccess(true);
+      setTimeout(() => router.push('/dashboard'), 1000);
     } catch (err: any) {
       setServerError('Ocurrió un error inesperado al conectar con el servidor.');
     } finally {
