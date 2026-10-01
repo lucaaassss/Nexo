@@ -112,22 +112,33 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     setResetLoading(true); // Activa el spinner de carga en el botón del modal
     try {
       if (isSupabaseConfigured) {
-        // Si Supabase está conectado, envía el mail de reseteo oficial con enlace de retorno a /login
+        // Si Supabase está conectado, envía el mail de reseteo oficial.
+        // El redirectTo debe apuntar a /auth/callback para que Supabase maneje el token correctamente.
+        const redirectTo = typeof window !== 'undefined'
+          ? `${window.location.origin}/auth/callback`
+          : undefined;
         const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-          redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined,
+          redirectTo,
         });
         if (error) {
-          setResetError(error.message || 'No se pudo enviar el enlace de recuperación.');
+          // Traducir errores comunes de Supabase al español
+          if (error.message?.includes('rate limit') || error.message?.includes('Too many')) {
+            setResetError('Demasiadas solicitudes. Esperá unos minutos antes de intentarlo de nuevo.');
+          } else if (error.message?.includes('not found') || error.message?.includes('user')) {
+            // Por seguridad, no revelamos si el correo existe o no
+            setResetSuccess('Si existe una cuenta con ese correo, recibirás el enlace en breve.');
+          } else {
+            setResetError(error.message || 'No se pudo enviar el enlace de recuperación.');
+          }
         } else {
-          setResetSuccess('¡Enlace de recuperación enviado! Revisá tu casilla de correo.');
+          setResetSuccess('¡Enlace de recuperación enviado! Revisá tu casilla de correo (también la carpeta de spam).');
         }
       } else {
-        // Modo fallback local / simulación si no se configuró Supabase en el .env
-        await new Promise((r) => setTimeout(r, 800));
-        setResetSuccess('¡Enlace de recuperación enviado! Revisá tu casilla de correo.');
+        // Sin Supabase configurado, avisar al usuario
+        setResetError('La recuperación de contraseña requiere que Supabase esté configurado. Completá las variables NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en el archivo .env.local.');
       }
     } catch (err: any) {
-      setResetError('Ocurrió un error al procesar la solicitud.');
+      setResetError('Ocurrió un error al procesar la solicitud. Verificá tu conexión e intentá de nuevo.');
     } finally {
       setResetLoading(false); // Apaga el estado de carga
     }
@@ -145,16 +156,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         // Dispara la redirección OAuth con Google provista por Supabase
         const { error } = await signInWithGoogle();
         if (error) {
-          setAuthError(error.message || 'Error al conectar con Google.');
+          // Mensajes de error específicos según el tipo de fallo
+          if (error.message?.includes('provider') || error.message?.includes('Provider')) {
+            setAuthError('El proveedor de Google no está habilitado en tu proyecto Supabase. Activalo en Authentication → Providers → Google en el panel de Supabase.');
+          } else if (error.message?.includes('redirect') || error.message?.includes('URL')) {
+            setAuthError('URL de redirección no permitida. Agregá ' + window.location.origin + '/auth/callback en Supabase → Authentication → URL Configuration → Redirect URLs.');
+          } else {
+            setAuthError(error.message || 'Error al conectar con Google. Verificá la configuración de OAuth en Supabase.');
+          }
           setIsGoogleLoading(false);
         }
+        // Si no hay error, la redirección a Google ocurre automáticamente
       } else {
-        // Si no están configuradas las variables de entorno de Supabase, avisa al usuario
-        setAuthError('Para autenticarte con Google y elegir cuenta real, configurá NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en tu .env. Podés iniciar sesión con email y contraseña en el formulario abajo.');
+        // Si no están configuradas las variables de entorno de Supabase
+        setAuthError('El inicio de sesión con Google requiere Supabase configurado. Usá email y contraseña por ahora, o completá las variables en .env.local.');
         setIsGoogleLoading(false);
       }
     } catch (err: any) {
-      setAuthError('Ocurrió un error inesperado al conectar con Google.');
+      setAuthError('Ocurrió un error inesperado al conectar con Google. Intentá con email y contraseña.');
       setIsGoogleLoading(false);
     }
   };
@@ -212,9 +231,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
       });
 
       const loginData = await loginRes.json();
-      // Si la API local falla y no estamos usando Supabase, mostramos error
+      // Si la API local falla:
+      // - Sin Supabase: mostrar error (no hay otro método de autenticación)
+      // - Con Supabase: ignorar error local (Supabase ya autenticó correctamente)
       if (!loginRes.ok && !isSupabaseConfigured) {
         setAuthError(loginData.error || 'El correo o la contraseña son incorrectos.');
+        setIsLoading(false);
+        return;
+      }
+      // Con Supabase configurado y la API local fallando, igual continuamos
+      // (el usuario ya fue validado por Supabase en el paso anterior)
+      if (!loginRes.ok && isSupabaseConfigured && !loggedUser) {
+        setAuthError('El correo o la contraseña son incorrectos.');
         setIsLoading(false);
         return;
       }

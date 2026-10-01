@@ -51,15 +51,22 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
       if (isSupabaseConfigured) {
         const { error } = await signInWithGoogle();
         if (error) {
-          setServerError(error.message || 'Error al conectar con Google.');
+          if (error.message?.includes('provider') || error.message?.includes('Provider')) {
+            setServerError('El proveedor de Google no está habilitado en tu proyecto Supabase. Activálo en Authentication → Providers → Google en el panel de Supabase.');
+          } else if (error.message?.includes('redirect') || error.message?.includes('URL')) {
+            setServerError('URL de redirección no permitida. Agregá ' + window.location.origin + '/auth/callback en Supabase → Authentication → URL Configuration → Redirect URLs.');
+          } else {
+            setServerError(error.message || 'Error al conectar con Google. Verificá la configuración de OAuth en Supabase.');
+          }
           setIsGoogleLoading(false);
         }
+        // Si no hay error, la redirección a Google ocurre automáticamente
       } else {
-        setServerError('Para registrarte con Google y elegir cuenta real, configurá NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en tu .env. Podés registrarte con tus datos y contraseña en el formulario abajo.');
+        setServerError('El registro con Google requiere Supabase configurado. Registrate con tus datos y contraseña en el formulario abajo, o completá las variables en .env.local.');
         setIsGoogleLoading(false);
       }
     } catch (err: any) {
-      setServerError('Ocurrió un error inesperado al conectar con Google.');
+      setServerError('Ocurrió un error inesperado al conectar con Google. Intentá con email y contraseña.');
       setIsGoogleLoading(false);
     }
   };
