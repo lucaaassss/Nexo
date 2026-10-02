@@ -234,7 +234,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                 members: formattedMembers,
               });
             }
+            // Guardar el ID en localStorage antes del sync para que persista en recarga
+            store.setCurrentProject(inviteResult.projectId);
             await store.syncWithDatabase();
+            // Seleccionar nuevamente después del sync (ahora ya está en memoria)
             store.setCurrentProject(inviteResult.projectId);
             setRegisterSuccess(true);
             setTimeout(() => router.push('/dashboard'), 800);

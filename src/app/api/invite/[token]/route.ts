@@ -199,7 +199,7 @@ export async function POST(req: Request, context: RouteContext) {
     }
 
     // 1. Buscar invitación
-    let invitation = await db.invitation.findUnique({
+    const invitation = await db.invitation.findUnique({
       where: { token },
       include: { project: true },
     });

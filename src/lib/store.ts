@@ -348,7 +348,9 @@ export class NexorSpaceStore {
           this.projects = formattedProjects;
 
           if (!this.currentProject || !this.projects.some((p) => p.id === this.currentProject?.id)) {
-            this.currentProject = this.projects[0];
+            const savedProjectId = typeof window !== 'undefined' ? localStorage.getItem('nexorspace_current_project_id') : null;
+            const foundSaved = savedProjectId ? this.projects.find((p) => String(p.id) === String(savedProjectId)) : null;
+            this.currentProject = foundSaved || this.projects[0];
           } else {
             const updatedCurrent = this.projects.find((p) => p.id === this.currentProject?.id);
             if (updatedCurrent) this.currentProject = updatedCurrent;
@@ -372,6 +374,7 @@ export class NexorSpaceStore {
       if (this.currentUser.email) {
         params.set('email', this.currentUser.email);
       }
+      params.set('_t', Date.now().toString());
 
       const res = await fetch(`/api/projects?${params.toString()}`);
       if (res.ok) {
@@ -408,7 +411,9 @@ export class NexorSpaceStore {
 
           // Mantener o seleccionar proyecto activo
           if (!this.currentProject || !this.projects.some((p) => p.id === this.currentProject?.id)) {
-            this.currentProject = this.projects[0];
+            const savedProjectId = typeof window !== 'undefined' ? localStorage.getItem('nexorspace_current_project_id') : null;
+            const foundSaved = savedProjectId ? this.projects.find((p) => String(p.id) === String(savedProjectId)) : null;
+            this.currentProject = foundSaved || this.projects[0];
           } else {
             const updatedCurrent = this.projects.find((p) => p.id === this.currentProject?.id);
             if (updatedCurrent) this.currentProject = updatedCurrent;
@@ -630,7 +635,13 @@ export class NexorSpaceStore {
           this.currentProject = defaultProj;
           this.persistState();
         } else {
-          this.currentProject = this.projects[0];
+          const savedProjectId = localStorage.getItem('nexorspace_current_project_id');
+          if (savedProjectId) {
+            const foundProject = this.projects.find((p) => String(p.id) === String(savedProjectId));
+            this.currentProject = foundProject || this.projects[0];
+          } else {
+            this.currentProject = this.projects[0];
+          }
         }
       } catch (e) {
         console.error('Error cargando estado inicial:', e);
@@ -648,6 +659,12 @@ export class NexorSpaceStore {
         localStorage.setItem('nexorspace_files', JSON.stringify(this.attachments));
         localStorage.setItem('nexorspace_activity', JSON.stringify(this.activityLogs));
         localStorage.setItem('nexorspace_notifications', JSON.stringify(this.notifications));
+        
+        if (this.currentProject) {
+          localStorage.setItem('nexorspace_current_project_id', this.currentProject.id);
+        } else {
+          localStorage.removeItem('nexorspace_current_project_id');
+        }
       } catch (e) {
         console.error('Error guardando estado:', e);
       }
@@ -762,11 +779,20 @@ export class NexorSpaceStore {
 
   /** Selecciona el proyecto activo actual y carga sus tareas desde la base de datos */
   public setCurrentProject(projectId: string) {
+    // Siempre guardar el ID en localStorage para persistir entre recargas y syncs
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nexorspace_current_project_id', projectId);
+    }
+
     const found = this.projects.find((p) => p.id === projectId);
     if (found) {
       this.currentProject = found;
       this.fetchTasksForProject(projectId);
       this.fetchProjectMembers(projectId);
+      this.notify();
+    } else {
+      // El proyecto aún no está en memoria (ej: invitado recién unido).
+      // Lo marcaremos para que syncWithDatabase lo seleccione al cargar.
       this.notify();
     }
   }

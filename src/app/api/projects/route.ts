@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Handler GET /api/projects
  * Retorna la lista de todos los proyectos registrados con sus miembros y tareas.
@@ -12,7 +14,7 @@ export async function GET(req: Request) {
     const userId = searchParams.get('userId');
     const email = searchParams.get('email');
 
-    let whereClause: any = {};
+    const whereClause: any = {};
     if (id) {
       whereClause.id = id;
     } else if (userId || email) {

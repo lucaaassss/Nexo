@@ -166,7 +166,8 @@ export default function InviteAcceptPage() {
         addMemberToProject(projectId, emailToSend, data.role || invitationData?.role || 'MEMBER');
       }
 
-      // 3. Seleccionar el proyecto
+      // 3. Guardar el ID del proyecto en localStorage ANTES de sincronizar
+      // (store.setCurrentProject siempre lo persiste, aunque el proyecto no esté en memoria aún)
       if (projectId) {
         store.setCurrentProject(projectId);
       }
@@ -176,9 +177,10 @@ export default function InviteAcceptPage() {
         localStorage.removeItem('pending_invite_token');
       }
 
-      // 5. Sincronizar base de datos completa
+      // 5. Sincronizar base de datos completa (ahora el proyecto ya estará cargado en memoria)
       await store.syncWithDatabase();
 
+      // 6. Seleccionar el proyecto nuevamente ahora que ya está en memoria
       if (projectId) {
         store.setCurrentProject(projectId);
       }
