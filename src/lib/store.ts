@@ -210,10 +210,126 @@ export class NexorSpaceStore {
         }
 
         if (allSupaProjects.length > 0) {
+          const supaProjIds = allSupaProjects.map((p) => String(p.id));
+          const supaMembersByProj: Record<string, any[]> = {};
+          const userIdsToFetch = new Set<string>();
+
+          allSupaProjects.forEach((p) => {
+            if (p.creador_id) userIdsToFetch.add(String(p.creador_id));
+          });
+          if (this.currentUser.id) userIdsToFetch.add(String(this.currentUser.id));
+
+          try {
+            const { data: supaMembersData } = await supabase
+              .from('proyecto_miembros')
+              .select('*')
+              .in('proyecto_id', supaProjIds);
+
+            if (Array.isArray(supaMembersData)) {
+              supaMembersData.forEach((m: any) => {
+                const pid = String(m.proyecto_id);
+                if (!supaMembersByProj[pid]) supaMembersByProj[pid] = [];
+                supaMembersByProj[pid].push(m);
+                if (m.usuario_id) userIdsToFetch.add(String(m.usuario_id));
+              });
+            }
+          } catch (memErr) {
+            console.warn('Error cargando miembros desde Supabase:', memErr);
+          }
+
+          const supaUsersMap: Record<string, any> = {};
+          if (userIdsToFetch.size > 0) {
+            try {
+              const { data: usersData } = await supabase
+                .from('usuarios')
+                .select('*')
+                .in('id', Array.from(userIdsToFetch));
+
+              if (Array.isArray(usersData)) {
+                usersData.forEach((u: any) => {
+                  const fullName = [u.nombre, u.apellido].filter(Boolean).join(' ').trim() || u.usuario || u.email?.split('@')[0] || 'Usuario';
+                  supaUsersMap[String(u.id)] = {
+                    id: String(u.id),
+                    name: fullName,
+                    email: u.email || '',
+                    role: u.role || 'MEMBER',
+                    avatarUrl: u.foto_perfil || '',
+                    createdAt: u.created_at || new Date().toISOString(),
+                  };
+                });
+              }
+            } catch (uErr) {
+              console.warn('Error cargando perfiles de usuarios desde Supabase:', uErr);
+            }
+          }
+
           const formattedProjects: Project[] = allSupaProjects.map((p: any) => {
             const rawKey = p.nombre
               ? p.nombre.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || 'PRJ'
               : 'PRJ';
+
+            const projectMembers: any[] = [];
+            const addedUserIds = new Set<string>();
+
+            // 1. Agregar creador como ADMIN si existe
+            if (p.creador_id) {
+              const creatorProfile = supaUsersMap[String(p.creador_id)] || (
+                String(p.creador_id) === this.currentUser.id ? this.currentUser : {
+                  id: String(p.creador_id),
+                  name: 'Creador del Proyecto',
+                  email: '',
+                  role: 'ADMIN',
+                  createdAt: p.fecha_creacion || new Date().toISOString(),
+                }
+              );
+              projectMembers.push({
+                id: 'mem_creator_' + p.id,
+                projectId: String(p.id),
+                userId: String(p.creador_id),
+                role: 'ADMIN' as MemberRole,
+                joinedAt: p.fecha_creacion ? new Date(p.fecha_creacion).toISOString() : new Date().toISOString(),
+                user: creatorProfile,
+              });
+              addedUserIds.add(String(p.creador_id));
+            }
+
+            // 2. Agregar miembros de proyecto_miembros
+            const rawMembers = supaMembersByProj[String(p.id)] || [];
+            rawMembers.forEach((m: any) => {
+              const uid = String(m.usuario_id);
+              if (!addedUserIds.has(uid)) {
+                addedUserIds.add(uid);
+                const userProfile = supaUsersMap[uid] || (
+                  uid === this.currentUser.id ? this.currentUser : {
+                    id: uid,
+                    name: 'Miembro de Equipo',
+                    email: '',
+                    role: (m.rol || 'MEMBER') as MemberRole,
+                    createdAt: m.fecha_union || new Date().toISOString(),
+                  }
+                );
+                projectMembers.push({
+                  id: m.id ? String(m.id) : `mem_${p.id}_${uid}`,
+                  projectId: String(p.id),
+                  userId: uid,
+                  role: (m.rol || 'MEMBER') as MemberRole,
+                  joinedAt: m.fecha_union ? new Date(m.fecha_union).toISOString() : new Date().toISOString(),
+                  user: userProfile,
+                });
+              }
+            });
+
+            // 3. Fallback: Si el usuario actual no quedó listado, añadirlo con su rol
+            if (!addedUserIds.has(this.currentUser.id)) {
+              projectMembers.push({
+                id: 'mem_current_' + p.id,
+                projectId: String(p.id),
+                userId: this.currentUser.id,
+                role: (p.userRole || 'MEMBER') as MemberRole,
+                joinedAt: new Date().toISOString(),
+                user: this.currentUser,
+              });
+            }
 
             return {
               id: String(p.id),
@@ -225,16 +341,7 @@ export class NexorSpaceStore {
               isArchived: p.estado === 'ARCHIVADO' || p.estado === 'INACTIVO',
               createdAt: p.fecha_creacion ? new Date(p.fecha_creacion).toISOString() : new Date().toISOString(),
               updatedAt: p.fecha_actualizacion ? new Date(p.fecha_actualizacion).toISOString() : new Date().toISOString(),
-              members: [
-                {
-                  id: 'mem_' + p.id,
-                  projectId: String(p.id),
-                  userId: p.creador_id || this.currentUser.id,
-                  role: (p.userRole || 'MEMBER') as MemberRole,
-                  joinedAt: p.fecha_creacion ? new Date(p.fecha_creacion).toISOString() : new Date().toISOString(),
-                  user: this.currentUser,
-                },
-              ],
+              members: projectMembers,
             };
           });
 
@@ -257,8 +364,16 @@ export class NexorSpaceStore {
         }
       }
 
-      // 2. Fallback: Obtener proyectos desde la API local pasando el userId
-      const res = await fetch(`/api/projects?userId=${encodeURIComponent(this.currentUser.id)}`);
+      // 2. Fallback: Obtener proyectos desde la API local pasando userId y email
+      const params = new URLSearchParams();
+      if (this.currentUser.id && this.currentUser.id !== 'usr_admin_1') {
+        params.set('userId', this.currentUser.id);
+      }
+      if (this.currentUser.email) {
+        params.set('email', this.currentUser.email);
+      }
+
+      const res = await fetch(`/api/projects?${params.toString()}`);
       if (res.ok) {
         const dbProjects = await res.json();
         if (Array.isArray(dbProjects) && dbProjects.length > 0) {
@@ -307,12 +422,14 @@ export class NexorSpaceStore {
           this.persistState();
           this.notify();
         } else if (Array.isArray(dbProjects) && dbProjects.length === 0) {
-          // Si la API devuelve 0 proyectos, limpiamos el estado
-          this.projects = [];
-          this.currentProject = null;
-          this.tasks = [];
-          this.persistState();
-          this.notify();
+          // Si la API no devolvió proyectos pero el store ya tiene proyectos cargados o recién unidos, no borrarlos
+          if (this.projects.length === 0 && this.currentUser.id && this.currentUser.id !== 'usr_admin_1') {
+            this.projects = [];
+            this.currentProject = null;
+            this.tasks = [];
+            this.persistState();
+            this.notify();
+          }
         }
       }
     } catch (err) {
@@ -649,7 +766,156 @@ export class NexorSpaceStore {
     if (found) {
       this.currentProject = found;
       this.fetchTasksForProject(projectId);
+      this.fetchProjectMembers(projectId);
       this.notify();
+    }
+  }
+
+  /** Inserta o actualiza un proyecto en memoria y notifica a los suscriptores */
+  public upsertProject(project: Project) {
+    const idx = this.projects.findIndex((p) => p.id === project.id);
+    if (idx >= 0) {
+      this.projects[idx] = { ...this.projects[idx], ...project };
+    } else {
+      this.projects = [project, ...this.projects];
+    }
+    if (this.currentProject?.id === project.id) {
+      this.currentProject = { ...this.currentProject, ...project };
+    }
+    this.persistState();
+    this.notify();
+  }
+
+  /** Consulta y sincroniza en tiempo real los miembros del proyecto actual */
+  public async fetchProjectMembers(projectId: string) {
+    if (!projectId || typeof window === 'undefined') return;
+
+    try {
+      if (isSupabaseConfigured) {
+        const { data: supaMembersData } = await supabase
+          .from('proyecto_miembros')
+          .select('*')
+          .eq('proyecto_id', projectId);
+
+        const project = this.projects.find((p) => p.id === projectId);
+        if (!project) return;
+
+        const userIds = new Set<string>();
+        if (project.members) {
+          project.members.forEach((m) => userIds.add(m.userId));
+        }
+        if (Array.isArray(supaMembersData)) {
+          supaMembersData.forEach((m: any) => userIds.add(String(m.usuario_id)));
+        }
+
+        if (userIds.size > 0) {
+          const { data: usersData } = await supabase
+            .from('usuarios')
+            .select('*')
+            .in('id', Array.from(userIds));
+
+          const userMap: Record<string, any> = {};
+          if (Array.isArray(usersData)) {
+            usersData.forEach((u: any) => {
+              const fullName = [u.nombre, u.apellido].filter(Boolean).join(' ').trim() || u.usuario || u.email?.split('@')[0] || 'Usuario';
+              userMap[String(u.id)] = {
+                id: String(u.id),
+                name: fullName,
+                email: u.email || '',
+                role: u.role || 'MEMBER',
+                avatarUrl: u.foto_perfil || '',
+                createdAt: u.created_at || new Date().toISOString(),
+              };
+            });
+          }
+
+          const updatedMembers: any[] = [];
+          const seen = new Set<string>();
+
+          project.members?.forEach((m) => {
+            if (!seen.has(m.userId)) {
+              seen.add(m.userId);
+              updatedMembers.push({
+                ...m,
+                user: userMap[m.userId] || m.user,
+              });
+            }
+          });
+
+          if (Array.isArray(supaMembersData)) {
+            supaMembersData.forEach((sm: any) => {
+              const uid = String(sm.usuario_id);
+              if (!seen.has(uid)) {
+                seen.add(uid);
+                updatedMembers.push({
+                  id: sm.id ? String(sm.id) : `mem_${projectId}_${uid}`,
+                  projectId,
+                  userId: uid,
+                  role: sm.rol || 'MEMBER',
+                  joinedAt: sm.fecha_union || new Date().toISOString(),
+                  user: userMap[uid] || { id: uid, name: 'Usuario', email: '' },
+                });
+              }
+            });
+          }
+
+          project.members = updatedMembers;
+          if (this.currentProject?.id === projectId) {
+            this.currentProject.members = updatedMembers;
+          }
+          this.persistState();
+          this.notify();
+        }
+        return;
+      }
+
+      // Consulta a la API local de Prisma
+      const res = await fetch(`/api/projects?id=${encodeURIComponent(projectId)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const proj = Array.isArray(data) ? data[0] : data;
+      if (proj && proj.members) {
+        const formattedMembers = proj.members.map((m: any) => ({
+          id: m.id,
+          projectId: m.projectId,
+          userId: m.userId,
+          role: m.role as MemberRole,
+          joinedAt: m.joinedAt ? new Date(m.joinedAt).toISOString() : new Date().toISOString(),
+          user: m.user ? {
+            id: m.user.id,
+            email: m.user.email,
+            name: m.user.name,
+            role: m.user.role,
+            avatarUrl: m.user.avatarUrl || '',
+            createdAt: m.user.createdAt || new Date().toISOString(),
+          } : DEFAULT_USER,
+        }));
+
+        let membersChanged = false;
+        const existingProj = this.projects.find((p) => p.id === projectId);
+        if (existingProj) {
+          const prevJson = JSON.stringify(existingProj.members || []);
+          const nextJson = JSON.stringify(formattedMembers);
+          if (prevJson !== nextJson) {
+            existingProj.members = formattedMembers;
+            membersChanged = true;
+          }
+        }
+        if (this.currentProject?.id === projectId) {
+          const currentPrevJson = JSON.stringify(this.currentProject.members || []);
+          const nextJson = JSON.stringify(formattedMembers);
+          if (currentPrevJson !== nextJson) {
+            this.currentProject.members = formattedMembers;
+            membersChanged = true;
+          }
+        }
+        if (membersChanged) {
+          this.persistState();
+          this.notify();
+        }
+      }
+    } catch (e) {
+      console.warn('Error actualizando miembros del proyecto:', e);
     }
   }
 
@@ -694,13 +960,28 @@ export class NexorSpaceStore {
         color: data.color || '#7C3AED',
         icon: data.icon || 'FolderKanban',
         creatorId: this.currentUser.id,
+        creatorEmail: this.currentUser.email,
+        creatorName: this.currentUser.name,
       }),
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((savedProject) => {
         if (savedProject && savedProject.id) {
-          // Actualizar ID asignado por la base de datos
+          // Actualizar ID asignado por la base de datos y miembros
           newProject.id = savedProject.id;
+          if (savedProject.members) {
+            newProject.members = savedProject.members.map((m: any) => ({
+              id: m.id,
+              projectId: savedProject.id,
+              userId: m.userId,
+              role: m.role as MemberRole,
+              joinedAt: m.joinedAt ? new Date(m.joinedAt).toISOString() : new Date().toISOString(),
+              user: m.user || this.currentUser,
+            }));
+          }
+          if (this.currentProject?.id === projId) {
+            this.currentProject = newProject;
+          }
           this.persistState();
         }
       })

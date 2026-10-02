@@ -40,6 +40,20 @@ export async function GET(req: Request, context: RouteContext) {
             description: true,
             color: true,
             icon: true,
+            members: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    avatarUrl: true,
+                    role: true,
+                    createdAt: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -83,6 +97,12 @@ export async function GET(req: Request, context: RouteContext) {
         );
       }
 
+      let resolvedInviter = invitation.inviterName;
+      if (!resolvedInviter && invitation.project?.members) {
+        const adminMember = invitation.project.members.find((m: any) => m.role === 'ADMIN');
+        resolvedInviter = adminMember?.user?.name || adminMember?.user?.email || 'Un integrante del equipo';
+      }
+
       return NextResponse.json({
         valid: true,
         invitation: {
@@ -91,7 +111,7 @@ export async function GET(req: Request, context: RouteContext) {
           email: invitation.email,
           role: invitation.role,
           roleLabel: ROLE_LABELS[invitation.role] || invitation.role,
-          inviterName: invitation.inviterName || 'Un miembro del equipo',
+          inviterName: resolvedInviter || 'Un miembro del equipo',
           expiresAt: invitation.expiresAt,
           createdAt: invitation.createdAt,
           project: invitation.project,
@@ -102,10 +122,34 @@ export async function GET(req: Request, context: RouteContext) {
     // 2. Si no es un token de invitación, verificar si es un enlace directo por ID de proyecto
     const matchedProject = await db.project.findUnique({
       where: { id: token },
-      select: { id: true, name: true, key: true, description: true, color: true, icon: true },
+      select: {
+        id: true,
+        name: true,
+        key: true,
+        description: true,
+        color: true,
+        icon: true,
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true,
+                role: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (matchedProject) {
+      const adminMember = matchedProject.members?.find((m: any) => m.role === 'ADMIN');
+      const inviter = adminMember?.user?.name || 'Equipo de Nexor-Space';
+
       return NextResponse.json({
         valid: true,
         invitation: {
@@ -114,7 +158,7 @@ export async function GET(req: Request, context: RouteContext) {
           email: '',
           role: 'MEMBER',
           roleLabel: 'Miembro',
-          inviterName: 'Equipo de Nexor-Space',
+          inviterName: inviter,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           createdAt: new Date().toISOString(),
           project: matchedProject,
@@ -220,6 +264,11 @@ export async function POST(req: Request, context: RouteContext) {
           role: role,
         },
       });
+    } else if (userName && (targetUser.name === targetEmail.split('@')[0] || targetUser.name.startsWith('Usuario '))) {
+      targetUser = await db.user.update({
+        where: { id: targetUser.id },
+        data: { name: userName },
+      });
     }
 
     // 3. Vincular al usuario como miembro del proyecto con el rol asignado
@@ -246,9 +295,9 @@ export async function POST(req: Request, context: RouteContext) {
       });
     }
 
-    // 5. Crear notificación y log de actividad
+    // 5. Crear notificación para el nuevo miembro y notificar a los admins del proyecto
+    const roleLabel = ROLE_LABELS[role] || role;
     try {
-      const roleLabel = ROLE_LABELS[role] || role;
       await db.notification.create({
         data: {
           userId: targetUser.id,
@@ -269,6 +318,27 @@ export async function POST(req: Request, context: RouteContext) {
           details: `${targetUser.name} (${targetUser.email}) se unió al equipo como ${roleLabel}.`,
         },
       });
+
+      // Notificar a los administradores del proyecto que el nuevo miembro se unió
+      const projectAdmins = await db.projectMember.findMany({
+        where: {
+          projectId,
+          role: 'ADMIN',
+          userId: { not: targetUser.id },
+        },
+      });
+
+      for (const admin of projectAdmins) {
+        await db.notification.create({
+          data: {
+            userId: admin.userId,
+            title: '¡Nuevo integrante en el equipo!',
+            message: `${targetUser.name} (${targetUser.email}) aceptó tu invitación y se sumó al proyecto "${projectName}".`,
+            type: 'INVITE',
+            linkUrl: '/dashboard',
+          },
+        });
+      }
     } catch (logErr) {
       console.warn('Advertencia registrando actividad/notificación:', logErr);
     }
@@ -276,6 +346,7 @@ export async function POST(req: Request, context: RouteContext) {
     // 6. Sincronizar en Supabase si está disponible
     if (isSupabaseConfigured) {
       try {
+        let supaUserId = userId;
         const { data: supaUser } = await supabase
           .from('usuarios')
           .select('id')
@@ -283,17 +354,71 @@ export async function POST(req: Request, context: RouteContext) {
           .maybeSingle();
 
         if (supaUser?.id) {
+          supaUserId = supaUser.id;
+        } else if (!supaUserId) {
+          const { data: newUser } = await supabase
+            .from('usuarios')
+            .upsert({
+              email: targetEmail,
+              nombre: userName || targetEmail.split('@')[0],
+              estado: 'activo',
+            })
+            .select('id')
+            .maybeSingle();
+          if (newUser?.id) supaUserId = newUser.id;
+        }
+
+        if (supaUserId) {
           await supabase.from('proyecto_miembros').upsert({
             proyecto_id: projectId,
-            usuario_id: supaUser.id,
+            usuario_id: supaUserId,
             rol: role,
             fecha_union: new Date().toISOString(),
           });
+
+          // Notificación en Supabase para el creador del proyecto
+          const { data: projectRow } = await supabase
+            .from('proyectos')
+            .select('creador_id')
+            .eq('id', projectId)
+            .maybeSingle();
+
+          if (projectRow?.creador_id && projectRow.creador_id !== supaUserId) {
+            await supabase.from('notificaciones').insert({
+              usuario_id: projectRow.creador_id,
+              titulo: '¡Nuevo integrante en el equipo!',
+              descripcion: `${targetUser.name} (${targetEmail}) aceptó tu invitación al proyecto "${projectName}".`,
+              tipo: 'INVITE',
+              leida: false,
+              fecha: new Date().toISOString(),
+            });
+          }
         }
       } catch (supaErr) {
         console.warn('Error sincronizando con Supabase:', supaErr);
       }
     }
+
+    // 7. Retornar el proyecto completo actualizado con todos sus miembros para sincronización inmediata
+    const updatedProject = await db.project.findUnique({
+      where: { id: projectId },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                avatarUrl: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
     return NextResponse.json({
       success: true,
@@ -303,7 +428,8 @@ export async function POST(req: Request, context: RouteContext) {
       userId: targetUser.id,
       userEmail: targetUser.email,
       userName: targetUser.name,
-      message: `Te uniste a "${projectName}" con rol de ${ROLE_LABELS[role] || role}.`,
+      project: updatedProject,
+      message: `Te uniste a "${projectName}" con rol de ${roleLabel}.`,
     });
   } catch (error: any) {
     console.error('Error al procesar aceptación de invitación:', error);

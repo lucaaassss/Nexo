@@ -128,27 +128,65 @@ export default function InviteAcceptPage() {
         throw new Error(data.error || 'Error al aceptar la invitación.');
       }
 
-      // Sincronizar en store local del cliente
-      const assignedRole = data.role || invitationData?.role || 'MEMBER';
-      const projectId = data.projectId || invitationData?.project?.id;
-
-      if (projectId) {
-        addMemberToProject(projectId, emailToSend, assignedRole);
-        setCurrentProject(projectId);
+      // 1. Alinear usuario actual con la base de datos
+      if (data.userId && data.userEmail) {
+        const updatedCurrentUser = {
+          ...currentUser,
+          id: data.userId,
+          email: data.userEmail,
+          name: data.userName || nameToSend,
+          role: data.role || currentUser?.role || 'MEMBER',
+          createdAt: currentUser?.createdAt || new Date().toISOString(),
+        };
+        store.setCurrentUser(updatedCurrentUser);
       }
 
-      // Limpiar token guardado si existía
+      // 2. Si la API devolvió el proyecto con todos sus miembros, incorporarlo al store
+      const projectId = data.projectId || invitationData?.project?.id;
+      if (data.project) {
+        const formattedProj = {
+          ...data.project,
+          members: (data.project.members || []).map((m: any) => ({
+            id: m.id,
+            projectId: m.projectId,
+            userId: m.userId,
+            role: m.role,
+            joinedAt: m.joinedAt ? new Date(m.joinedAt).toISOString() : new Date().toISOString(),
+            user: m.user || {
+              id: m.userId,
+              name: m.user?.name || nameToSend,
+              email: m.user?.email || emailToSend,
+              role: m.role,
+              createdAt: new Date().toISOString(),
+            },
+          })),
+        };
+        store.upsertProject(formattedProj);
+      } else if (projectId) {
+        addMemberToProject(projectId, emailToSend, data.role || invitationData?.role || 'MEMBER');
+      }
+
+      // 3. Seleccionar el proyecto
+      if (projectId) {
+        store.setCurrentProject(projectId);
+      }
+
+      // 4. Limpiar token temporal guardado
       if (typeof window !== 'undefined') {
         localStorage.removeItem('pending_invite_token');
       }
 
-      // Sincronizar base de datos
+      // 5. Sincronizar base de datos completa
       await store.syncWithDatabase();
+
+      if (projectId) {
+        store.setCurrentProject(projectId);
+      }
 
       setIsAccepted(true);
       setTimeout(() => {
         router.push('/dashboard');
-      }, 1200);
+      }, 1000);
     } catch (err: any) {
       setErrorMessage(err.message || 'Ocurrió un error inesperado al unirte.');
       setIsSubmitting(false);

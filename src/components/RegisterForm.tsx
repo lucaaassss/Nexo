@@ -211,9 +211,31 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
             if (typeof window !== 'undefined') {
               localStorage.removeItem('pending_invite_token');
             }
-            store.addMemberToProject(inviteResult.projectId, activeUser.email, inviteResult.role || 'MEMBER');
-            store.setCurrentProject(inviteResult.projectId);
+            if (inviteResult.userId) {
+              activeUser.id = inviteResult.userId;
+              store.setCurrentUser(activeUser);
+            }
+            if (inviteResult.project) {
+              const formattedMembers = (inviteResult.project.members || []).map((m: any) => ({
+                id: m.id,
+                projectId: m.projectId,
+                userId: m.userId,
+                role: m.role,
+                joinedAt: m.joinedAt ? new Date(m.joinedAt).toISOString() : new Date().toISOString(),
+                user: m.user || {
+                  id: m.userId,
+                  name: m.user?.name || activeUser.name,
+                  email: m.user?.email || activeUser.email,
+                  role: m.role,
+                },
+              }));
+              store.upsertProject({
+                ...inviteResult.project,
+                members: formattedMembers,
+              });
+            }
             await store.syncWithDatabase();
+            store.setCurrentProject(inviteResult.projectId);
             setRegisterSuccess(true);
             setTimeout(() => router.push('/dashboard'), 800);
             return;

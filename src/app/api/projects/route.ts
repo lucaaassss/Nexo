@@ -8,15 +8,20 @@ import { db } from '@/lib/db';
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id') || searchParams.get('projectId');
     const userId = searchParams.get('userId');
+    const email = searchParams.get('email');
 
-    let whereClause = {};
-    if (userId) {
-      whereClause = {
-        members: {
-          some: {
-            userId: userId,
-          },
+    let whereClause: any = {};
+    if (id) {
+      whereClause.id = id;
+    } else if (userId || email) {
+      whereClause.members = {
+        some: {
+          OR: [
+            ...(userId ? [{ userId }] : []),
+            ...(email ? [{ user: { email: email.toLowerCase().trim() } }] : []),
+          ],
         },
       };
     }
@@ -26,7 +31,16 @@ export async function GET(req: Request) {
       include: {
         members: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                avatarUrl: true,
+                createdAt: true,
+              },
+            },
           },
         },
         tasks: {
@@ -56,7 +70,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, key, description, color, icon, creatorId } = body;
+    const { name, key, description, color, icon, creatorId, creatorEmail, creatorName } = body;
 
     if (!name || !key) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
@@ -73,21 +87,52 @@ export async function POST(req: Request) {
 
     // Asegurar que el usuario creador exista en la base de datos si se provee
     let validCreatorId = creatorId;
+    const cleanEmail = creatorEmail ? String(creatorEmail).toLowerCase().trim() : '';
+    const cleanName = creatorName ? String(creatorName).trim() : '';
+
     if (validCreatorId) {
-      const userExists = await db.user.findUnique({ where: { id: validCreatorId } });
+      let userExists = await db.user.findUnique({ where: { id: validCreatorId } });
+      if (!userExists && cleanEmail) {
+        userExists = await db.user.findUnique({ where: { email: cleanEmail } });
+        if (userExists) {
+          validCreatorId = userExists.id;
+        }
+      }
+
       if (!userExists) {
-        // Si no existe, crear un usuario base
+        // Crear usuario con datos reales del creador
         const createdUser = await db.user.create({
           data: {
             id: validCreatorId,
-            email: `${validCreatorId}@nexor-space.app`,
-            name: 'Usuario Nexor-Space',
+            email: cleanEmail || `${validCreatorId}@nexor-space.app`,
+            name: cleanName || 'Usuario Nexor-Space',
             password: 'demo_password',
             role: 'ADMIN',
           },
         });
         validCreatorId = createdUser.id;
+      } else if (cleanName && (userExists.name.startsWith('Usuario ') || userExists.name === userExists.email.split('@')[0])) {
+        await db.user.update({
+          where: { id: userExists.id },
+          data: {
+            name: cleanName,
+            ...(cleanEmail && userExists.email.endsWith('@nexor-space.app') ? { email: cleanEmail } : {}),
+          },
+        });
       }
+    } else if (cleanEmail) {
+      let userByEmail = await db.user.findUnique({ where: { email: cleanEmail } });
+      if (!userByEmail) {
+        userByEmail = await db.user.create({
+          data: {
+            email: cleanEmail,
+            name: cleanName || cleanEmail.split('@')[0],
+            password: 'demo_password',
+            role: 'ADMIN',
+          },
+        });
+      }
+      validCreatorId = userByEmail.id;
     } else {
       const firstUser = await db.user.findFirst();
       if (firstUser) {
@@ -116,7 +161,16 @@ export async function POST(req: Request) {
       include: {
         members: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                avatarUrl: true,
+                createdAt: true,
+              },
+            },
           },
         },
         _count: {

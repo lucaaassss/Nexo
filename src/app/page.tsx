@@ -67,9 +67,10 @@ export default function HomePage() {
         }
       }
 
-      // 1. Revisar si ya hay sesión activa
+      // 1. Revisar si ya hay sesión activa (Supabase o local)
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      const localUser = typeof window !== 'undefined' ? localStorage.getItem('nexorspace_current_user') : null;
+      if (session || localUser) {
         if (isSubscribed) setIsCheckingAuth(false);
         return;
       }
@@ -85,9 +86,10 @@ export default function HomePage() {
       // 3. Breve margen de seguridad antes de redirigir a /login
       timeout = setTimeout(async () => {
         const { data: { session: retrySession } } = await supabase.auth.getSession();
-        if (!retrySession && isSubscribed) {
+        const retryLocalUser = typeof window !== 'undefined' ? localStorage.getItem('nexorspace_current_user') : null;
+        if (!retrySession && !retryLocalUser && isSubscribed) {
           router.replace('/login');
-        } else if (retrySession && isSubscribed) {
+        } else if ((retrySession || retryLocalUser) && isSubscribed) {
           setIsCheckingAuth(false);
         }
       }, 1500);
