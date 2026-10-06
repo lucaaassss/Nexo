@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexo - Plataforma Moderna de Gestión y Colaboración</title>
+  <meta name="description" content="Nexo es la plataforma integral para gestionar proyectos, colaborar en equipo y potenciar la productividad con flujos inteligentes.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Estilos principales -->
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body data-theme="dark">
+
+  <!-- Glow Background Background Effect -->
+  <div class="glow-bg glow-1"></div>
+  <div class="glow-bg glow-2"></div>
+
+  <!-- Header & Navbar -->
+  <header class="navbar-wrapper" id="main-header">
+    <nav class="navbar container">
+      <a href="#inicio" class="logo-link">
+        <img src="img/logo.png" alt="Logo de Nexo" class="nav-logo" id="site-logo">
+        <span class="brand-text">Nexo</span>
+      </a>
+
+      <div class="nav-menu" id="nav-menu">
+        <ul class="nav-list">
+          <li><a href="#inicio" class="nav-link active">Inicio</a></li>
+          <li><a href="#caracteristicas" class="nav-link">Características</a></li>
+          <li><a href="#demo" class="nav-link">Demo Interactiva</a></li>
+          <li><a href="#precios" class="nav-link">Precios</a></li>
+          <li><a href="#contacto" class="nav-link">Contacto</a></li>
+        </ul>
+      </div>
+
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">
+          <i class="fa-solid fa-sun icon-sun"></i>
+          <i class="fa-solid fa-moon icon-moon"></i>
+        </button>
+        <a href="#contacto" class="btn btn-primary btn-glow">Empezar Ahora</a>
+        <button class="mobile-toggle" id="mobile-toggle" aria-label="Abrir menú">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero-section" id="inicio">
+      <div class="container hero-container">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <i class="fa-solid fa-sparkles"></i>
+            <span>Nexo 2.0 ya está disponible</span>
+          </div>
+          <h1 class="hero-title">
+            Transforma la gestión de tus proyectos en una <span class="gradient-text">experiencia fluida</span>
+          </h1>
+          <p class="hero-subtitle">
+            Centraliza tus tareas, colabora con tu equipo en tiempo real y potencia los resultados de tu empresa con flujos de trabajo inteligentes.
+          </p>
+          <div class="hero-buttons">
+            <a href="#demo" class="btn btn-primary btn-lg btn-glow">
+              <span>Probar Demo</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+            <a href="#caracteristicas" class="btn btn-outline btn-lg">
+              <i class="fa-solid fa-play"></i>
+              <span>Ver Funciones</span>
+            </a>
+          </div>
+
+          <div class="hero-metrics">
+            <div class="metric-item">
+              <span class="metric-number" data-target="99.9">0</span><span class="metric-suffix">%</span>
+              <span class="metric-label">Disponibilidad</span>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+              <span class="metric-number" data-target="15">0</span><span class="metric-suffix">k+</span>
+              <span class="metric-label">Equipos activos</span>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+              <span class="metric-number" data-target="4.9">0</span><span class="metric-suffix">★</span>
+              <span class="metric-label">Calificación</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="showcase-card">
+            <div class="showcase-header">
+              <div class="dot red"></div>
+              <div class="dot yellow"></div>
+              <div class="dot green"></div>
+              <span class="showcase-title">Nexo Workspace Dashboard</span>
+            </div>
+            <div class="showcase-image-wrapper">
+              <img src="img/foto.jpg" alt="Panel de control Nexo" class="showcase-img" id="hero-showcase-img">
+              <div class="floating-badge badge-top">
+                <i class="fa-solid fa-chart-line"></i>
+                <div>
+                  <strong>+42% Eficiencia</strong>
+                  <small>Optimización de sprints</small>
+                </div>
+              </div>
+              <div class="floating-badge badge-bottom">
+                <i class="fa-solid fa-circle-check"></i>
+                <div>
+                  <strong>128 Tareas completadas</strong>
+                  <small>Esta semana</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section" id="caracteristicas">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">Capacidades</span>
+          <h2 class="section-title">Diseñado para equipos que buscan la excelencia</h2>
+          <p class="section-desc">Todo lo que necesitas para planificar, ejecutar y entregar proyectos de alto impacto.</p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon icon-cyan">
+              <i class="fa-solid fa-table-columns"></i>
+            </div>
+            <h3>Tableros Kanban Ágiles</h3>
+            <p>Visualiza el flujo de trabajo de tu equipo con estados personalizados, límites WIP y etiquetas dinámicas.</p>
+            <div class="feature-link">Saber más <i class="fa-solid fa-arrow-right"></i></div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon icon-purple">
+              <i class="fa-solid fa-chart-pie"></i>
+            </div>
+            <h3>Analítica en Tiempo Real</h3>
+            <p>Métricas avanzadas de productividad, velocidad de sprint y reportes automáticos exportables.</p>
+            <div class="feature-link">Saber más <i class="fa-solid fa-arrow-right"></i></div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon icon-blue">
+              <i class="fa-solid fa-comments"></i>
+            </div>
+            <h3>Colaboración Directa</h3>
+            <p>Comentarios con menciones, hilos de discusión y notificaciones instantáneas para mantener a todos alineados.</p>
+            <div class="feature-link">Saber más <i class="fa-solid fa-arrow-right"></i></div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon icon-emerald">
+              <i class="fa-solid fa-robot"></i>
+            </div>
+            <h3>Asistente IA Integrado</h3>
+            <p>Genera resúmenes de tareas, redacta especificaciones y prioriza actividades de forma automática.</p>
+            <div class="feature-link">Saber más <i class="fa-solid fa-arrow-right"></i></div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon icon-orange">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h3>Seguridad Empresarial</h3>
+            <p>Cifrado de extremo a extremo, roles con permisos granulares y autenticación multifactor.</p>
+            <div class="feature-link">Saber más <i class="fa-solid fa-arrow-right"></i></div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon icon-pink">
+              <i class="fa-solid fa-plug"></i>
+            </div>
+            <h3>Integraciones sin Límites</h3>
+            <p>Conecta Nexo con GitHub, Slack, Google Workspace, Figma y más de 50 herramientas.</p>
+            <div class="feature-link">Saber más <i class="fa-solid fa-arrow-right"></i></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Kanban Live Demo Section -->
+    <section class="demo-section" id="demo">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">Interactividad</span>
+          <h2 class="section-title">Prueba el Tablero Ágil de Nexo</h2>
+          <p class="section-desc">Crea y mueve tareas en tiempo real directamente en esta demostración interactiva.</p>
+        </div>
+
+        <div class="demo-app-box">
+          <div class="demo-toolbar">
+            <div class="demo-input-group">
+              <input type="text" id="new-task-input" placeholder="Escribe el nombre de una nueva tarea..." maxlength="60">
+              <select id="task-priority-select">
+                <option value="alta">Prioridad Alta</option>
+                <option value="media" selected>Prioridad Media</option>
+                <option value="baja">Prioridad Baja</option>
+              </select>
+              <button class="btn btn-primary" id="add-task-btn">
+                <i class="fa-solid fa-plus"></i> Agregar Tarea
+              </button>
+            </div>
+            <div class="demo-stats">
+              <span>Total tareas: <strong id="total-tasks-count">3</strong></span>
+            </div>
+          </div>
+
+          <div class="kanban-board" id="kanban-board">
+            <!-- Columna 1: Por Hacer -->
+            <div class="kanban-col" data-status="todo">
+              <div class="col-header">
+                <span class="col-status-dot dot-todo"></span>
+                <h4>Por Hacer</h4>
+                <span class="col-count" id="count-todo">1</span>
+              </div>
+              <div class="kanban-cards" id="cards-todo">
+                <div class="task-card" data-id="1">
+                  <span class="task-tag tag-alta">Alta</span>
+                  <h5>Diseñar flujo de onboarding</h5>
+                  <p>Definir los pasos clave para la experiencia del usuario.</p>
+                  <div class="card-footer">
+                    <button class="move-btn" onclick="moveTask(1, 'in-progress')" title="Mover a En Progreso">
+                      Avanzar <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna 2: En Progreso -->
+            <div class="kanban-col" data-status="in-progress">
+              <div class="col-header">
+                <span class="col-status-dot dot-progress"></span>
+                <h4>En Progreso</h4>
+                <span class="col-count" id="count-progress">1</span>
+              </div>
+              <div class="kanban-cards" id="cards-in-progress">
+                <div class="task-card" data-id="2">
+                  <span class="task-tag tag-media">Media</span>
+                  <h5>Integrar pasarela de pagos</h5>
+                  <p>Configurar webhooks y verificar respuestas exitosas.</p>
+                  <div class="card-footer">
+                    <button class="move-btn" onclick="moveTask(2, 'todo')" title="Regresar">
+                      <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button class="move-btn" onclick="moveTask(2, 'done')" title="Completar">
+                      Listo <i class="fa-solid fa-check"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna 3: Completado -->
+            <div class="kanban-col" data-status="done">
+              <div class="col-header">
+                <span class="col-status-dot dot-done"></span>
+                <h4>Completado</h4>
+                <span class="col-count" id="count-done">1</span>
+              </div>
+              <div class="kanban-cards" id="cards-done">
+                <div class="task-card completed" data-id="3">
+                  <span class="task-tag tag-baja">Baja</span>
+                  <h5>Configurar paleta de colores</h5>
+                  <p>Armonizar tokens de diseño en dark/light mode.</p>
+                  <div class="card-footer">
+                    <button class="move-btn" onclick="moveTask(3, 'in-progress')" title="Reabrir">
+                      <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                    <button class="delete-btn" onclick="deleteTask(3)" title="Eliminar">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing-section" id="precios">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">Planes Flexibles</span>
+          <h2 class="section-title">Elige el plan ideal para tu equipo</h2>
+          <p class="section-desc">Escala tu productividad sin costos ocultos. Cancela cuando quieras.</p>
+        </div>
+
+        <div class="pricing-grid">
+          <!-- Starter Plan -->
+          <div class="pricing-card">
+            <div class="plan-header">
+              <h3>Starter</h3>
+              <p>Ideal para profesionales individuales y proyectos iniciales.</p>
+              <div class="plan-price">
+                <span class="currency">$</span>
+                <span class="amount">0</span>
+                <span class="period">/ mes</span>
+              </div>
+            </div>
+            <ul class="plan-features">
+              <li><i class="fa-solid fa-check"></i> Hasta 3 proyectos activos</li>
+              <li><i class="fa-solid fa-check"></i> Tableros Kanban ilimitados</li>
+              <li><i class="fa-solid fa-check"></i> 1 GB de almacenamiento</li>
+              <li><i class="fa-solid fa-check"></i> Soporte por comunidad</li>
+            </ul>
+            <a href="#contacto" class="btn btn-outline btn-full">Comenzar Gratis</a>
+          </div>
+
+          <!-- Pro Plan (Featured) -->
+          <div class="pricing-card featured">
+            <div class="badge-featured">Más Popular</div>
+            <div class="plan-header">
+              <h3>Pro Teams</h3>
+              <p>Para equipos que necesitan velocidad, analíticas y automatizaciones.</p>
+              <div class="plan-price">
+                <span class="currency">$</span>
+                <span class="amount">19</span>
+                <span class="period">/ mes</span>
+              </div>
+            </div>
+            <ul class="plan-features">
+              <li><i class="fa-solid fa-check"></i> Proyectos ilimitados</li>
+              <li><i class="fa-solid fa-check"></i> Asistente de IA (500 prompts/mes)</li>
+              <li><i class="fa-solid fa-check"></i> Analítica y reportes avanzados</li>
+              <li><i class="fa-solid fa-check"></i> 50 GB de almacenamiento en la nube</li>
+              <li><i class="fa-solid fa-check"></i> Soporte prioritario 24/7</li>
+            </ul>
+            <a href="#contacto" class="btn btn-primary btn-full btn-glow">Iniciar Prueba de 14 Días</a>
+          </div>
+
+          <!-- Enterprise Plan -->
+          <div class="pricing-card">
+            <div class="plan-header">
+              <h3>Enterprise</h3>
+              <p>Para grandes organizaciones con requisitos avanzados de seguridad.</p>
+              <div class="plan-price">
+                <span class="currency">$</span>
+                <span class="amount">49</span>
+                <span class="period">/ mes</span>
+              </div>
+            </div>
+            <ul class="plan-features">
+              <li><i class="fa-solid fa-check"></i> Todo lo de Pro ilimitado</li>
+              <li><i class="fa-solid fa-check"></i> SSO y SAML corporativo</li>
+              <li><i class="fa-solid fa-check"></i> Almacenamiento ilimitado</li>
+              <li><i class="fa-solid fa-check"></i> SLA del 99.99% garantizado</li>
+              <li><i class="fa-solid fa-check"></i> Gerente de cuenta dedicado</li>
+            </ul>
+            <a href="#contacto" class="btn btn-outline btn-full">Contactar Ventas</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact & Lead Form Section -->
+    <section class="contact-section" id="contacto">
+      <div class="container">
+        <div class="contact-box">
+          <div class="contact-info">
+            <span class="section-tag">Ponte en Contacto</span>
+            <h2>¿Listo para elevar tu productividad?</h2>
+            <p>Escríbenos y un especialista te ayudará a configurar Nexo a la medida de tu equipo.</p>
+            
+            <div class="contact-details">
+              <div class="contact-item">
+                <i class="fa-solid fa-envelope"></i>
+                <span>contacto@nexo-space.com</span>
+              </div>
+              <div class="contact-item">
+                <i class="fa-solid fa-location-dot"></i>
+                <span>Buenos Aires, Argentina</span>
+              </div>
+              <div class="contact-item">
+                <i class="fa-solid fa-clock"></i>
+                <span>Lunes a Viernes de 9:00 a 18:00 hs</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="contact-form-wrapper">
+            <form id="contact-form" class="contact-form">
+              <div class="form-group">
+                <label for="name">Nombre completo</label>
+                <input type="text" id="name" name="name" placeholder="Ej: Lucas Rossi" required>
+              </div>
+
+              <div class="form-group">
+                <label for="email">Correo electrónico</label>
+                <input type="email" id="email" name="email" placeholder="lucas@empresa.com" required>
+              </div>
+
+              <div class="form-group">
+                <label for="plan-select">Plan de interés</label>
+                <select id="plan-select" name="plan">
+                  <option value="starter">Starter (Gratis)</option>
+                  <option value="pro" selected>Pro Teams</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="message">Mensaje o consulta</label>
+                <textarea id="message" name="message" rows="4" placeholder="Cuéntanos sobre tu equipo y objetivos..." required></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-full btn-glow" id="submit-btn">
+                <span>Enviar Solicitud</span>
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+
+              <div id="form-feedback" class="form-feedback"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <img src="img/logo.png" alt="Logo de Nexo" class="nav-logo">
+          <span>Nexo</span>
+        </div>
+        <p>La plataforma ágil y moderna para equipos de alto rendimiento.</p>
+      </div>
+
+      <div class="footer-links">
+        <div class="footer-col">
+          <h5>Producto</h5>
+          <a href="#caracteristicas">Características</a>
+          <a href="#demo">Demo en Vivo</a>
+          <a href="#precios">Precios</a>
+        </div>
+        <div class="footer-col">
+          <h5>Recursos</h5>
+          <a href="#">Documentación</a>
+          <a href="#">Guía de Inicio</a>
+          <a href="#">Blog</a>
+        </div>
+        <div class="footer-col">
+          <h5>Legal</h5>
+          <a href="#">Privacidad</a>
+          <a href="#">Términos de Servicio</a>
+          <a href="#">Seguridad</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>&copy; 2026 Nexo. Todos los derechos reservados.</p>
+      <div class="social-links">
+        <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+        <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script principal -->
+  <script src="script.js"></script>
+</body>
+</html>
